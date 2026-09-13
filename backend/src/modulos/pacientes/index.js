@@ -1,0 +1,5 @@
+//Constructor donde se inyecta la BD
+const db = require('../../BD/mysql');
+const ctrl = require('./controlador');
+
+module.exports = ctrl(db);
