@@ -18,6 +18,6 @@ export const EstadoTurno = sequelize.define(
   },
   {
     tableName: "estado_turno",
-    timestamps: true,
+    timestamps: false,
   },
 );

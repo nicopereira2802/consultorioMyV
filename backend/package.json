@@ -4,10 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon src/index.js",
-    "start": "node src/index.js",
-    "db:init": "node scripts/init_db.js"
-  },
+  "dev": "nodemon index.js",
+  "start": "node index.js",
+  "db:init": "node scripts/init_db.js"
+},
   "keywords": [],
   "author": "",
   "license": "ISC",

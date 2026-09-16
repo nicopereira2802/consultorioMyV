@@ -30,6 +30,6 @@ export const PacienteObraSocial = sequelize.define(
   },
   {
     tableName: "paciente_obra_social",
-    timestamps: true,
+    timestamps: false,
   },
 );

@@ -38,6 +38,6 @@ export const Practica = sequelize.define(
   },
   {
     tableName: "practica",
-    timestamps: true,
+    timestamps: false,
   },
 );

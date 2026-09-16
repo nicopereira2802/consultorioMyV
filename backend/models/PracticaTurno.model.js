@@ -26,6 +26,6 @@ export const PracticaTurno = sequelize.define(
   },
   {
     tableName: "practica_turno",
-    timestamps: true,
+    timestamps: false,
   },
 );

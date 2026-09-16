@@ -1,4 +1,4 @@
-import { PacienteObraSocial } from "../models/pacienteObraSocial.model.js";
+import { PacienteObraSocial } from "../models/PacienteObraSocial.model.js";
 
 // Obtener todos los pacientes por obra social
 export const getAllPacientesPorObraSocial = async (req, res) => {

@@ -9,7 +9,7 @@ USE consultorio_myv;
 -- 1. TABLA: ESTADO_TURNO
 CREATE TABLE estado_turno (
     id_estado INT AUTO_INCREMENT PRIMARY KEY,
-    estado ENUM("Programado", "Reprogramado", "Cancelado", "Atendido", "Inasistente") NOT NULL DEFAULT "Programado",
+    estado ENUM('Programado', 'Reprogramado', 'Cancelado', 'Atendido', 'Inasistente') NOT NULL DEFAULT 'Programado'
 ) ENGINE=InnoDB;
 
 -- 2. TABLA: OBRA_SOCIAL
@@ -65,7 +65,7 @@ CREATE TABLE turno (
     FOREIGN KEY (id_estado) REFERENCES estado_turno(id_estado) ON DELETE RESTRICT
 ) ENGINE=InnoDB;
 
--- 7. TABLA INTERMEDIA: TURNO_PRACTICA
+-- 7. TABLA INTERMEDIA: PRACTICA_TURNO
 CREATE TABLE practica_turno (
     id_turno INT NOT NULL,
     id_practica INT NOT NULL,
@@ -116,8 +116,8 @@ INSERT INTO turno (id_turno, id_paciente, id_estado, fecha_hora_inicio, fecha_ho
 (3, 3, 3, '2026-09-16 14:00:00', '2026-09-16 14:30:00', 0.00, 'Avisó que no puede asistir por trabajo.'),
 (4, 4, 1, '2026-09-21 16:00:00', '2026-09-21 17:00:00', 32000.00, 'Control y posible restauración pieza 16.');
 
-INSERT INTO practica_turno (id_practica, id_turno) VALUES
+INSERT INTO practica_turno (id_turno, id_practica) VALUES
 (1, 1),
 (2, 2),
-(4, 1),
-(4, 3);
+(1, 4),
+(3, 4);

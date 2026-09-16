@@ -6,6 +6,7 @@ import EstadoTurnoRoutes from "./EstadoTurno.routes.js";
 import PacienteRoutes from "./Paciente.routes.js";
 import ObraSocialRoutes from "./ObraSocial.routes.js";
 import PacienteObraSocialRoutes from "./PacienteObraSocial.routes.js";
+import PracticaRoutes from "./Practica.routes.js";
 import PracticaTurnoRoutes from "./PracticaTurno.routes.js";
 import TurnoRoutes from "./Turno.routes.js";
 
@@ -14,6 +15,7 @@ router.use("/api/estado-turnos", EstadoTurnoRoutes);
 router.use("/api/pacientes", PacienteRoutes);
 router.use("/api/obras-sociales", ObraSocialRoutes);
 router.use("/api/pacientes-por-obras-sociales", PacienteObraSocialRoutes);
+router.use("/api/practicas", PracticaRoutes);
 router.use("/api/practicas-turnos", PracticaTurnoRoutes);
 router.use("/api/turnos", TurnoRoutes);
 
