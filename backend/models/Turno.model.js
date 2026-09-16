@@ -7,7 +7,7 @@ import { EstadoTurno } from "./EstadoTurno.model.js";
 export const Turno = sequelize.define(
   "Turno",
   {
-    id: {
+    id_turno: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
@@ -17,7 +17,7 @@ export const Turno = sequelize.define(
       allowNull: false,
       references: {
         model: Paciente,
-        key: "id",
+        key: "id_paciente",
       },
     },
     id_estado: {
@@ -25,7 +25,7 @@ export const Turno = sequelize.define(
       allowNull: false,
       references: {
         model: EstadoTurno,
-        key: "id",
+        key: "id_estado",
       },
     },
     fecha_hora_inicio: {

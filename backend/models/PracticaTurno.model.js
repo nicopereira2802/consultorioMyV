@@ -12,7 +12,7 @@ export const PracticaTurno = sequelize.define(
       primaryKey: true,
       references: {
         model: Turno,
-        key: "id",
+        key: "id_turno",
       },
     },
     id_practica: {
@@ -20,7 +20,7 @@ export const PracticaTurno = sequelize.define(
       primaryKey: true,
       references: {
         model: Practica,
-        key: "id",
+        key: "id_practica",
       },
     },
   },

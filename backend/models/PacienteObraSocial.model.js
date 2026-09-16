@@ -12,7 +12,7 @@ export const PacienteObraSocial = sequelize.define(
       primaryKey: true,
       references: {
         model: Paciente,
-        key: "id",
+        key: "id_paciente",
       },
     },
     id_obra_social: {
@@ -20,12 +20,12 @@ export const PacienteObraSocial = sequelize.define(
       primaryKey: true,
       references: {
         model: ObraSocial,
-        key: "id",
+        key: "id_obra_social",
       },
     },
     nro_afiliado: {
       type: DataTypes.STRING,
-      allowNull: true,
+      allowNull: false,
     },
   },
   {

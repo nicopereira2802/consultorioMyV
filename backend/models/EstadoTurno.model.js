@@ -5,7 +5,7 @@ import sequelize from "../config/database.js";
 export const EstadoTurno = sequelize.define(
   "EstadoTurno",
   {
-    id: {
+    id_estado: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,

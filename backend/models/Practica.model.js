@@ -5,7 +5,7 @@ import sequelize from "../config/database.js";
 export const Practica = sequelize.define(
   "Practica",
   {
-    id: {
+    id_practica: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
@@ -33,6 +33,7 @@ export const Practica = sequelize.define(
     activo: {
       type: DataTypes.BOOLEAN,
       defaultValue: true,
+      allowNull: false,
     },
   },
   {

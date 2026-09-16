@@ -5,7 +5,7 @@ import sequelize from "../config/database.js";
 export const Paciente = sequelize.define(
   "Paciente",
   {
-    id: {
+    id_paciente: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
@@ -37,6 +37,7 @@ export const Paciente = sequelize.define(
     },
     activo: {
       type: DataTypes.BOOLEAN,
+      allowNull: false,
       defaultValue: true,
     },
   },

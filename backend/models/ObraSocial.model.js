@@ -5,7 +5,7 @@ import sequelize from "../config/database.js";
 export const ObraSocial = sequelize.define(
   "ObraSocial",
   {
-    id: {
+    id_obra_social: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
@@ -16,6 +16,7 @@ export const ObraSocial = sequelize.define(
     },
     activo: {
       type: DataTypes.BOOLEAN,
+      allowNull: false,
       defaultValue: true,
     },
   },
