@@ -9,7 +9,7 @@ USE consultorio_myv;
 -- 1. TABLA: ESTADO_TURNO
 CREATE TABLE estado_turno (
     id_estado INT AUTO_INCREMENT PRIMARY KEY,
-    nombre VARCHAR(50) NOT NULL UNIQUE
+    estado ENUM("Programado", "Reprogramado", "Cancelado", "Atendido", "Inasistente") NOT NULL DEFAULT "Programado",
 ) ENGINE=InnoDB;
 
 -- 2. TABLA: OBRA_SOCIAL
@@ -24,10 +24,10 @@ CREATE TABLE paciente (
     id_paciente INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
     apellido VARCHAR(100) NOT NULL,
-    dni VARCHAR(20) NOT NULL UNIQUE,
-    fecha_nacimiento DATE NULL,
-    telefono VARCHAR(30) NULL,
-    domicilio VARCHAR(200) NULL,
+    dni VARCHAR(20) UNIQUE,
+    fecha_nacimiento DATE,
+    telefono VARCHAR(30) NOT NULL,
+    domicilio VARCHAR(200),
     activo BOOLEAN NOT NULL DEFAULT TRUE
 ) ENGINE=InnoDB;
 
