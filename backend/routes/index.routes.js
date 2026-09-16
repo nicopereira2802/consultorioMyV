@@ -7,7 +7,7 @@ import PacienteRoutes from "./Paciente.routes.js";
 import ObraSocialRoutes from "./ObraSocial.routes.js";
 import PacienteObraSocialRoutes from "./PacienteObraSocial.routes.js";
 import PracticaTurnoRoutes from "./PracticaTurno.routes.js";
-import TurnoRoutes from "./turno.routes.js";
+import TurnoRoutes from "./Turno.routes.js";
 
 // Rutas para los diferentes recursos
 router.use("/api/estado-turnos", EstadoTurnoRoutes);
