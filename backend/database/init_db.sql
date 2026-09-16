@@ -66,7 +66,7 @@ CREATE TABLE turno (
 ) ENGINE=InnoDB;
 
 -- 7. TABLA INTERMEDIA: TURNO_PRACTICA
-CREATE TABLE turno_practica (
+CREATE TABLE practica_turno (
     id_turno INT NOT NULL,
     id_practica INT NOT NULL,
     PRIMARY KEY (id_turno, id_practica),
@@ -78,7 +78,7 @@ CREATE TABLE turno_practica (
 -- CARGA DE DATOS DE PRUEBA (SEEDERS)
 -- ==========================================================
 
-INSERT INTO estado_turno (id_estado, nombre) VALUES
+INSERT INTO estado_turno (id_estado, estado) VALUES
 (1, 'Programado'),
 (2, 'Reprogramado'),
 (3, 'Cancelado'),
@@ -116,7 +116,7 @@ INSERT INTO turno (id_turno, id_paciente, id_estado, fecha_hora_inicio, fecha_ho
 (3, 3, 3, '2026-09-16 14:00:00', '2026-09-16 14:30:00', 0.00, 'Avisó que no puede asistir por trabajo.'),
 (4, 4, 1, '2026-09-21 16:00:00', '2026-09-21 17:00:00', 32000.00, 'Control y posible restauración pieza 16.');
 
-INSERT INTO turno_practica (id_turno, id_practica) VALUES
+INSERT INTO practica_turno (id_practica, id_turno) VALUES
 (1, 1),
 (2, 2),
 (4, 1),
