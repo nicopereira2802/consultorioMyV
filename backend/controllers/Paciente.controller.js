@@ -28,7 +28,7 @@ export const getPacienteById = async (req, res) => {
   }
 };
 
-// Crear un nuevo paciente
+
 // Crear un nuevo paciente
 export const createPaciente = async (req, res) => {
   const { nombre, apellido, fecha_nacimiento, fechaNacimiento, dni, telefono, domicilio } = req.body;
