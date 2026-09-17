@@ -30,7 +30,7 @@ PacienteObraSocial.belongsTo(ObraSocial, { foreignKey: "id_obra_social" });
 
 const sincronizarModelos = async () => {
   try {
-    await sequelize.sync(); // <-- Sin { alter: true }
+    await sequelize.sync( { alter: true } ); // Poner en true para sincronizar los modelos con la base de datos (crear tablas si no existen)
     console.log("Base de datos sincronizada correctamente");
     return true;
   } catch (error) {

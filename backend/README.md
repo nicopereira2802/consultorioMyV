@@ -14,6 +14,8 @@ Esta es la API del proyecto, construida con Node.js y Express. Se encarga de man
 ## npm install
 3. Inicia el servidor en modo desarrollo (con recarga automática):
 ## npm run dev
+## nodemon (Para que al guardar corra el programa nuevamente)
+
 
 El servidor se ejecutará por defecto en `http://localhost:3000`.
 

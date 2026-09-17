@@ -22,7 +22,6 @@ app.get('/', (req, res) => {
 app.use('/', indexRoutes);
 
 const bootstrap = async () => {
-  console.clear();
   try {
     
     // 1. Verificar la conexión a la base de datos
