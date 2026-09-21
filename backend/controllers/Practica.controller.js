@@ -1,4 +1,5 @@
 import { Practica } from "../models/Practica.model.js";
+import { validarCreacionPractica } from "../validations/Practica.validation.js";
 
 // Obtener todas las prácticas
 export const getAllPracticas = async (req, res) => {
@@ -25,11 +26,26 @@ export const getPracticaById = async (req, res) => {
   }
 };
 
-// Obtener una práctica por su nombre
+
+// Crear una nueva practica
 export const createPractica = async (req, res) => {
-  const { nombre, descripcion, precio } = req.body;
   try {
-    const newPractica = await Practica.create({ nombre, descripcion, precio });
+    // Delegamos toda la validación al módulo externo
+    const errorValidacion = await validarCreacionPractica(req.body);
+    if (errorValidacion) {
+      return res.status(400).json({ message: errorValidacion });
+    }
+
+    const { codigo_nomenclador, nombre_nomenclador, nombre_referencia, especialidad, precio_referencia } = req.body;
+
+    const newPractica = await Practica.create({ 
+      codigo_nomenclador, 
+      nombre_nomenclador, 
+      nombre_referencia, 
+      especialidad, 
+      precio_referencia 
+    });
+
     res.status(201).json(newPractica);
   } catch (error) {
     res.status(500).json({ message: error.message });

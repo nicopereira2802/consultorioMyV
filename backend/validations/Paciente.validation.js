@@ -1,7 +1,18 @@
 import { Paciente } from "../models/Paciente.model.js";
 
-// Función para verificar si el teléfono ya está registrado en la base de datos
-export const verificarTelefonoExistente = async (telefono) => {
+export const validarCreacionPaciente = async (datos) => {
+  const { nombre, apellido, fechaNacimiento, dni, telefono } = datos;
+
+  // campos obligatorios
+  if (!nombre || !apellido || !fechaNacimiento || !dni || !telefono) {
+    return "Faltan completar campos obligatorios";
+  }
+
+  // Validar si el Telefono ya existe en  BD
   const pacienteEncontrado = await Paciente.findOne({ where: { telefono } });
-  return pacienteEncontrado ? true : false;
+  if (pacienteEncontrado) {
+    return "El número de teléfono ya está registrado";
+  }
+
+  return null;
 };

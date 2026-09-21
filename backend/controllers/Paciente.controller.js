@@ -1,5 +1,5 @@
 import { Paciente } from "../models/Paciente.model.js";
-import { verificarTelefonoExistente } from "../validations/Paciente.validation.js";
+import { validarCreacionPaciente } from "../validations/Paciente.validation.js";
 
 // Obtener todos los pacientes
 export const getAllPacientes = async (req, res) => {
@@ -32,31 +32,22 @@ export const getPacienteById = async (req, res) => {
 
 // Crear un nuevo paciente
 export const createPaciente = async (req, res) => {
-
-  
-  console.log("BODY QUE LLEGÓ:", req.body); // <-- Poné esto
-
-  const { nombre, apellido, fechaNacimiento, dni, telefono, email } = req.body;
-
   try {
-    if (!nombre || !apellido || !fechaNacimiento || !dni || !telefono) {
-      return res.status(400).json({ error: "Faltan completar campos obligatorios" });
+    const errorValidacion = await validarCreacionPaciente(req.body);
+    if (errorValidacion) {
+      return res.status(400).json({ error: errorValidacion });
     }
 
-    // Validacion si el telefono ya existe
-    const telefonoOcupado = await verificarTelefonoExistente(telefono);
-    if (telefonoOcupado) {
-      return res.status(400).json({ error: "El número de teléfono ya está registrado" });
-    }
+    const { nombre, apellido, fechaNacimiento, dni, telefono, email, domicilio } = req.body;
 
-    //Si pasa todas las validaciones, lo crea en la base de datos
     const newPaciente = await Paciente.create({ 
       nombre, 
       apellido, 
       fechaNacimiento, 
       dni, 
       telefono, 
-      email 
+      email,
+      domicilio 
     });
     
     res.status(201).json(newPaciente);
