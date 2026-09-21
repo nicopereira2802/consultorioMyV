@@ -1,4 +1,5 @@
 import { Paciente } from "../models/Paciente.model.js";
+import { verificarTelefonoExistente } from "../validations/Paciente.validation.js";
 
 // Obtener todos los pacientes
 export const getAllPacientes = async (req, res) => {
@@ -31,57 +32,37 @@ export const getPacienteById = async (req, res) => {
 
 // Crear un nuevo paciente
 export const createPaciente = async (req, res) => {
-  const { nombre, apellido, fecha_nacimiento, fechaNacimiento, dni, telefono, domicilio } = req.body;
 
-  // 1. Validar campos obligatorios según el criterio de aceptación
-  const faltantes = [];
-  if (!nombre || !nombre.trim()) faltantes.push("nombre");
-  if (!apellido || !apellido.trim()) faltantes.push("apellido");
-  if (!telefono || !telefono.trim()) faltantes.push("telefono");
+  
+  console.log("BODY QUE LLEGÓ:", req.body); // <-- Poné esto
 
-  if (faltantes.length > 0) {
-    return res.status(400).json({
-      error: "Campos obligatorios incompletos",
-      mensaje: `Los siguientes campos son requeridos: ${faltantes.join(", ")}.`,
-      campos: faltantes,
-    });
-  }
+  const { nombre, apellido, fechaNacimiento, dni, telefono, email } = req.body;
 
   try {
-    // 2. Verificar duplicidad de teléfono manualmente
-    const telefonoLimpio = telefono.trim();
-    const existeTelefono = await Paciente.findOne({
-      where: { telefono: telefonoLimpio },
-    });
-
-    if (existeTelefono) {
-      return res.status(409).json({
-        error: "Conflicto de datos",
-        mensaje: "El número de teléfono ya se encuentra registrado para otro paciente.",
-        campo: "telefono",
-      });
+    if (!nombre || !apellido || !fechaNacimiento || !dni || !telefono) {
+      return res.status(400).json({ error: "Faltan completar campos obligatorios" });
     }
 
-    // 3. Crear el registro con los datos recibidos
-    const newPaciente = await Paciente.create({
-      nombre: nombre.trim(),
-      apellido: apellido.trim(),
-      telefono: telefonoLimpio,
-      dni: dni ? dni.trim() : null,
-      fecha_nacimiento: fecha_nacimiento || fechaNacimiento || null,
-      domicilio: domicilio ? domicilio.trim() : null,
-    });
+    // Validacion si el telefono ya existe
+    const telefonoOcupado = await verificarTelefonoExistente(telefono);
+    if (telefonoOcupado) {
+      return res.status(400).json({ error: "El número de teléfono ya está registrado" });
+    }
 
-    return res.status(201).json({
-      mensaje: "Paciente registrado exitosamente",
-      paciente: newPaciente,
+    //Si pasa todas las validaciones, lo crea en la base de datos
+    const newPaciente = await Paciente.create({ 
+      nombre, 
+      apellido, 
+      fechaNacimiento, 
+      dni, 
+      telefono, 
+      email 
     });
+    
+    res.status(201).json(newPaciente);
   } catch (error) {
     console.error("Error al crear el paciente:", error);
-    return res.status(500).json({
-      error: "Error del servidor",
-      mensaje: "Ocurrió un problema interno al registrar el paciente. Intente nuevamente.",
-    });
+    res.status(500).json({ error: "Error al crear el paciente" });
   }
 };
 
