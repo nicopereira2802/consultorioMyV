@@ -1,0 +1,25 @@
+@import "tailwindcss";
+@import "@schedule-x/theme-default/dist/index.css";
+
+@layer base {
+  body {
+    background-color: hsl(210, 9%, 96%);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    color: hsl(220, 43%, 99%);
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+  }
+}
+
+/* Schedule-X custom styling to match UI theme */
+.sx__calendar-wrapper {
+  border-radius: 1rem;
+  overflow: hidden;
+  border: 1px solid #E5E7EB;
+}
+
+.sx__view-container {
+  min-height: 520px;
+}
+
