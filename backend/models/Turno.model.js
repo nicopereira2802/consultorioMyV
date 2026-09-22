@@ -2,8 +2,8 @@ import { DataTypes } from "sequelize";
 import sequelize from "../config/database.js";
 import { Paciente } from "./Paciente.model.js";
 import { EstadoTurno } from "./EstadoTurno.model.js";
+import { Practica } from "./Practica.model.js"; 
 
-// Definir el modelo de Turno según ECMAScript Modules
 export const Turno = sequelize.define(
   "Turno",
   {
@@ -28,6 +28,14 @@ export const Turno = sequelize.define(
         key: "id_estado",
       },
     },
+    id_practica_planificada: { 
+      type: DataTypes.INTEGER,
+      allowNull: true, 
+      references: {
+        model: Practica,
+        key: "id_practica",
+      },
+    },
     fecha_hora_inicio: {
       type: DataTypes.DATE,
       allowNull: false,
@@ -48,5 +56,5 @@ export const Turno = sequelize.define(
   {
     tableName: "turnos",
     timestamps: false,
-  },
+  }
 );
