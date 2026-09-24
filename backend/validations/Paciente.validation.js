@@ -1,7 +1,9 @@
 import { Paciente } from "../models/Paciente.model.js";
 
 export const validarCreacionPaciente = async (datos) => {
-  const { nombre, apellido, fechaNacimiento, dni, telefono } = datos;
+  const { nombre, apellido, fechaNacimiento, dni, telefono, domicilio } = datos;
+      console.log("LLEGAAAA::::", nombre, apellido, fechaNacimiento, dni, telefono, domicilio)
+
 
   // campos obligatorios
   if (!nombre || !apellido || !fechaNacimiento || !dni || !telefono) {

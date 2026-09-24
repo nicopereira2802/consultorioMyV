@@ -19,12 +19,12 @@ export const Paciente = sequelize.define(
       allowNull: false,
     },
     dni: {
-      type: DataTypes.STRING,
+      type: DataTypes.INTEGER,
       allowNull: true,
       unique: true,
     },
     fecha_nacimiento: {
-      type: DataTypes.DATE,
+      type: DataTypes.DATEONLY,
       allowNull: true,
     },
     telefono: {

@@ -1,5 +1,4 @@
 import { Paciente } from "../models/Paciente.model.js";
-import { validarCreacionPaciente } from "../validations/Paciente.validation.js";
 
 // Obtener todos los pacientes
 export const getAllPacientes = async (req, res) => {
@@ -33,20 +32,14 @@ export const getPacienteById = async (req, res) => {
 // Crear un nuevo paciente
 export const createPaciente = async (req, res) => {
   try {
-    const errorValidacion = await validarCreacionPaciente(req.body);
-    if (errorValidacion) {
-      return res.status(400).json({ error: errorValidacion });
-    }
-
-    const { nombre, apellido, fechaNacimiento, dni, telefono, email, domicilio } = req.body;
+    const { nombre, apellido, fecha_nacimiento, dni, telefono, domicilio } = req.body;
 
     const newPaciente = await Paciente.create({ 
       nombre, 
       apellido, 
-      fechaNacimiento, 
+      fecha_nacimiento, 
       dni, 
       telefono, 
-      email,
       domicilio 
     });
     
@@ -60,14 +53,14 @@ export const createPaciente = async (req, res) => {
 // Actualizar un paciente existente
 export const updatePaciente = async (req, res) => {
   const { id } = req.params;
-  const { nombre, apellido, fechaNacimiento, dni, telefono, domicilio } = req.body;
+  const { nombre, apellido, fecha_nacimiento, dni, telefono, domicilio } = req.body;
 
   try {
     const paciente = await Paciente.findByPk(id);
     if (paciente) {
       paciente.nombre = nombre;
       paciente.apellido = apellido;
-      paciente.fechaNacimiento = fechaNacimiento;
+      paciente.fecha_nacimiento = fecha_nacimiento;
       paciente.dni = dni;
       paciente.telefono = telefono;
       paciente.domicilio = domicilio;

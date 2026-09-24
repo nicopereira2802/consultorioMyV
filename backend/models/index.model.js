@@ -9,6 +9,7 @@ import { Practica } from "./Practica.model.js";
 import { PracticaTurno } from "./PracticaTurno.model.js";
 import { PacienteObraSocial } from "./PacienteObraSocial.model.js";
 import { HistorialEstadoTurno } from "./HistorialEstadoTurno.model.js";
+import { Usuario } from "./Usuario.model.js";
 
 // Definir relaciones entre modelos
 Paciente.hasMany(Turno, { foreignKey: "id_paciente" });
@@ -29,10 +30,6 @@ PacienteObraSocial.belongsTo(Paciente, { foreignKey: "id_paciente" });
 ObraSocial.hasMany(PacienteObraSocial, { foreignKey: "id_obra_social" });
 PacienteObraSocial.belongsTo(ObraSocial, { foreignKey: "id_obra_social" });
 
-// Relación para la práctica planificada al momento de sacar el turno
-Practica.hasMany(Turno, { foreignKey: "id_practica_planificada" });
-Turno.belongsTo(Practica, { foreignKey: "id_practica_planificada" });
-
 //configuracion FK historial
 Turno.hasMany(HistorialEstadoTurno, { foreignKey: "id_turno" });
 HistorialEstadoTurno.belongsTo(Turno, { foreignKey: "id_turno" });
@@ -42,7 +39,7 @@ HistorialEstadoTurno.belongsTo(EstadoTurno, { foreignKey: "id_estado" });
 
 const sincronizarModelos = async () => {
   try {
-    await sequelize.sync( { alter: true } ); // Poner en true para sincronizar los modelos con la base de datos (crear tablas si no existen)
+    await sequelize.sync( { alter: false } ); // Poner en true para sincronizar los modelos con la base de datos (crear tablas si no existen)
     console.log("Base de datos sincronizada correctamente");
     return true;
   } catch (error) {
@@ -59,5 +56,7 @@ export {
   Practica,
   PracticaTurno,
   PacienteObraSocial,
+  HistorialEstadoTurno,
+  Usuario,
   sincronizarModelos,
 };
