@@ -37,6 +37,7 @@ export const createTurno = async (req, res) => {
   const transaction = await sequelize.transaction();
 
   try {
+    // Desestructuramos el req.body apenas entramos
     const { 
       id_paciente, 
       id_practica_planificada, 
@@ -45,12 +46,19 @@ export const createTurno = async (req, res) => {
       notas_consulta 
     } = req.body;
 
-    const errorValidacion = await validarCreacionTurno(req.body);
+    // Le pasamos a la validación CADA ATRIBUTO por separado
+    const errorValidacion = await validarCreacionTurno(
+      id_paciente, 
+      fecha_hora_inicio, 
+      duracion_minutos
+    );
+    
     if (errorValidacion) {
       await transaction.rollback();
       return res.status(400).json({ error: errorValidacion });
     }
 
+    // Seguimos con la creación normal...
     const inicio = new Date(fecha_hora_inicio);
     const fin = new Date(inicio.getTime() + duracion_minutos * 60000);
 
