@@ -10,6 +10,6 @@ router.get("/", PacienteController.getAllPacientes);
 router.get("/:id", PacienteController.getPacienteById);
 router.post("/", validateSchema(createPacienteSchema),PacienteController.createPaciente);
 router.put("/:id", PacienteController.updatePaciente);
-router.delete("/:id", PacienteController.deletePaciente);
+router.patch("/:id/delete", PacienteController.deletePaciente);
 
 export default router;

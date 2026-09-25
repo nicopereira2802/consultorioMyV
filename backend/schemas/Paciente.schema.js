@@ -42,14 +42,16 @@ export const createPacienteSchema = z.object({
   dni: z
     .number({ invalid_type_error: "El DNI debe ser un número" })
     .int("El DNI no puede tener decimales")
-    .positive("El DNI debe ser un número positivo"),
+    .positive("El DNI debe ser un número positivo")
+    .optional(),
 
   fecha_nacimiento: z.coerce
     .date({
       invalid_type_error: "Formato de fecha inválido",
     })
     .max(fechaMaxima, { message: "El paciente debe tener al menos 1 año de edad" })
-    .min(fechaMinima, { message: "La fecha de nacimiento no es válida" }),
+    .min(fechaMinima, { message: "La fecha de nacimiento no es válida" })
+    .optional(),
 
   telefono: z.string().trim().min(8, "El teléfono debe tener al menos 8 dígitos"),
 
@@ -57,5 +59,6 @@ export const createPacienteSchema = z.object({
     .string({ invalid_type_error: "El apellido debe ser un texto" })
     .trim()
     .min(2, "El domicilio debe tener al menos 2 caracteres")
-    .regex(domicilioRegex, "El domicilio no puede contener caracteres especiales como (), [], {}"),
+    .regex(domicilioRegex, "El domicilio no puede contener caracteres especiales como (), [], {}")
+    .optional(),
 });

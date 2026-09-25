@@ -1,20 +1,9 @@
 import { Paciente } from "../models/Paciente.model.js";
 
-export const validarCreacionPaciente = async (datos) => {
-  const { nombre, apellido, fechaNacimiento, dni, telefono, domicilio } = datos;
-      console.log("LLEGAAAA::::", nombre, apellido, fechaNacimiento, dni, telefono, domicilio)
-
-
-  // campos obligatorios
-  if (!nombre || !apellido || !fechaNacimiento || !dni || !telefono) {
-    return "Faltan completar campos obligatorios";
+export const validarTelefono = async (telefono) => {
+  const telefonoDuplicado = await Paciente.findOne({ where: { telefono } });
+  if (telefonoDuplicado) {
+    return false;
   }
-
-  // Validar si el Telefono ya existe en  BD
-  const pacienteEncontrado = await Paciente.findOne({ where: { telefono } });
-  if (pacienteEncontrado) {
-    return "El número de teléfono ya está registrado";
-  }
-
-  return null;
+  return true;
 };

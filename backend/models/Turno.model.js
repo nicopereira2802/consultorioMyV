@@ -28,14 +28,6 @@ export const Turno = sequelize.define(
         key: "id_estado",
       },
     },
-    id_practica_planificada: { 
-      type: DataTypes.INTEGER,
-      allowNull: true, 
-      references: {
-        model: Practica,
-        key: "id_practica",
-      },
-    },
     fecha_hora_inicio: {
       type: DataTypes.DATE,
       allowNull: false,

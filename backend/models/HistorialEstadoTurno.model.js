@@ -32,10 +32,6 @@ export const HistorialEstadoTurno = sequelize.define(
       allowNull: false,
       defaultValue: DataTypes.NOW, // Automáticamente guarda el momento exacto del cambio
     },
-    observaciones: {
-      type: DataTypes.STRING,
-      allowNull: true, // Por si el odontólogo anota "El paciente llamó para reprogramar"
-    },
   },
   {
     tableName: "historial_estado_turno",

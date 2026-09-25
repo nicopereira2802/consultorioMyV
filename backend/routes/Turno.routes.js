@@ -2,11 +2,13 @@ import express from "express";
 const router = express.Router();
 
 import * as TurnoController from "../controllers/Turno.controller.js";
+import { validateSchema } from "../middleware/validateSchema.js"
+import { createTurnoSchema } from "../schemas/Turno.schema.js"
 
 // Rutas básicas de Turno
 router.get("/", TurnoController.getAllTurnos);
 router.get("/:id", TurnoController.getTurnoById);
-router.post("/", TurnoController.createTurno);          
+router.post("/", validateSchema(createTurnoSchema),TurnoController.createTurno);          
 router.delete("/:id", TurnoController.deleteTurno);
 
 // Ver la línea de tiempo de los estados de un turno

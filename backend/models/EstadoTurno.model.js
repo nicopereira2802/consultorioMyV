@@ -13,7 +13,7 @@ export const EstadoTurno = sequelize.define(
     estado: {
       type: DataTypes.ENUM("Programado", "Reprogramado", "Cancelado", "Atendido", "Inasistente"),
       allowNull: false,
-      defaultValue: "Programado",
+      unique: true,      
     },
   },
   {
