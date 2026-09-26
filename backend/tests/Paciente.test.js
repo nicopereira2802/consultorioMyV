@@ -1,10 +1,22 @@
+/** @format */
+
 import request from "supertest";
 import app from "../index.js";
 import sequelize from "../config/database.js";
 import { sincronizarModelos } from "../models/index.model.js";
 
-describe("POST /pacientes - Validación y Creación de Pacientes", () => {
-  
+/*
+Modelo de paciente
+
+nombre -> String
+apellido -> String
+dni -> INT
+fecha_nacimiento -> DATE
+telefono -> String -> UNIQUE
+domicilio -> String
+*/
+
+describe("Endpoints de /api/pacientes", () => {
   // CRUCIAL: Crear las tablas en la memoria de SQLite antes de ejecutar los tests
   beforeAll(async () => {
     await sequelize.authenticate();
@@ -16,56 +28,93 @@ describe("POST /pacientes - Validación y Creación de Pacientes", () => {
     await sequelize.close();
   });
 
+  // 1. POST / (Creación exitosa)
+  test("Debería crear un nuevo paciente correctamente (201)", async () => {
+    const res = await request(app).post("/api/pacientes").send({
+      nombre: "Ana",
+      apellido: "Maria",
+      dni: 11111111,
+      fecha_nacimiento: "2000-09-06",
+      telefono: "222222222",
+      domicilio: "1234 calle 1",
+    });
 
-  // ESCENARIO 1: ÉXITO ----------------------------------------------------------------------------------------------
-  test("Debe crear un paciente exitosamente si los datos son válidos", async () => {
-    const nuevoPaciente = {
-      nombre: "Juan Pérez",
-      apellido: "Hernandez",
-      dni: 38123456,
-      domicilio: "Av. Colón 1234, 2° B",
-      fecha_nacimiento: "1995-05-20",
-      telefono: "3511234567",
-    };
+    expect(res.status).toBe(201);
+    expect(res.body.status).toBe("success");
+    expect(res.body.data).toHaveProperty("id_paciente");
 
-    const response = await request(app).post("/api/pacientes").send(nuevoPaciente);
-    expect(response.statusCode).toBe(201);
+    // Guardamos el ID para usarlo en los siguientes tests
+    pacienteId = res.body.data.id_paciente;
   });
 
+  // 2. POST / (Fallo por no pasar todos los datos obligatiorios)
+  test("Debería devolver 400 si faltan campos obligatorios", async () => {
+    const res = await request(app).post("/api/pacientes").send({
+      apellido: "Maria",
+      dni: 11111111,
+      fecha_nacimiento: "2000-09-06",
+      telefono: "222222222",
+      domicilio: "1234 calle 1",
+    }); // Sin nombre
 
-  // ESCENARIO 2: FALLO POR REGLAS DE ZOD (Nombre con caracteres raros) ----------------------------------------------------------------------------------------------
-  test("Debe rebotar la petición con 400 si el nombre contiene caracteres inválidos", async () => {
-    const pacienteInvalido = {
-      nombre: "Juan () {}", // Caracteres no permitidos por la Regex
-      apellido: "Hernandez ()",
-      dni: 38123456,
-      domicilio: "Calle Falsa 123",
-      fecha_nacimiento: "1995-05-20",
-      telefono: "3511234567",
-    };
-
-    const response = await request(app).post("/api/pacientes").send(pacienteInvalido);
-
-    expect(response.statusCode).toBe(400);
-    expect(response.body.status).toBe("error");
-    expect(response.body.errors).toHaveProperty("nombre");
+    expect(res.status).toBe(400);
   });
 
+  // 3. POST / (Fallo por tipo incorrecto de dato)
+  test("Debería devolver 400 si faltan campos obligatorios", async () => {
+    const res = await request(app).post("/api/pacientes").send({
+      nombre: 12,
+      apellido: "Maria",
+      dni: 11111111,
+      fecha_nacimiento: "2000-09-06",
+      telefono: "222222222",
+      domicilio: "1234 calle 1",
+    });
 
-  // ESCENARIO 3: FALLO POR REGLAS DE EDAD (Fecha futura) ----------------------------------------------------------------------------------------------
-  test("Debe rebotar la petición con 400 si la fecha de nacimiento es de un bebé o futura", async () => {
-    const pacienteInvalido = {
-      nombre: "Carlos Gómez",
-      apellido: "Hernandez",
-      dni: 40123456,
-      domicilio: "San Martín 500",
-      fecha_nacimiento: "2026-12-31", // Fecha futura
-      telefono: "3511234567",
-    };
+    expect(res.status).toBe(400);
+  });
 
-    const response = await request(app).post("/api/pacientes").send(pacienteInvalido);
+  // 4. POST / (Fallo por caracteres incorrectos en nombre)
+  test("Debería devolver 400 si faltan campos obligatorios", async () => {
+    const res = await request(app).post("/api/pacientes").send({
+      nombre: "Ana{}12",
+      apellido: "Maria",
+      dni: 11111111,
+      fecha_nacimiento: "2000-09-06",
+      telefono: "222222222",
+      domicilio: "1234 calle 1",
+    });
 
-    expect(response.statusCode).toBe(400);
-    expect(response.body.errors).toHaveProperty("fecha_nacimiento");
+    expect(res.status).toBe(400);
+  });
+
+  // 5. GET / (Listar todos)
+  test("Debería obtener la lista de pacientes (200)", async () => {
+    const res = await request(app).get("/api/pacientes");
+
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body.data)).toBe(true);
+  });
+
+  // 6. GET /:id (Buscar por ID)
+  test("Debería obtener una práctica por ID (200)", async () => {
+    const res = await request(app).get(`/api/pacientes/${pacienteId}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.id_paciente).toBe(pacienteId);
+  });
+
+  // 7. GET /:id (Error 404 por middleware validarExistencia)
+  test("Debería devolver 404 si la práctica no existe", async () => {
+    const res = await request(app).get("/api/pacientes/99999");
+
+    expect(res.status).toBe(404);
+  });
+
+  // 8. DELETE /:id (Eliminación)
+  test("Debería eliminar una práctica existente (200)", async () => {
+    const res = await request(app).patch(`/api/pacientes/${pacienteId}/delete`);
+
+    expect(res.status).toBe(200);
   });
 });

@@ -19,6 +19,6 @@ router.use("/api/pacientes-por-obras-sociales", PacienteObraSocialRoutes);
 router.use("/api/practicas", PracticaRoutes);
 router.use("/api/practicas-turnos", PracticaTurnoRoutes);
 router.use("/api/turnos", TurnoRoutes);
-router.use("/api/historial-estado-turno", HistorialEstadoTurno);
+router.use("/api/historial-estado-turnos", HistorialEstadoTurno);
 
 export default router;
