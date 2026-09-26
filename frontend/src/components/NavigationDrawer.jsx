@@ -1,15 +1,17 @@
-import React from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
 import { Calendar, UserPlus, Users, CalendarPlus, X } from 'lucide-react';
 import DentalLogo from '../assets/DentalLogo';
 
-export default function NavigationDrawer({ isOpen, onClose, currentView, onNavigate }) {
+export default function NavigationDrawer({ isOpen, onClose }) {
+  const location = useLocation();
+
   if (!isOpen) return null;
 
   const navItems = [
-    { id: 'calendar', label: 'Calendario', icon: Calendar },
-    { id: 'registrar-turno', label: 'Registrar Turno', icon: CalendarPlus },
-    { id: 'pacientes', label: 'Pacientes', icon: Users },
-    { id: 'registrar-paciente', label: 'Registrar Paciente', icon: UserPlus },
+    { path: '/turnos', label: 'Calendario', icon: Calendar, matches: ['/turnos', '/'] },
+    { path: '/turnos/nuevo', label: 'Registrar Turno', icon: CalendarPlus, matches: ['/turnos/nuevo'] },
+    { path: '/pacientes', label: 'Pacientes', icon: Users, matches: ['/pacientes'] },
+    { path: '/pacientes/nuevo', label: 'Registrar Paciente', icon: UserPlus, matches: ['/pacientes/nuevo'] },
   ];
 
   return (
@@ -32,7 +34,7 @@ export default function NavigationDrawer({ isOpen, onClose, currentView, onNavig
           </div>
           <button 
             onClick={onClose}
-            className="p-2 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+            className="p-2 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
             title="Cerrar menú"
           >
             <X className="w-6 h-6" />
@@ -45,14 +47,12 @@ export default function NavigationDrawer({ isOpen, onClose, currentView, onNavig
           </div>
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isActive = currentView === item.id;
+            const isActive = item.matches.includes(location.pathname);
             return (
-              <button
-                key={item.id}
-                onClick={() => {
-                  onNavigate(item.id);
-                  onClose();
-                }}
+              <NavLink
+                key={item.path}
+                to={item.path}
+                onClick={onClose}
                 className={`flex items-center gap-3.5 px-4 py-3.5 rounded-xl font-medium text-left transition-all ${
                   isActive
                     ? 'bg-teal-50 text-teal-700 font-semibold border-l-4 border-teal-600 shadow-xs'
@@ -61,7 +61,7 @@ export default function NavigationDrawer({ isOpen, onClose, currentView, onNavig
               >
                 <Icon className={`w-5 h-5 ${isActive ? 'text-teal-600' : 'text-gray-400'}`} />
                 <span className="text-base">{item.label}</span>
-              </button>
+              </NavLink>
             );
           })}
         </div>

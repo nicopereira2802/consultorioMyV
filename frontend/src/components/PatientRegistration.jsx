@@ -1,14 +1,18 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import DentalLogo from '../assets/DentalLogo';
-import { api } from '../services/api';
+import { api, extractDataArray, extractErrorMessage } from '../services/api';
 
 export default function PatientRegistration({ 
   obrasSociales = [], 
   onBack, 
   onSuccess 
 }) {
+  const navigate = useNavigate();
+  const [obrasSocialesList, setObrasSocialesList] = useState(obrasSociales);
   const [formData, setFormData] = useState({
     nombre: '',
+    apellido: '',
     dni: '',
     fecha_nacimiento: '',
     telefono: '',
@@ -21,6 +25,27 @@ export default function PatientRegistration({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
+  // Cargar obras sociales del backend
+  useEffect(() => {
+    let isMounted = true;
+    api.get('/obras-sociales')
+      .then((res) => {
+        if (isMounted) {
+          const list = extractDataArray(res);
+          setObrasSocialesList(list.length > 0 ? list : [{ id_obra_social: 1, nombre: 'Particular' }]);
+        }
+      })
+      .catch((err) => {
+        console.error('Error al cargar obras sociales:', err);
+        if (isMounted) {
+          setObrasSocialesList([{ id_obra_social: 1, nombre: 'Particular' }]);
+        }
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     setErrorMessage('');
@@ -29,13 +54,22 @@ export default function PatientRegistration({
   const handleConfirmar = async (e) => {
     if (e) e.preventDefault();
 
-    if (!formData.nombre.trim()) {
-      setErrorMessage('Por favor ingrese el nombre del paciente.');
+    const nombreLimpio = formData.nombre.trim();
+    const apellidoLimpio = formData.apellido.trim();
+    const telefonoLimpio = formData.telefono.trim();
+
+    if (!nombreLimpio || nombreLimpio.length < 2) {
+      setErrorMessage('Por favor ingrese el nombre del paciente (mínimo 2 caracteres, solo letras).');
       return;
     }
 
-    if (!formData.telefono.trim()) {
-      setErrorMessage('Por favor ingrese el teléfono de contacto.');
+    if (!apellidoLimpio || apellidoLimpio.length < 2) {
+      setErrorMessage('Por favor ingrese el apellido del paciente (mínimo 2 caracteres, solo letras).');
+      return;
+    }
+
+    if (!telefonoLimpio || telefonoLimpio.length < 8) {
+      setErrorMessage('Por favor ingrese un teléfono válido de al menos 8 dígitos.');
       return;
     }
 
@@ -43,20 +77,39 @@ export default function PatientRegistration({
     setErrorMessage('');
 
     try {
+      // Formato compatible con createPacienteSchema
       const payload = {
-        nombre: formData.nombre.trim(),
-        dni: formData.dni.trim() || null,
-        fecha_nacimiento: formData.fecha_nacimiento || null,
-        telefono: formData.telefono.trim(),
-        domicilio: formData.domicilio.trim() || null,
-        id_obra_social: Number(formData.id_obra_social) || 1,
-        nro_afiliado: formData.nro_socio.trim() || 'S/N'
+        nombre: nombreLimpio,
+        apellido: apellidoLimpio,
+        telefono: telefonoLimpio,
       };
 
-      await api.createPaciente(payload);
-      if (onSuccess) onSuccess();
+      if (formData.dni && formData.dni.trim()) {
+        const parsedDni = Number(formData.dni.trim());
+        if (isNaN(parsedDni) || parsedDni <= 0) {
+          setErrorMessage('El DNI debe ser un número positivo sin puntos ni letras.');
+          setIsSubmitting(false);
+          return;
+        }
+        payload.dni = parsedDni;
+      }
+
+      if (formData.fecha_nacimiento) {
+        payload.fecha_nacimiento = formData.fecha_nacimiento;
+      }
+
+      if (formData.domicilio && formData.domicilio.trim().length >= 2) {
+        payload.domicilio = formData.domicilio.trim();
+      }
+
+      await api.post('/pacientes', payload);
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        navigate('/pacientes', { state: { message: '¡Paciente registrado exitosamente!' } });
+      }
     } catch (err) {
-      setErrorMessage(err.message || 'Error al registrar el paciente');
+      setErrorMessage(extractErrorMessage(err, 'Error al registrar el paciente'));
     } finally {
       setIsSubmitting(false);
     }
@@ -76,7 +129,7 @@ export default function PatientRegistration({
         <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={onBack}
+            onClick={onBack || (() => navigate('/pacientes'))}
             className="px-8 py-2.5 bg-[#F87171] hover:bg-[#EF4444] text-white font-medium rounded-xl shadow-xs transition-all active:scale-95 cursor-pointer text-base sm:text-lg"
           >
             Volver
@@ -98,7 +151,7 @@ export default function PatientRegistration({
         </div>
       )}
 
-      {/* Two Column Form matching Image 4 */}
+      {/* Two Column Form */}
       <form onSubmit={handleConfirmar} className="pt-8 sm:pt-10">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 lg:gap-x-16 gap-y-6">
           {/* Left Column */}
@@ -112,8 +165,22 @@ export default function PatientRegistration({
                 type="text"
                 value={formData.nombre}
                 onChange={(e) => handleChange('nombre', e.target.value)}
-                placeholder="..."
-                className="flex-1 py-2 px-4 rounded-xl border border-gray-400 focus:border-teal-600 focus:ring-2 focus:ring-teal-100 outline-none text-gray-800 text-center text-base shadow-2xs"
+                placeholder="Nombre..."
+                className="flex-1 py-2 px-4 rounded-xl border border-gray-400 focus:border-teal-600 focus:ring-2 focus:ring-teal-100 outline-none text-gray-800 text-left text-base shadow-2xs"
+              />
+            </div>
+
+            {/* Apellido */}
+            <div className="flex items-center justify-between">
+              <label className="text-base sm:text-lg font-medium text-gray-900 w-36 sm:w-44 text-left">
+                Apellido:
+              </label>
+              <input
+                type="text"
+                value={formData.apellido}
+                onChange={(e) => handleChange('apellido', e.target.value)}
+                placeholder="Apellido..."
+                className="flex-1 py-2 px-4 rounded-xl border border-gray-400 focus:border-teal-600 focus:ring-2 focus:ring-teal-100 outline-none text-gray-800 text-left text-base shadow-2xs"
               />
             </div>
 
@@ -123,11 +190,11 @@ export default function PatientRegistration({
                 DNI:
               </label>
               <input
-                type="text"
+                type="number"
                 value={formData.dni}
                 onChange={(e) => handleChange('dni', e.target.value)}
-                placeholder="..."
-                className="flex-1 py-2 px-4 rounded-xl border border-gray-400 focus:border-teal-600 focus:ring-2 focus:ring-teal-100 outline-none text-gray-800 text-center text-base shadow-2xs"
+                placeholder="Número sin puntos..."
+                className="flex-1 py-2 px-4 rounded-xl border border-gray-400 focus:border-teal-600 focus:ring-2 focus:ring-teal-100 outline-none text-gray-800 text-left text-base shadow-2xs"
               />
             </div>
 
@@ -137,28 +204,30 @@ export default function PatientRegistration({
                 Fecha de Nacimiento:
               </label>
               <input
-                type="text"
+                type="date"
                 value={formData.fecha_nacimiento}
                 onChange={(e) => handleChange('fecha_nacimiento', e.target.value)}
-                placeholder="..."
-                className="flex-1 py-2 px-4 rounded-xl border border-gray-400 focus:border-teal-600 focus:ring-2 focus:ring-teal-100 outline-none text-gray-800 text-center text-base shadow-2xs"
+                className="flex-1 py-2 px-4 rounded-xl border border-gray-400 focus:border-teal-600 focus:ring-2 focus:ring-teal-100 outline-none text-gray-800 text-left text-base shadow-2xs bg-white cursor-pointer"
               />
             </div>
 
             {/* Telefono */}
             <div className="flex items-center justify-between">
               <label className="text-base sm:text-lg font-medium text-gray-900 w-36 sm:w-44 text-left">
-                Telefono:
+                Teléfono:
               </label>
               <input
                 type="text"
                 value={formData.telefono}
                 onChange={(e) => handleChange('telefono', e.target.value)}
-                placeholder="..."
-                className="flex-1 py-2 px-4 rounded-xl border border-gray-400 focus:border-teal-600 focus:ring-2 focus:ring-teal-100 outline-none text-gray-800 text-center text-base shadow-2xs"
+                placeholder="Mínimo 8 dígitos..."
+                className="flex-1 py-2 px-4 rounded-xl border border-gray-400 focus:border-teal-600 focus:ring-2 focus:ring-teal-100 outline-none text-gray-800 text-left text-base shadow-2xs"
               />
             </div>
+          </div>
 
+          {/* Right Column */}
+          <div className="space-y-5">
             {/* Domicilio */}
             <div className="flex items-center justify-between">
               <label className="text-base sm:text-lg font-medium text-gray-900 w-36 sm:w-44 text-left">
@@ -168,14 +237,11 @@ export default function PatientRegistration({
                 type="text"
                 value={formData.domicilio}
                 onChange={(e) => handleChange('domicilio', e.target.value)}
-                placeholder="..."
-                className="flex-1 py-2 px-4 rounded-xl border border-gray-400 focus:border-teal-600 focus:ring-2 focus:ring-teal-100 outline-none text-gray-800 text-center text-base shadow-2xs"
+                placeholder="Dirección..."
+                className="flex-1 py-2 px-4 rounded-xl border border-gray-400 focus:border-teal-600 focus:ring-2 focus:ring-teal-100 outline-none text-gray-800 text-left text-base shadow-2xs"
               />
             </div>
-          </div>
 
-          {/* Right Column */}
-          <div className="space-y-5">
             {/* Obra social */}
             <div className="flex items-center justify-between">
               <label className="text-base sm:text-lg font-medium text-gray-900 w-36 sm:w-44 text-left">
@@ -184,9 +250,9 @@ export default function PatientRegistration({
               <select
                 value={formData.id_obra_social}
                 onChange={(e) => handleChange('id_obra_social', e.target.value)}
-                className="flex-1 py-2 px-4 rounded-xl border border-gray-400 focus:border-teal-600 focus:ring-2 focus:ring-teal-100 outline-none text-gray-800 text-center text-base shadow-2xs bg-white cursor-pointer"
+                className="flex-1 py-2 px-4 rounded-xl border border-gray-400 focus:border-teal-600 focus:ring-2 focus:ring-teal-100 outline-none text-gray-800 text-left text-base shadow-2xs bg-white cursor-pointer"
               >
-                {obrasSociales.map((os) => (
+                {obrasSocialesList.map((os) => (
                   <option key={os.id_obra_social} value={os.id_obra_social}>
                     {os.nombre}
                   </option>
@@ -203,8 +269,8 @@ export default function PatientRegistration({
                 type="text"
                 value={formData.nro_socio}
                 onChange={(e) => handleChange('nro_socio', e.target.value)}
-                placeholder="..."
-                className="flex-1 py-2 px-4 rounded-xl border border-gray-400 focus:border-teal-600 focus:ring-2 focus:ring-teal-100 outline-none text-gray-800 text-center text-base shadow-2xs"
+                placeholder="Número de afiliado..."
+                className="flex-1 py-2 px-4 rounded-xl border border-gray-400 focus:border-teal-600 focus:ring-2 focus:ring-teal-100 outline-none text-gray-800 text-left text-base shadow-2xs"
               />
             </div>
 
@@ -217,8 +283,8 @@ export default function PatientRegistration({
                 type="text"
                 value={formData.grupo_familiar}
                 onChange={(e) => handleChange('grupo_familiar', e.target.value)}
-                placeholder="..."
-                className="flex-1 py-2 px-4 rounded-xl border border-gray-400 focus:border-teal-600 focus:ring-2 focus:ring-teal-100 outline-none text-gray-800 text-center text-base shadow-2xs"
+                placeholder="Titular / Carga..."
+                className="flex-1 py-2 px-4 rounded-xl border border-gray-400 focus:border-teal-600 focus:ring-2 focus:ring-teal-100 outline-none text-gray-800 text-left text-base shadow-2xs"
               />
             </div>
           </div>

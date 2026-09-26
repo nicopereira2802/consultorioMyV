@@ -1,6 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import DentalLogo from '../assets/DentalLogo';
-import { X, Calendar, Clock, AlertCircle } from 'lucide-react';
+import { api, extractDataArray } from '../services/api';
+import { X, Calendar, AlertCircle } from 'lucide-react';
 
 export default function PatientsList({ 
   pacientes = [], 
@@ -9,25 +11,51 @@ export default function PatientsList({
   onNavigateToRegistrarPaciente,
   onScheduleTurnoForPatient
 }) {
+  const navigate = useNavigate();
+  const [pacientesList, setPacientesList] = useState(pacientes);
+  const [turnosList, setTurnosList] = useState(turnos);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPatientForHistory, setSelectedPatientForHistory] = useState(null);
 
+  useEffect(() => {
+    let isMounted = true;
+    api.get('/pacientes')
+      .then((res) => {
+        if (isMounted) {
+          setPacientesList(extractDataArray(res));
+        }
+      })
+      .catch((err) => console.error('Error al cargar pacientes:', err));
+
+    api.get('/turnos')
+      .then((res) => {
+        if (isMounted) {
+          setTurnosList(extractDataArray(res));
+        }
+      })
+      .catch((err) => console.error('Error al cargar turnos:', err));
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   // Filter patients
   const filteredPacientes = useMemo(() => {
-    if (!searchTerm.trim()) return pacientes;
+    if (!searchTerm.trim()) return pacientesList;
     const q = searchTerm.toLowerCase();
-    return pacientes.filter((p) => {
+    return pacientesList.filter((p) => {
       const full = `${p.nombre || ''} ${p.apellido || ''}`.toLowerCase();
       const dni = (p.dni || '').toLowerCase();
       return full.includes(q) || dni.includes(q);
     });
-  }, [pacientes, searchTerm]);
+  }, [pacientesList, searchTerm]);
 
   // Turnos for the selected patient
   const patientTurnos = useMemo(() => {
     if (!selectedPatientForHistory) return [];
-    return turnos.filter(t => t.id_paciente === selectedPatientForHistory.id_paciente);
-  }, [selectedPatientForHistory, turnos]);
+    return turnosList.filter(t => t.id_paciente === selectedPatientForHistory.id_paciente);
+  }, [selectedPatientForHistory, turnosList]);
 
   return (
     <div className="w-full">
@@ -42,13 +70,13 @@ export default function PatientsList({
 
         <div className="flex items-center gap-3">
           <button
-            onClick={onBack}
+            onClick={onBack || (() => navigate('/turnos'))}
             className="px-8 py-2.5 bg-[#F87171] hover:bg-[#EF4444] text-white font-medium rounded-xl shadow-xs transition-all active:scale-95 cursor-pointer text-base sm:text-lg"
           >
             Volver
           </button>
           <button
-            onClick={onNavigateToRegistrarPaciente}
+            onClick={onNavigateToRegistrarPaciente || (() => navigate('/pacientes/nuevo'))}
             className="px-6 py-2.5 bg-[#A7F3D0] hover:bg-[#86EFAC] text-gray-900 font-semibold rounded-xl shadow-xs transition-all active:scale-95 cursor-pointer text-base sm:text-lg whitespace-nowrap"
           >
             Registrar nuevo
@@ -169,7 +197,8 @@ export default function PatientsList({
               {patientTurnos.length > 0 ? (
                 patientTurnos.map((t) => {
                   const inicio = t.fecha_hora_inicio ? new Date(t.fecha_hora_inicio).toLocaleString('es-AR') : 'Fecha no definida';
-                  const estado = t.EstadoTurno?.estado || 'Programado';
+                  const estadoMap = { 1: 'Programado', 2: 'Cancelado', 3: 'Atendido', 4: 'Inasistente', 5: 'Reprogramado' };
+                  const estado = t.EstadoTurno?.estado || estadoMap[t.id_estado] || 'Programado';
                   return (
                     <div key={t.id_turno} className="p-3 bg-gray-50 rounded-xl border border-gray-200 text-left">
                       <div className="flex items-center justify-between">
@@ -177,9 +206,12 @@ export default function PatientsList({
                           <Calendar className="w-4 h-4 text-teal-600" />
                           {inicio}
                         </span>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                          estado === 'Atendido' ? 'bg-green-100 text-green-800' :
-                          estado === 'Cancelado' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'
+                        <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold ${
+                          estado === 'Atendido' ? 'bg-blue-100 text-blue-800' :
+                          estado === 'Cancelado' ? 'bg-red-100 text-red-800' :
+                          estado === 'Inasistente' ? 'bg-gray-100 text-gray-800' :
+                          estado === 'Reprogramado' ? 'bg-amber-100 text-amber-800' :
+                          'bg-emerald-100 text-emerald-800'
                         }`}>
                           {estado}
                         </span>
@@ -210,18 +242,20 @@ export default function PatientsList({
               >
                 Cerrar
               </button>
-              {onScheduleTurnoForPatient && (
-                <button
-                  onClick={() => {
-                    const pid = selectedPatientForHistory.id_paciente;
-                    setSelectedPatientForHistory(null);
+              <button
+                onClick={() => {
+                  const pid = selectedPatientForHistory.id_paciente;
+                  setSelectedPatientForHistory(null);
+                  if (onScheduleTurnoForPatient) {
                     onScheduleTurnoForPatient(pid);
-                  }}
-                  className="px-4 py-2 text-sm bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-medium"
-                >
-                  Registrar Turno
-                </button>
-              )}
+                  } else {
+                    navigate('/turnos/nuevo', { state: { pacienteId: pid } });
+                  }
+                }}
+                className="px-4 py-2 text-sm bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-medium cursor-pointer"
+              >
+                Registrar Turno
+              </button>
             </div>
           </div>
         </div>

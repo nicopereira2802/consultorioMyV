@@ -1,5 +1,3 @@
-import React from 'react';
-
 export default function Layout({ children }) {
   return (
     <div className="min-h-screen bg-[#2B2D31] flex flex-col items-center justify-start sm:justify-center p-3 sm:p-6 md:p-8">
