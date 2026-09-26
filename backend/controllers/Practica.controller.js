@@ -1,3 +1,5 @@
+/** @format */
+
 import { Practica } from "../models/Practica.model.js";
 
 // Obtener todas las prácticas
@@ -17,16 +19,7 @@ export const getAllPracticas = async (req, res) => {
 // Obtener una práctica por su ID
 export const getPracticaById = async (req, res) => {
   try {
-    const { id } = req.params;
-
-    const practica = await Practica.findByPk(id);
-
-    if (!practica) {
-      return res.status(400).json({
-        status: "error",
-        message: "Practica no encontrada",
-      });
-    }
+    const practica = req.practica;
 
     res.status(200).json({
       status: "success",
@@ -40,8 +33,13 @@ export const getPracticaById = async (req, res) => {
 // Crear una nueva practica
 export const createPractica = async (req, res) => {
   try {
-    const { codigo_nomenclador, nombre_nomenclador, nombre_referencia, especialidad, precio_referencia } =
-      req.body;
+    const {
+      codigo_nomenclador,
+      nombre_nomenclador,
+      nombre_referencia,
+      especialidad,
+      precio_referencia,
+    } = req.body;
 
     const newPractica = await Practica.create({
       codigo_nomenclador,
@@ -63,18 +61,15 @@ export const createPractica = async (req, res) => {
 // Actualizar una práctica existente
 export const updatePractica = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { codigo_nomenclador, nombre_nomenclador, nombre_referencia, especialidad, precio_referencia } =
-      req.body;
+    const {
+      codigo_nomenclador,
+      nombre_nomenclador,
+      nombre_referencia,
+      especialidad,
+      precio_referencia,
+    } = req.body;
 
-    const practica = await Practica.findByPk(id);
-
-    if (!practica) {
-      return res.status(400).json({
-        status: "error",
-        message: "Practica no encontrada",
-      });
-    }
+    const practica = req.practica;
 
     await practica.update({
       codigo_nomenclador: codigo_nomenclador || practica.codigo_nomenclador,
@@ -96,16 +91,7 @@ export const updatePractica = async (req, res) => {
 // Eliminar una práctica existente
 export const deletePractica = async (req, res) => {
   try {
-    const { id } = req.params;
-
-    const practica = await Practica.findByPk(id);
-
-    if (!practica) {
-      return res.status(400).json({
-        status: "error",
-        message: "Practica no encontrada",
-      });
-    }
+    const practica = req.practica;
 
     await practica.update({
       activo: false,

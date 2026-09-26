@@ -1,4 +1,6 @@
-import { ObraSocial } from "../models/ObraSocial.model.js";
+/** @format */
+
+import { ObraSocial } from "../models/index.model.js";
 
 // Obtener todas las obras sociales
 export const getAllObrasSociales = async (req, res) => {
@@ -18,16 +20,7 @@ export const getAllObrasSociales = async (req, res) => {
 // Obtener una obra social por su ID
 export const getObraSocialById = async (req, res) => {
   try {
-    const { id } = req.params;
-
-    const obraSocial = await ObraSocial.findByPk(id);
-
-    if (!obraSocial) {
-      return res.status(400).json({
-        status: "error",
-        message: "Obra social no encontrado",
-      });
-    }
+    const obraSocial = req.obraSocial;
 
     res.status(200).json({
       status: "success",
@@ -59,17 +52,9 @@ export const createObraSocial = async (req, res) => {
 // Actualizar una obra social existente
 export const updateObraSocial = async (req, res) => {
   try {
-    const { id } = req.params;
     const { nombre } = req.body;
 
-    const obraSocial = await ObraSocial.findByPk(id);
-
-    if (!obraSocial) {
-      return res.status(400).json({
-        status: "error",
-        message: "Obra social no encontrado",
-      });
-    }
+    const obraSocial = req.obraSocial;
 
     await obraSocial.update({
       nombre: nombre || obraSocial.nombre,
@@ -88,16 +73,7 @@ export const updateObraSocial = async (req, res) => {
 // Eliminar una obra social existente
 export const deleteObraSocial = async (req, res) => {
   try {
-    const { id } = req.params;
-
-    const obraSocial = await ObraSocial.findByPk(id);
-
-    if (!obraSocial) {
-      return res.status(400).json({
-        status: "error",
-        message: "Obra social no encontrado",
-      });
-    }
+    const obraSocial = req.obraSocial;
 
     await obraSocial.update({
       activo: false,

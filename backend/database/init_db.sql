@@ -10,10 +10,9 @@ USE consultorio_myv;
 
 INSERT INTO estado_turno (id_estado, estado) VALUES
 (1, 'Programado'),
-(2, 'Reprogramado'),
-(3, 'Cancelado'),
-(4, 'Atendido'),
-(5, 'Inasistente');
+(2, 'Cancelado'),
+(3, 'Atendido'),
+(4, 'Inasistente');
 
 INSERT INTO obra_social (id_obra_social, nombre, activo) VALUES
 (1, 'Particular', TRUE),

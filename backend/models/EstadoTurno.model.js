@@ -11,7 +11,7 @@ export const EstadoTurno = sequelize.define(
       autoIncrement: true,
     },
     estado: {
-      type: DataTypes.ENUM("Programado", "Reprogramado", "Cancelado", "Atendido", "Inasistente"),
+      type: DataTypes.ENUM("Programado", "Cancelado", "Atendido", "Inasistente"),
       allowNull: false,
       unique: true,      
     },

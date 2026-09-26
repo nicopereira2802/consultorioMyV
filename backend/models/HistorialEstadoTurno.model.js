@@ -32,6 +32,10 @@ export const HistorialEstadoTurno = sequelize.define(
       allowNull: false,
       defaultValue: DataTypes.NOW, // Automáticamente guarda el momento exacto del cambio
     },
+    descripcion: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
   },
   {
     tableName: "historial_estado_turno",

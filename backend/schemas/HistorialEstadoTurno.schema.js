@@ -1,3 +1,5 @@
+/** @format */
+
 import { z } from "zod";
 
 export const createHistorialEstadoTurnoSchema = z.object({
@@ -20,4 +22,30 @@ export const createHistorialEstadoTurnoSchema = z.object({
   fecha_hora_cambio: z.coerce.date({
     invalid_type_error: "Formato de fecha inválido",
   }),
+});
+
+export const updateHistorialEstadoTurnoSchema = z.object({
+  id_turno: z
+    .number({
+      required_error: "El ID del turno es obligatorio",
+      invalid_type_error: "El ID del turno debe ser un número",
+    })
+    .int("El ID debe ser un número entero")
+    .positive("El ID no es válido")
+    .optional(),
+
+  id_estado: z
+    .number({
+      required_error: "El ID del estado es obligatorio",
+      invalid_type_error: "El ID del estado debe ser un número",
+    })
+    .int("El ID debe ser un número entero")
+    .positive("El ID no es válido")
+    .optional(),
+
+  fecha_hora_cambio: z.coerce
+    .date({
+      invalid_type_error: "Formato de fecha inválido",
+    })
+    .optional(),
 });

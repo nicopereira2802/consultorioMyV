@@ -1,3 +1,5 @@
+/** @format */
+
 import { Paciente } from "../models/Paciente.model.js";
 import { validarTelefono } from "../validations/Paciente.validation.js";
 
@@ -19,16 +21,7 @@ export const getAllPacientes = async (req, res) => {
 // Obtener un paciente por su ID
 export const getPacienteById = async (req, res) => {
   try {
-    const { id } = req.params;
-
-    const paciente = await Paciente.findByPk(id);
-
-    if (!paciente) {
-      return res.status(400).json({
-        status: "error",
-        message: "Paciente no encontrado",
-      });
-    }
+    const paciente = req.paciente;
 
     res.status(200).json({
       status: "success",
@@ -43,7 +36,8 @@ export const getPacienteById = async (req, res) => {
 // Crear un nuevo paciente
 export const createPaciente = async (req, res) => {
   try {
-    const { nombre, apellido, fecha_nacimiento, dni, telefono, domicilio } = req.body;
+    const { nombre, apellido, fecha_nacimiento, dni, telefono, domicilio } =
+      req.body;
 
     const telefonoDuplicado = validarTelefono(telefono);
 
@@ -76,17 +70,10 @@ export const createPaciente = async (req, res) => {
 // Actualizar un paciente existente
 export const updatePaciente = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { nombre, apellido, fecha_nacimiento, dni, telefono, domicilio } = req.body;
+    const { nombre, apellido, fecha_nacimiento, dni, telefono, domicilio } =
+      req.body;
 
-    const paciente = await Paciente.findByPk(id);
-
-    if (!paciente) {
-      return res.status(400).json({
-        status: "error",
-        message: "Paciente no encontrado",
-      });
-    }
+    const paciente = req.paciente;
 
     if (telefono) {
       const telefonoDuplicado = validarTelefono(telefono);
@@ -121,16 +108,7 @@ export const updatePaciente = async (req, res) => {
 // Eliminar un paciente existente
 export const deletePaciente = async (req, res) => {
   try {
-    const { id } = req.params;
-
-    const paciente = await Paciente.findByPk(id);
-
-    if (!paciente) {
-      return res.status(400).json({
-        status: "error",
-        message: "Paciente no encontrado",
-      });
-    }
+    const paciente = req.paciente;
 
     await paciente.update({
       activo: false,
