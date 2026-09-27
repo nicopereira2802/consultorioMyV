@@ -23,7 +23,6 @@ const ESTADOS_MAP = {
   2: 'Cancelado',
   3: 'Atendido',
   4: 'Inasistente',
-  5: 'Reprogramado'
 };
 
 export default function CalendarView({

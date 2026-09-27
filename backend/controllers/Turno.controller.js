@@ -49,6 +49,7 @@ export const createTurno = async (req, res) => {
       precio_final,
       notas_consulta,
     } = req.body;
+    console.log(fecha_hora_inicio);
 
     const inicio = new Date(fecha_hora_inicio);
     const fecha_hora_fin = new Date(

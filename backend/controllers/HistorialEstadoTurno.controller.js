@@ -1,6 +1,6 @@
 /** @format */
 
-import { HistorialEstadoTurno } from "../models/HistorialEstadoTurno.model";
+import { HistorialEstadoTurno } from "../models/HistorialEstadoTurno.model.js";
 
 export const getHistorialTurnoByTurnoId = async (req, res) => {
   try {

@@ -20,7 +20,8 @@ export const createTurnoSchema = z.object({
       invalid_type_error: "El ID del estado debe ser un número",
     })
     .int("El ID debe ser un número entero")
-    .positive("El ID no es válido"),
+    .positive("El ID no es válido")
+    .optional(),
 
   fecha_hora_inicio: z.coerce
     .date({

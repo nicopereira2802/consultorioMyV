@@ -49,7 +49,7 @@ export const validarEstados = async (id_estado, estadoInicio, estadoFinal) => {
 };
 
 export const validarSolapaminetoHorarios = async (fechaInicio, fechaFin, turnoIdExcluir = null) => {
-
+  console.log(fechaInicio, fechaFin, turnoIdExcluir)
   // Obtenemos los turnos en conflicto
   const turnoExistente = await Turno.findOne({
     where: {
