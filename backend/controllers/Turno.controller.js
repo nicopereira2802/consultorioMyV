@@ -55,11 +55,10 @@ export const createTurno = async (req, res) => {
     const fecha_hora_fin = new Date(
       inicio.getTime() + duracion_minutos * 60000,
     );
-
     // Si no encuentra el estado lo crea
-    const estado = validarEstadoProgramado();
+    const estado = await validarEstadoProgramado();
 
-    const haySolapamiento = validarSolapaminetoHorarios(
+    const haySolapamiento = await validarSolapaminetoHorarios(
       fecha_hora_inicio,
       fecha_hora_fin,
       null,
@@ -128,7 +127,7 @@ export const updateTurno = async (req, res) => {
     );
 
     if (fecha_hora_inicio || duracion_minutos) {
-      const haySolapamiento = validarSolapaminetoHorarios(
+      const haySolapamiento = await validarSolapaminetoHorarios(
         fecha_hora_inicio,
         fecha_hora_fin,
         turno.id_turno,
@@ -169,7 +168,7 @@ export const turnoAtendido = async (req, res) => {
 
     const turno = req.turno;
 
-    const estado = validarEstados(turno.id_estado, "Programado", "Atendido");
+    const estado = await validarEstados(turno.id_estado, "Programado", "Atendido");
 
     if (!estado) {
       return res.status(400).json({
@@ -230,7 +229,7 @@ export const turnoCancelado = async (req, res) => {
   try {
     const turno = req.turno;
 
-    const estado = validarEstados(
+    const estado = await validarEstados(
       turno.id_estado,
       ["Programado", "Inasistente"],
       "Cancelado",
@@ -281,7 +280,7 @@ export const turnoInasistido = async (req, res) => {
   try {
     const turno = req.turno;
 
-    const estado = validarEstados(turno.id_estado, "Programado", "Inasistente");
+    const estado = await validarEstados(turno.id_estado, "Programado", "Inasistente");
 
     if (!estado) {
       return res.status(400).json({
@@ -334,7 +333,7 @@ export const turnoReprogramado = async (req, res) => {
       inicio.getTime() + duracion_minutos * 60000,
     );
 
-    const estado = validarEstados(
+    const estado = await validarEstados(
       turno.id_estado,
       ["Inasistente", "Cancelado"],
       "Programado",
@@ -347,7 +346,7 @@ export const turnoReprogramado = async (req, res) => {
       });
     }
 
-    const haySolapamiento = validarSolapaminetoHorarios(
+    const haySolapamiento = await validarSolapaminetoHorarios(
       fecha_hora_inicio,
       fecha_hora_fin,
       turno.id_turno,

@@ -1,3 +1,5 @@
+/** @format */
+
 import { DataTypes } from "sequelize";
 import sequelize from "../config/database.js";
 
@@ -11,9 +13,18 @@ export const EstadoTurno = sequelize.define(
       autoIncrement: true,
     },
     estado: {
-      type: DataTypes.ENUM("Programado", "Cancelado", "Atendido", "Inasistente"),
+      type: DataTypes.ENUM(
+        "Programado",
+        "Cancelado",
+        "Atendido",
+        "Inasistente",
+      ),
       allowNull: false,
-      unique: true,      
+      unique: true,
+    },
+    descripcion: {
+      type: DataTypes.STRING,
+      allowNull: false,
     },
   },
   {
