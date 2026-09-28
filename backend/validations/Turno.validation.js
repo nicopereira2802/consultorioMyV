@@ -48,14 +48,26 @@ export const validarEstados = async (id_estado, estadoInicio, estadoFinal) => {
   return estadoDestino;
 };
 
-export const validarSolapaminetoHorarios = async (fechaInicio, fechaFin, turnoIdExcluir = null) => {
+export const validarSolapaminetoHorarios = async (
+  fechaInicio,
+  fechaFin,
+  turnoIdExcluir = null,
+) => {
+
+  const inicio = new Date(fechaInicio);
+  const fin = new Date(fechaFin);
+
+  const estadoCancelado = await EstadoTurno.findOne({
+    where: { estado: "Cancelado" },
+  });
 
   // Obtenemos los turnos en conflicto
   const turnoExistente = await Turno.findOne({
     where: {
+      estado: {[Op.ne]: estadoCancelado.id_estado},
       // Condición de solapamiento
-      fecha_hora_inicio: { [Op.lt]: fechaInicio },
-      fecha_hora_fin: { [Op.gt]: fechaFin },
+      fecha_hora_inicio: { [Op.lt]: fin },
+      fecha_hora_fin: { [Op.gt]: inicio },
       // Ignorar turnos cancelados (asumiendo que id_estado 3 es 'Cancelado')
       id_estado: { [Op.ne]: 3 },
       // Si estamos editando un turno existente, lo excluimos de la búsqueda
