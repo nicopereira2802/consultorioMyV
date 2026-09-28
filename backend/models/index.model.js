@@ -39,7 +39,7 @@ HistorialEstadoTurno.belongsTo(EstadoTurno, { foreignKey: "id_estado" });
 
 const sincronizarModelos = async () => {
   try {
-    await sequelize.sync( { alter: true } ); // Poner en true para sincronizar los modelos con la base de datos (crear tablas si no existen)
+    await sequelize.sync( { alter: false } ); // Poner en true para sincronizar los modelos con la base de datos (crear tablas si no existen)
     console.log("Base de datos sincronizada correctamente");
     return true;
   } catch (error) {

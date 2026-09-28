@@ -22,10 +22,6 @@ export const EstadoTurno = sequelize.define(
       allowNull: false,
       unique: true,
     },
-    descripcion: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
   },
   {
     tableName: "estado_turno",
