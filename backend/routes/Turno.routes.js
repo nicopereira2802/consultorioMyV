@@ -38,6 +38,7 @@ router.put(
 // Finalizar atención en consultorio y registrar prácticas
 router.patch(
   "/:id/atender",
+  validateSchema(updateTurnoSchema),
   validarExistencia(Turno, "id", "params"),
   TurnoController.turnoAtendido,
 );
@@ -45,6 +46,7 @@ router.patch(
 // Cancelar turno
 router.patch(
   "/:id/cancelar",
+  validateSchema(updateTurnoSchema),
   validarExistencia(Turno, "id", "params"),
   TurnoController.turnoCancelado,
 );
@@ -52,6 +54,7 @@ router.patch(
 // Marcar como inasistente
 router.patch(
   "/:id/inasistente",
+  validateSchema(updateTurnoSchema),
   validarExistencia(Turno, "id", "params"),
   TurnoController.turnoCancelado,
 );

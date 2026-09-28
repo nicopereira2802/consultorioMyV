@@ -68,8 +68,6 @@ export const validarSolapaminetoHorarios = async (
       // Condición de solapamiento
       fecha_hora_inicio: { [Op.lt]: fin },
       fecha_hora_fin: { [Op.gt]: inicio },
-      // Ignorar turnos cancelados (asumiendo que id_estado 3 es 'Cancelado')
-      id_estado: { [Op.ne]: 3 },
       // Si estamos editando un turno existente, lo excluimos de la búsqueda
       ...(turnoIdExcluir && { id_turno: { [Op.ne]: turnoIdExcluir } }),
     },

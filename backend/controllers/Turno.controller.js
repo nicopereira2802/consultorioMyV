@@ -168,7 +168,11 @@ export const turnoAtendido = async (req, res) => {
 
     const turno = req.turno;
 
-    const estado = await validarEstados(turno.id_estado, "Programado", "Atendido");
+    const estado = await validarEstados(
+      turno.id_estado,
+      "Programado",
+      "Atendido",
+    );
 
     if (!estado) {
       return res.status(400).json({
@@ -203,7 +207,26 @@ export const turnoAtendido = async (req, res) => {
         Array.isArray(practicas_realizadas) &&
         practicas_realizadas.length > 0
       ) {
-        const registrosPracticas = practicas_realizadas.map((id_practica) => ({
+        const idsUnicos = [...new Set(practicas_realizadas)];
+
+        // 2. Verificar la existencia de TODAS las prácticas en UNA sola consulta
+        const practicasEncontradas = await Practica.findAll({
+          where: {
+            id_practica: { [Op.in]: idsUnicos },
+          },
+          transaction: t,
+        });
+
+        // 3. Comparar la cantidad hallada con la cantidad solicitada
+        if (practicasEncontradas.length !== idsUnicos.length) {
+          console.error("Una o más prácticas especificadas no existen.", error);
+          res
+            .status(400)
+            .json({ error: "Una o más prácticas especificadas no existen" });
+        }
+
+        // 4. Mapear e insertar en lote (bulkCreate)
+        const registrosPracticas = idsUnicos.map((id_practica) => ({
           id_turno: turno.id_turno,
           id_practica,
         }));
@@ -228,6 +251,7 @@ export const turnoAtendido = async (req, res) => {
 export const turnoCancelado = async (req, res) => {
   try {
     const turno = req.turno;
+    const { notas_consulta } = req.body;
 
     const estado = await validarEstados(
       turno.id_estado,
@@ -246,6 +270,7 @@ export const turnoCancelado = async (req, res) => {
       await turno.update(
         {
           id_estado: estado.id_estado,
+          notas_consulta: notas_consulta,
         },
         { transaction: t },
       );
@@ -280,7 +305,11 @@ export const turnoInasistido = async (req, res) => {
   try {
     const turno = req.turno;
 
-    const estado = await validarEstados(turno.id_estado, "Programado", "Inasistente");
+    const estado = await validarEstados(
+      turno.id_estado,
+      "Programado",
+      "Inasistente",
+    );
 
     if (!estado) {
       return res.status(400).json({
