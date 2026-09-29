@@ -2,6 +2,7 @@
 
 import { Paciente } from "../models/Paciente.model.js";
 import { validarTelefono } from "../validations/Paciente.validation.js";
+import { Op, Sequelize } from "sequelize";
 
 // Obtener todos los pacientes
 export const getAllPacientes = async (req, res) => {
@@ -118,5 +119,47 @@ export const deletePaciente = async (req, res) => {
   } catch (error) {
     console.error("Error al eliminar el paciente:", error);
     res.status(500).json({ error: "Error al eliminar el paciente" });
+  }
+};
+
+
+// P-8 buscar al paciente por dni,nombre,apellido
+export const searchPacientes = async (req, res) => {
+  try {
+    const { termino } = req.query;
+
+    if (!termino || termino.trim() === "") {
+      return res.status(400).json({
+        status: "error",
+        message: "Debe ingresar un término para buscar",
+      });
+    }
+
+    const valor = termino.trim();
+    const pacientes = await Paciente.findAll({
+      where: {
+        activo: true, 
+        [Op.or]: [
+          { nombre: { [Op.substring]: valor } },
+          { apellido: { [Op.substring]: valor } },
+          Sequelize.where(
+            Sequelize.cast(Sequelize.col("dni"), "char"),
+            { [Op.substring]: valor }
+          ),
+        ],
+      },
+      order: [["apellido", "ASC"]],
+      limit: 15,
+    });
+
+    return res.status(200).json({
+      status: "success",
+      data: pacientes,
+    });
+  } catch (error) {
+    console.error("Error al buscar pacientes:", error);
+    return res.status(500).json({ 
+      error: "Error interno al procesar la búsqueda de pacientes" 
+    });
   }
 };

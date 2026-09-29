@@ -17,6 +17,10 @@ const router = express.Router();
 // Rutas para Paciente
 router.get("/", PacienteController.getAllPacientes);
 
+
+//Ruta buscar pacientes por dni,nombre,apellido
+router.get("/buscar", PacienteController.searchPacientes);
+
 router.get(
   "/:id",
   validarExistencia(Paciente, "id", "params"),
