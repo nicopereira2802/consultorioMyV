@@ -15,6 +15,12 @@ import {
 const router = express.Router();
 
 // Rutas para Obra Social
+
+//
+/** Ejemplo de usos:
+ * Input con autocompletado: GET /api/obras-sociales?search=osde&limit=5
+ * Tabla administrativa:     GET /api/obras-sociales?page=1&limit=10&sortField=nombre&sortOrder=ASC
+ */
 router.get("/", ObraSocialController.getAllObrasSociales);
 
 router.get(

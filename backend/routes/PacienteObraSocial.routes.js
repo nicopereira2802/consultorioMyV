@@ -19,6 +19,11 @@ import {
 const router = express.Router();
 
 // Rutas para Paciente por Obra Social
+
+/** Ejemplo de uso:
+ * Coberturas de un paciente: GET /api/pacientes-obras-sociales?id_paciente=3
+ * Buscar por credencial:     GET /api/pacientes-obras-sociales?search=892341
+ */
 router.get("/", PacienteObraSocialController.getAllPacientesPorObraSocial);
 
 router.get(

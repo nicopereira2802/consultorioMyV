@@ -15,7 +15,12 @@ import {
 const router = express.Router();
 
 // Rutas para Practica por Turno
+/** Ejemplo de uso:
+ * Prácticas de una atención: GET /api/practicas-turnos?id_turno=25
+ * Listado general paginado:  GET /api/practicas-turnos?page=1&limit=15
+ */
 router.get("/", PracticaTurnoController.getAllPracticaTurno);
+
 router.get(
   "/:id",
   validarExistencia(PracticaTurno, "id", "params"),

@@ -15,6 +15,11 @@ import {
 const router = express.Router();
 
 // Rutas para Practica
+
+/** Ejemplo de usos:
+ * Buscar en select de turno: GET /api/practicas?search=extrac&limit=5
+ * Catálogo completo paginado: GET /api/practicas?page=1&limit=20
+ */
 router.get("/", PracticaController.getAllPracticas);
 
 router.get(

@@ -15,7 +15,14 @@ import {
 const router = express.Router();
 
 // Rutas para Paciente
-//este get tiene implementado el filtrado y paginacion
+
+/* Ejemplo de uso:
+ * -> Tabla basica (pag 1):     GET /api/pacientes?page=1&limit=10
+ * -> Buscador en tiempo real:     GET /api/pacientes?search=38123456
+ * -> Buscador por nombre:         GET /api/pacientes?search=perez
+ * -> Ordenar por DNI descendente: GET /api/pacientes?sortField=dni&sortOrder=DESC
+ * -> Paginación combinada:        GET /api/pacientes?search=juan&page=2&limit=5&sortField=nombre&sortOrder=ASC
+ */
 router.get("/", PacienteController.getAllPacientes);
 
 router.get(
