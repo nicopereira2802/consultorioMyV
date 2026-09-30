@@ -5,15 +5,52 @@ import { PracticaTurno, Turno, Practica } from "../models/index.model.js";
 // Obtener todas las prácticas de turno
 export const getAllPracticaTurno = async (req, res) => {
   try {
-    const practicaTurnos = await PracticaTurno.findAll();
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 10;
+    const sortField = req.query.sortField || "id_practica_turno";
+    const sortOrder = req.query.sortOrder || "ASC";
+    const offset = (page - 1) * limit;
 
+    const where = {};
+
+    if (req.query.id_turno) {
+      where.id_turno = req.query.id_turno;
+    }
+
+    const { count, rows: practicaTurnos } = await PracticaTurno.findAndCountAll({
+      where,
+      include: [
+        {
+          model: Practica,
+          attributes: ["id_practica", "nombre"],
+        },
+      ],
+      limit,
+      offset,
+      order: [[sortField, sortOrder]],
+      distinct: true,
+    });
+
+    const totalPages = Math.ceil(count / limit);
     res.status(200).json({
       status: "success",
       data: practicaTurnos,
+      meta: {
+        total: count,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
     });
   } catch (error) {
     console.error("Error al obtener las prácticas de turno:", error);
-    res.status(500).json({ error: "Error al obtener las prácticas de turno" });
+    res.status(500).json({
+      status: "error",
+      message: "Error al obtener las prácticas de turno",
+      error: error.message,
+    });
   }
 };
 

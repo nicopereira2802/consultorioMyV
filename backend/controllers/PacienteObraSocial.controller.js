@@ -8,19 +8,74 @@ import {
 import { validarEntidadUpdate } from "../validations/validarEntidadUpdate.validation.js";
 
 // Obtener todos los pacientes por obra social
+import { Op } from "sequelize";
+import { PacienteObraSocial } from "../models/PacienteObraSocial.model.js";
+import { Paciente, ObraSocial } from "../models/index.model.js";
+
+// Obtener todos los pacientes por obra social con paginación y orden dinámico
 export const getAllPacientesPorObraSocial = async (req, res) => {
   try {
-    const pacientesPorObraSocial = await PacienteObraSocial.findAll();
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 10;
+    const search = req.query.search || "";
+    const sortField = req.query.sortField || "id_paciente_obra_social";
+    const sortOrder = req.query.sortOrder || "ASC";
+    const offset = (page - 1) * limit;
+
+    const where = {};
+
+    // Filtros ?id_paciente=3 o ?id_obra_social=1
+    if (req.query.id_paciente) {
+      where.id_paciente = req.query.id_paciente;
+    }
+    if (req.query.id_obra_social) {
+      where.id_obra_social = req.query.id_obra_social;
+    }
+    if (search.trim() !== "") {
+      where[Op.or] = [
+        { numero_afiliado: { [Op.like]: `%${search.trim()}%` } },
+      ];
+    }
+    const { count, rows: pacientesPorObraSocial } =
+      await PacienteObraSocial.findAndCountAll({
+        where,
+        include: [
+          {
+            model: Paciente,
+            attributes: ["id_paciente", "nombre", "apellido", "dni"],
+          },
+          {
+            model: ObraSocial,
+            attributes: ["id_obra_social", "nombre"],
+          },
+        ],
+        limit,
+        offset,
+        order: [[sortField, sortOrder]],
+        distinct: true,
+      });
+
+    const totalPages = Math.ceil(count / limit);
 
     res.status(200).json({
       status: "success",
       data: pacientesPorObraSocial,
+      meta: {
+        total: count,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
     });
   } catch (error) {
     console.error("Error al obtener los pacientes por obra social:", error);
-    res
-      .status(500)
-      .json({ error: "Error al obtener los pacientes por obra social" });
+    res.status(500).json({
+      status: "error",
+      message: "Error al obtener los pacientes por obra social",
+      error: error.message,
+    });
   }
 };
 

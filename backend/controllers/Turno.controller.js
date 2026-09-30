@@ -6,6 +6,7 @@ import {
   HistorialEstadoTurno,
   PracticaTurno,
   EstadoTurno,
+  
 } from "../models/index.model.js";
 import {
   validarEstadoProgramado,
@@ -16,11 +17,49 @@ import {
 // Obtener todos los turnos
 export const getAllTurnos = async (req, res) => {
   try {
-    const turnos = await Turno.findAll();
-    res.status(200).json(turnos);
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 10;
+    const search = req.query.search || "";
+    const sortField = req.query.sortField || "fecha_hora_inicio";
+    const sortOrder = req.query.sortOrder || "ASC";
+    const offset = (page - 1) * limit;
+
+    const where = {};
+
+    if (search.trim() !== "") {
+      where[Op.or] = [
+        { notas_consulta: { [Op.like]: `%${search}%` } },
+      ];
+    }
+
+    const { count, rows: turnos } = await Turno.findAndCountAll({
+      where,
+      limit,
+      offset,
+      order: [[sortField, sortOrder]],
+    });
+
+    const totalPages = Math.ceil(count / limit);
+
+    res.status(200).json({
+      status: "success",
+      data: turnos,
+      meta: {
+        total: count,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
+    });
   } catch (error) {
     console.error("Error al obtener los turnos:", error);
-    res.status(500).json({ error: "Error al obtener los turnos" });
+    res.status(500).json({
+      status: "error",
+      message: "Error al obtener los turnos",
+      error: error.message,
+    });
   }
 };
 
