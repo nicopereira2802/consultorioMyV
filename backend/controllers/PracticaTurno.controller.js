@@ -1,6 +1,11 @@
 /** @format */
 
-import { PracticaTurno, Turno, Practica } from "../models/index.model.js";
+import {
+  PracticaTurno,
+  Turno,
+  Practica,
+  ObraSocial,
+} from "../models/index.model.js";
 
 // Obtener todas las prácticas de turno
 export const getAllPracticaTurno = async (req, res) => {
@@ -35,11 +40,22 @@ export const getPracticaTurnoById = async (req, res) => {
 // Crear una nueva práctica de turno
 export const createPracticaTurno = async (req, res) => {
   try {
-    const { id_turno, practica_id } = req.body;
+    const { id_turno, id_practica, id_obra_social } = req.body;
+
+    if (id_obra_social) {
+      const obraSocial = await ObraSocial.findByPk(id_obra_social);
+
+      if (!obraSocial)
+        res.status(400).json({
+          status: "error",
+          message: "La obra social seleccionada no existe.",
+        });
+    }
 
     const newPracticaTurno = await PracticaTurno.create({
       id_turno,
-      practica_id,
+      id_practica,
+      id_obra_social: id_obra_social || null,
     });
 
     res.status(201).json({
@@ -55,25 +71,28 @@ export const createPracticaTurno = async (req, res) => {
 // Actualizar una práctica de turno existente
 export const updatePracticaTurno = async (req, res) => {
   try {
-    const { id_turno, practica_id } = req.body;
+    const { id_turno, id_practica, id_obra_social } = req.body;
 
     const practicaTurno = req.practicaTurno;
 
-    if (id_turno || practica_id) {
-      const turno = validarEntidadUpdate(Turno, id_turno);
-      const practica = validarEntidadUpdate(Practica, practica_id);
+    if (id_turno || id_practica || id_obra_social) {
+      const turno = Turno.findByPk(id_turno);
+      const practica = Practica.findByPk(id_practica);
+      const obraSocial = ObraSocial.findByPk(id_obra_social);
 
-      if (!turno || !practica) {
+      if (!turno || !practica || !obraSocial) {
         return res.status(400).json({
           status: "error",
-          message: "El turno o la practica seleccionada no existen.",
+          message:
+            "El turno, la practica o la obra social seleccionada no existen.",
         });
       }
     }
 
     await practicaTurno.update({
       id_turno: id_turno || practicaTurno.id_turno,
-      practica_id: practica_id || practicaTurno.practica_id,
+      id_practica: id_practica || practicaTurno.id_practica,
+      id_obra_social: id_obra_social || practicaTurno.id_obra_social,
     });
 
     res.status(200).json({

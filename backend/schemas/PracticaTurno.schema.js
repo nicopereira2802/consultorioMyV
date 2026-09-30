@@ -18,6 +18,14 @@ export const createPracticaTurnoSchema = z.object({
     })
     .int("El ID debe ser un número entero")
     .positive("El ID no es válido"),
+
+  id_obra_social: z
+    .number({
+      invalid_type_error: "El ID de la obra social debe ser un número",
+    })
+    .int("El ID debe ser un número entero")
+    .positive("El ID no es válido")
+    .optional(),
 });
 
 export const updatePracticaTurnoSchema = z.object({
@@ -34,6 +42,14 @@ export const updatePracticaTurnoSchema = z.object({
     .number({
       required_error: "El ID de la practica es obligatorio",
       invalid_type_error: "El ID de la practica debe ser un número",
+    })
+    .int("El ID debe ser un número entero")
+    .positive("El ID no es válido")
+    .optional(),
+
+  id_obra_social: z
+    .number({
+      invalid_type_error: "El ID de la obra social debe ser un número",
     })
     .int("El ID debe ser un número entero")
     .positive("El ID no es válido")

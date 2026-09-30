@@ -6,15 +6,17 @@ import { validarEntidadUpdate } from "../validations/validarEntidadUpdate.valida
 // Obtener una cobro por su ID
 export const getCobroByTurnoId = async (req, res) => {
   try {
-    const cobro = req.cobro;
+    const id_turno = req.turno.id_turno;
+
+    const cobro = await Cobro.findAll({ where: { id_turno: id_turno } });
 
     res.status(200).json({
       status: "success",
       data: cobro,
     });
   } catch (error) {
-    console.error("Error al obtener el cobro:", error);
-    res.status(500).json({ error: "Error al obtener el cobro" });
+    console.error("Error al obtener el cobro del turno:", error);
+    res.status(500).json({ error: "Error al obtener el cobro del turno" });
   }
 };
 
@@ -50,17 +52,17 @@ export const updateCobro = async (req, res) => {
     const { id_turno, id_paciente, monto_a_cobrar, cant_cuotas } = req.body;
 
     const cobro = req.cobro;
-    
-    if(id_turno || id_paciente){
-        const turno = validarEntidadUpdate(Turno, id_turno);
-        const paciente = validarEntidadUpdate(Paciente, id_paciente);
 
-        if(!turno || !paciente){
-            res.status(400).json({
-                status: "error",
-                message: "El paciente o el turno seleccionado no existe."
-            })
-        }
+    if (id_turno || id_paciente) {
+      const turno = validarEntidadUpdate(Turno, id_turno);
+      const paciente = validarEntidadUpdate(Paciente, id_paciente);
+
+      if (!turno || !paciente) {
+        res.status(400).json({
+          status: "error",
+          message: "El paciente o el turno seleccionado no existe.",
+        });
+      }
     }
 
     await cobro.update({

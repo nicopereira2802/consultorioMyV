@@ -17,7 +17,7 @@ const router = express.Router();
 // Rutas para Cobro
 router.get(
   "/:id",
-  validarExistencia(Cobro, "id", "params"),
+  validarExistencia(Turno, "id", "params"),
   CobroController.getCobroByTurnoId,
 );
 
