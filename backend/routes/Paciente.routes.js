@@ -15,11 +15,8 @@ import {
 const router = express.Router();
 
 // Rutas para Paciente
+//este get tiene implementado el filtrado y paginacion
 router.get("/", PacienteController.getAllPacientes);
-
-
-//Ruta buscar pacientes por dni,nombre,apellido
-router.get("/buscar", PacienteController.searchPacientes);
 
 router.get(
   "/:id",

@@ -7,15 +7,55 @@ import { Op, Sequelize } from "sequelize";
 // Obtener todos los pacientes
 export const getAllPacientes = async (req, res) => {
   try {
-    const pacientes = await Paciente.findAll();
+    // paginacion
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
+    const search = req.query.search || "";
+    const sortField = req.query.sortField || "apellido"; 
+    const sortOrder = req.query.sortOrder || "ASC";       
+    const where = {
+      activo: true,
+    };
+
+    // Busqueda por nombre apellido dni telefono
+    if (search.trim() !== "") {
+      where[Op.or] = [
+        { nombre: { [Op.like]: `%${search}%` } },
+        { apellido: { [Op.like]: `%${search}%` } },
+        { dni: { [Op.like]: `%${search}%` } },
+        { telefono: { [Op.like]: `%${search}%` } },
+      ];
+    }
+
+    const { count, rows: pacientes } = await Paciente.findAndCountAll({
+      where,
+      limit,
+      offset,
+      order: [[sortField, sortOrder]],
+    });
+
+    const totalPages = Math.ceil(count / limit);
 
     res.status(200).json({
       status: "success",
       data: pacientes,
+      meta: {
+        total: count,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
     });
   } catch (error) {
     console.error("Error al obtener los pacientes:", error);
-    res.status(500).json({ error: "Error al obtener los pacientes" });
+    res.status(500).json({
+      status: "error",
+      message: "Error al obtener los pacientes",
+      error: error.message,
+    });
   }
 };
 
@@ -123,43 +163,3 @@ export const deletePaciente = async (req, res) => {
 };
 
 
-// P-8 buscar al paciente por dni,nombre,apellido
-export const searchPacientes = async (req, res) => {
-  try {
-    const { termino } = req.query;
-
-    if (!termino || termino.trim() === "") {
-      return res.status(400).json({
-        status: "error",
-        message: "Debe ingresar un término para buscar",
-      });
-    }
-
-    const valor = termino.trim();
-    const pacientes = await Paciente.findAll({
-      where: {
-        activo: true, 
-        [Op.or]: [
-          { nombre: { [Op.substring]: valor } },
-          { apellido: { [Op.substring]: valor } },
-          Sequelize.where(
-            Sequelize.cast(Sequelize.col("dni"), "char"),
-            { [Op.substring]: valor }
-          ),
-        ],
-      },
-      order: [["apellido", "ASC"]],
-      limit: 15,
-    });
-
-    return res.status(200).json({
-      status: "success",
-      data: pacientes,
-    });
-  } catch (error) {
-    console.error("Error al buscar pacientes:", error);
-    return res.status(500).json({ 
-      error: "Error interno al procesar la búsqueda de pacientes" 
-    });
-  }
-};
