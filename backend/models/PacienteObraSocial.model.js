@@ -1,7 +1,6 @@
 import { DataTypes } from "sequelize";
 import sequelize from "../config/database.js";
-import { Paciente } from "./Paciente.model.js";
-import { ObraSocial } from "./ObraSocial.model.js";
+import { ObraSocial, Paciente } from "./index.model.js";
 
 // Definir el modelo de PacienteObraSocial según ECMAScript Modules
 export const PacienteObraSocial = sequelize.define(

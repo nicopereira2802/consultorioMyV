@@ -1,8 +1,6 @@
 /** @format */
 
-import { PracticaTurno } from "../models/PracticaTurno.model.js";
-import { Turno } from "../models/Turno.model.js";
-import { Practica } from "../models/Practica.model.js";
+import { PracticaTurno, Turno, Practica } from "../models/index.model.js";
 
 // Obtener todas las prácticas de turno
 export const getAllPracticaTurno = async (req, res) => {
@@ -37,10 +35,10 @@ export const getPracticaTurnoById = async (req, res) => {
 // Crear una nueva práctica de turno
 export const createPracticaTurno = async (req, res) => {
   try {
-    const { turno_id, practica_id } = req.body;
+    const { id_turno, practica_id } = req.body;
 
     const newPracticaTurno = await PracticaTurno.create({
-      turno_id,
+      id_turno,
       practica_id,
     });
 
@@ -57,12 +55,24 @@ export const createPracticaTurno = async (req, res) => {
 // Actualizar una práctica de turno existente
 export const updatePracticaTurno = async (req, res) => {
   try {
-    const { turno_id, practica_id } = req.body;
+    const { id_turno, practica_id } = req.body;
 
     const practicaTurno = req.practicaTurno;
 
+    if (id_turno || practica_id) {
+      const turno = validarEntidadUpdate(Turno, id_turno);
+      const practica = validarEntidadUpdate(Practica, practica_id);
+
+      if (!turno || !practica) {
+        return res.status(400).json({
+          status: "error",
+          message: "El turno o la practica seleccionada no existen.",
+        });
+      }
+    }
+
     await practicaTurno.update({
-      turno_id: turno_id || practicaTurno.turno_id,
+      id_turno: id_turno || practicaTurno.id_turno,
       practica_id: practica_id || practicaTurno.practica_id,
     });
 

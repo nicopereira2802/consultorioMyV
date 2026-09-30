@@ -45,10 +45,17 @@ export const createPacienteSchema = z.object({
     ),
 
   dni: z
-    .number({ invalid_type_error: "El DNI debe ser un número" })
-    .int("El DNI no puede tener decimales")
-    .positive("El DNI debe ser un número positivo")
-    .optional(),
+    .string({
+      required_error: "El dni es obligatorio",
+      invalid_type_error: "El dni debe ser un texto",
+    })
+    .trim()
+    .min(2, "El dni debe tener al menos 2 caracteres")
+    .max(50, "El dni no puede superar los 50 caracteres")
+    .regex(
+      regex,
+      "El dni no puede contener números ni caracteres especiales como (), [], {}, comillas o comas",
+    ),
 
   fecha_nacimiento: z.coerce
     .date({
@@ -106,9 +113,17 @@ export const updatePacienteSchema = z.object({
     .optional(),
 
   dni: z
-    .number({ invalid_type_error: "El DNI debe ser un número" })
-    .int("El DNI no puede tener decimales")
-    .positive("El DNI debe ser un número positivo")
+    .string({
+      required_error: "El dni es obligatorio",
+      invalid_type_error: "El dni debe ser un texto",
+    })
+    .trim()
+    .min(2, "El dni debe tener al menos 2 caracteres")
+    .max(50, "El dni no puede superar los 50 caracteres")
+    .regex(
+      regex,
+      "El dni no puede contener números ni caracteres especiales como (), [], {}, comillas o comas",
+    )
     .optional(),
 
   fecha_nacimiento: z.coerce

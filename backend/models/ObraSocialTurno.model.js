@@ -1,11 +1,20 @@
+/** @format */
+
 import { DataTypes } from "sequelize";
 import sequelize from "../config/database.js";
-import { Practica, Turno } from "./index.model.js";
+import { ObraSocial, Turno, Practica } from "./index.model.js";
 
-// Definir el modelo de PracticaTurno según ECMAScript Modules
-export const PracticaTurno = sequelize.define(
-  "PracticaTurno",
+export const ObraSocialTurno = sequelize.define(
+  "ObraSocialTurno",
   {
+    id_obra_social: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      references: {
+        model: ObraSocial,
+        key: "id_obra_social",
+      },
+    },
     id_turno: {
       type: DataTypes.INTEGER,
       primaryKey: true,
@@ -16,7 +25,7 @@ export const PracticaTurno = sequelize.define(
     },
     id_practica: {
       type: DataTypes.INTEGER,
-      primaryKey: true,
+      allowNull: false,
       references: {
         model: Practica,
         key: "id_practica",
@@ -24,7 +33,7 @@ export const PracticaTurno = sequelize.define(
     },
   },
   {
-    tableName: "practica_turno",
+    tableName: "obra_social_turno",
     timestamps: false,
   },
 );

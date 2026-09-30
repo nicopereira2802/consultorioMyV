@@ -1,8 +1,6 @@
 import { DataTypes } from "sequelize";
 import sequelize from "../config/database.js";
-import { Paciente } from "./Paciente.model.js";
-import { EstadoTurno } from "./EstadoTurno.model.js";
-import { Practica } from "./Practica.model.js"; 
+import { EstadoTurno, Paciente } from "./index.model.js";
 
 export const Turno = sequelize.define(
   "Turno",

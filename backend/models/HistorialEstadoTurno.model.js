@@ -1,7 +1,8 @@
+/** @format */
+
 import { DataTypes } from "sequelize";
 import sequelize from "../config/database.js";
-import { Turno } from "./Turno.model.js";
-import { EstadoTurno } from "./EstadoTurno.model.js";
+import { Turno, EstadoTurno } from "./index.model.js";
 
 export const HistorialEstadoTurno = sequelize.define(
   "HistorialEstadoTurno",
@@ -40,5 +41,5 @@ export const HistorialEstadoTurno = sequelize.define(
   {
     tableName: "historial_estado_turno",
     timestamps: false,
-  }
+  },
 );

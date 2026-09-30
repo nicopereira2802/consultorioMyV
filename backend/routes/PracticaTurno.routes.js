@@ -32,8 +32,6 @@ router.put(
   "/:id",
   validateSchema(updatePracticaTurnoSchema),
   validarExistencia(PracticaTurno, "id", "params"),
-  validarExistencia(Turno, "turno_id", "body"),
-  validarExistencia(Practica, "practica_id", "body"),
   PracticaTurnoController.updatePracticaTurno,
 );
 router.delete(

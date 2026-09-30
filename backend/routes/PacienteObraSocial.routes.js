@@ -15,6 +15,7 @@ import {
   createPacienteObraSocialSchema,
   updatePacienteObraSocialSchema,
 } from "../schemas/PacienteObraSocial.schema.js";
+
 const router = express.Router();
 
 // Rutas para Paciente por Obra Social
@@ -37,8 +38,6 @@ router.put(
   "/:id",
   validateSchema(updatePacienteObraSocialSchema),
   validarExistencia(PacienteObraSocial, "id", "params"),
-  validarExistencia(Paciente, "id_paciente", "body"),
-  validarExistencia(ObraSocial, "id_obra_social", "body"),
   PacienteObraSocialController.updatePacientePorObraSocial,
 );
 

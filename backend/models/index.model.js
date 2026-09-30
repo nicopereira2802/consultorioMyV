@@ -1,3 +1,5 @@
+/** @format */
+
 import sequelize from "../config/database.js";
 
 // Importar modelos
@@ -9,6 +11,9 @@ import { Practica } from "./Practica.model.js";
 import { PracticaTurno } from "./PracticaTurno.model.js";
 import { PacienteObraSocial } from "./PacienteObraSocial.model.js";
 import { HistorialEstadoTurno } from "./HistorialEstadoTurno.model.js";
+import { Cobro } from "./Cobro.model.js";
+import { Cuota } from "./Cuota.model.js";
+import { ObraSocialTurno } from "./ObraSocialTurno.model.js";
 import { Usuario } from "./Usuario.model.js";
 
 // Definir relaciones entre modelos
@@ -37,9 +42,27 @@ HistorialEstadoTurno.belongsTo(Turno, { foreignKey: "id_turno" });
 EstadoTurno.hasMany(HistorialEstadoTurno, { foreignKey: "id_estado" });
 HistorialEstadoTurno.belongsTo(EstadoTurno, { foreignKey: "id_estado" });
 
+Turno.hasMany(Cobro, { foreignKey: "id_turno" });
+Cobro.belongsTo(Turno, { foreignKey: "id_turno" });
+
+Paciente.hasMany(Cobro, { foreignKey: "id_paciente" });
+Cobro.belongsTo(Paciente, { foreignKey: "id_paciente" });
+
+Cobro.hasMany(Cuota, { foreignKey: "id_cobro" });
+Cuota.belongsTo(Turno, { foreignKey: "id_cobro" });
+
+ObraSocial.hasMany(ObraSocialTurno, { foreignKey: "id_obra_social" });
+ObraSocialTurno.belongsTo(ObraSocial, { foreignKey: "id_obra_social" });
+
+Turno.hasMany(ObraSocialTurno, { foreignKey: "id_turno" });
+ObraSocialTurno.belongsTo(Turno, { foreignKey: "id_turno" });
+
+Practica.hasMany(ObraSocialTurno, { foreignKey: "id_practica" });
+ObraSocialTurno.belongsTo(Practica, { foreignKey: "id_practica" });
+
 const sincronizarModelos = async () => {
   try {
-    await sequelize.sync( { alter: false } ); // Poner en true para sincronizar los modelos con la base de datos (crear tablas si no existen)
+    await sequelize.sync({ alter: false }); // Poner en true para sincronizar los modelos con la base de datos (crear tablas si no existen)
     console.log("Base de datos sincronizada correctamente");
     return true;
   } catch (error) {
@@ -57,6 +80,9 @@ export {
   PracticaTurno,
   PacienteObraSocial,
   HistorialEstadoTurno,
+  Cobro,
+  Cuota,
+  ObraSocialTurno,
   Usuario,
   sincronizarModelos,
 };

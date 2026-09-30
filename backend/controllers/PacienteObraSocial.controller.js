@@ -1,6 +1,11 @@
 /** @format */
 
-import { PacienteObraSocial } from "../models/PacienteObraSocial.model.js";
+import {
+  PacienteObraSocial,
+  Paciente,
+  ObraSocial,
+} from "../models/index.model.js";
+import { validarEntidadUpdate } from "../validations/validarEntidadUpdate.validation.js";
 
 // Obtener todos los pacientes por obra social
 export const getAllPacientesPorObraSocial = async (req, res) => {
@@ -65,6 +70,18 @@ export const updatePacientePorObraSocial = async (req, res) => {
     const { id_paciente, id_obra_social, nro_afiliado } = req.body;
 
     const pacientePorObraSocial = req.pacienteObraSocial;
+
+    if (id_paciente || id_obra_social) {
+      const paciente = validarEntidadUpdate(Paciente, id_paciente);
+      const obraSocial = validarEntidadUpdate(ObraSocial, id_obra_social);
+
+      if (!paciente || !obraSocial) {
+        return res.status(400).json({
+          status: "error",
+          message: "El paciente o la obra social seleccionada no existen."
+        })
+      }
+    }
 
     await pacientePorObraSocial.update({
       id_paciente: id_paciente || pacientePorObraSocial.id_paciente,

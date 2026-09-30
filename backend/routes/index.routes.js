@@ -10,7 +10,8 @@ import PacienteObraSocialRoutes from "./PacienteObraSocial.routes.js";
 import PracticaRoutes from "./Practica.routes.js";
 import PracticaTurnoRoutes from "./PracticaTurno.routes.js";
 import TurnoRoutes from "./Turno.routes.js";
-import HistorialEstadoTurno from "./HistorialEstadoTurno.routes.js";
+import HistorialEstadoTurnoRoutes from "./HistorialEstadoTurno.routes.js";
+import CobroRoutes from "./Cobro.routes.js"
 
 // Rutas para los diferentes recursos
 router.use("/api/pacientes", PacienteRoutes);
@@ -19,6 +20,7 @@ router.use("/api/pacientes-por-obras-sociales", PacienteObraSocialRoutes);
 router.use("/api/practicas", PracticaRoutes);
 router.use("/api/practicas-turnos", PracticaTurnoRoutes);
 router.use("/api/turnos", TurnoRoutes);
-router.use("/api/historial-estado-turnos", HistorialEstadoTurno);
+router.use("/api/historial-estado-turnos", HistorialEstadoTurnoRoutes);
+router.use("/api/cobros", CobroRoutes);
 
 export default router;
