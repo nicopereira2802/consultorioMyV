@@ -1,6 +1,6 @@
 /** @format */
 
-import { HistorialEstadoTurno } from "../models/HistorialEstadoTurno.model.js";
+import { HistorialEstadoTurno, EstadoTurno } from "../models/index.model.js";
 
 export const getHistorialTurnoByTurnoId = async (req, res) => {
   try {
@@ -27,3 +27,4 @@ export const getHistorialTurnoByTurnoId = async (req, res) => {
     res.status(500).json({ error: "Error interno al obtener el historial." });
   }
 };
+

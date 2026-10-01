@@ -3,7 +3,8 @@
 import { z } from "zod";
 
 // Fecha de hoy
-const hoy = new Date();
+const hoyString = new Date().toLocaleDateString("sv-SE");
+const metodosPagoValidos = ["Efectivo", "Transferencia", "Tarjeta"];
 
 export const createCuotaSchema = z.object({
   id_cobro: z
@@ -35,11 +36,19 @@ export const createCuotaSchema = z.object({
     })
     .optional(),
 
-  fecha_vencimiento: z.coerce
-    .date({
+  fecha_vencimiento: z
+    .string({
+      required_error: "La fecha de vencimiento es requerida",
       invalid_type_error: "Formato de fecha inválido",
     })
-    .min(hoy, { message: "La fecha de vencimiento debe ser mayor a hoy" }),
+    // Valida que cumpla estrictamente el formato YYYY-MM-DD
+    .regex(/^\d{4}-\d{2}-\d{2}$/, {
+      message: "Formato de fecha inválido (debe ser YYYY-MM-DD)",
+    })
+    // Compara directamente strings en formato ISO (ej: "2026-11-15" >= "2026-11-01")
+    .refine((fecha) => fecha >= hoyString, {
+      message: "La fecha de vencimiento debe ser mayor o igual a hoy",
+    }),
 
   fecha_cobro: z.coerce
     .date({
@@ -48,16 +57,8 @@ export const createCuotaSchema = z.object({
     .optional(),
 
   metodo_pago: z
-    .enum(["Efectivo", "Transferencia", "Tarjeta", "Otro"], {
-      errorMap: (issue, ctx) => {
-        if (issue.code === "invalid_enum_value") {
-          return {
-            message:
-              'El metodo de pago debe ser únicamente "Efectivo", "Transferencia", "Tarjeta" u "Otro"',
-          };
-        }
-        return { message: ctx.defaultError };
-      },
+    .enum(metodosPagoValidos, {
+      errorMap: () => ({ message: "Método de pago no válido" }),
     })
     .optional(),
 });
@@ -94,11 +95,19 @@ export const updateCuotaSchema = z.object({
     })
     .optional(),
 
-  fecha_vencimiento: z.coerce
-    .date({
+  fecha_vencimiento: z
+    .string({
+      required_error: "La fecha de vencimiento es requerida",
       invalid_type_error: "Formato de fecha inválido",
     })
-    .min(hoy, { message: "La fecha de vencimiento debe ser mayor a hoy" })
+    // Valida que cumpla estrictamente el formato YYYY-MM-DD
+    .regex(/^\d{4}-\d{2}-\d{2}$/, {
+      message: "Formato de fecha inválido (debe ser YYYY-MM-DD)",
+    })
+    // Compara directamente strings en formato ISO (ej: "2026-11-15" >= "2026-11-01")
+    .refine((fecha) => fecha >= hoyString, {
+      message: "La fecha de vencimiento debe ser mayor o igual a hoy",
+    })
     .optional(),
 
   fecha_cobro: z.coerce
@@ -108,16 +117,8 @@ export const updateCuotaSchema = z.object({
     .optional(),
 
   metodo_pago: z
-    .enum(["Efectivo", "Transferencia", "Tarjeta", "Otro"], {
-      errorMap: (issue, ctx) => {
-        if (issue.code === "invalid_enum_value") {
-          return {
-            message:
-              'El metodo de pago debe ser únicamente "Efectivo", "Transferencia", "Tarjeta" u "Otro"',
-          };
-        }
-        return { message: ctx.defaultError };
-      },
+    .enum(metodosPagoValidos, {
+      errorMap: () => ({ message: "Método de pago no válido" }),
     })
     .optional(),
 });

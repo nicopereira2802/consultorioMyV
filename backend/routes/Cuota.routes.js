@@ -24,13 +24,13 @@ router.get(
 router.get(
   "/:id",
   validarExistencia(Cuota, "id", "params"),
-  CuotaController.getCuotaById
+  CuotaController.getCuotaById,
 );
 
 router.post(
   "/",
   validateSchema(createCuotaSchema),
-  validarExistencia(Cobro, "id", "body"),
+  validarExistencia(Cobro, "id_cobro", "body"),
   CuotaController.createCuota,
 );
 
@@ -43,6 +43,7 @@ router.put(
 
 router.patch(
   "/:id/cobrar",
+  validateSchema(updateCuotaSchema),
   validarExistencia(Cuota, "id", "params"),
   CuotaController.cobrarCuota,
 );

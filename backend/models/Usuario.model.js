@@ -1,3 +1,5 @@
+/** @format */
+
 import { DataTypes } from "sequelize";
 import sequelize from "../config/database.js";
 
@@ -20,6 +22,12 @@ export const Usuario = sequelize.define(
     rol: {
       type: DataTypes.ENUM("admin", "odontologo"),
       allowNull: false,
+      validate: {
+        isIn: {
+          args: [["admin", "odontologo"]],
+          msg: "El rol no es un valor permitido dentro del ENUM.",
+        },
+      },
     },
   },
   {

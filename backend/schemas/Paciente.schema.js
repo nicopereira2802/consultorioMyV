@@ -4,6 +4,7 @@ import { z } from "zod";
 
 // Expresión regular que permite letras (A-Z, a-z), acentos, ñ, Ü y espacios
 const regex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/;
+const dniRegex = /^[0-9\s]+$/;
 const domicilioRegex = /^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\s\.,°#\-\/]+$/;
 
 // Fecha de hoy
@@ -53,9 +54,10 @@ export const createPacienteSchema = z.object({
     .min(2, "El dni debe tener al menos 2 caracteres")
     .max(50, "El dni no puede superar los 50 caracteres")
     .regex(
-      regex,
+      dniRegex,
       "El dni no puede contener números ni caracteres especiales como (), [], {}, comillas o comas",
-    ),
+    )
+    .optional(),
 
   fecha_nacimiento: z.coerce
     .date({
@@ -121,7 +123,7 @@ export const updatePacienteSchema = z.object({
     .min(2, "El dni debe tener al menos 2 caracteres")
     .max(50, "El dni no puede superar los 50 caracteres")
     .regex(
-      regex,
+      dniRegex,
       "El dni no puede contener números ni caracteres especiales como (), [], {}, comillas o comas",
     )
     .optional(),

@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 
-const nroAfiliadoRegex = /^[a-zA-Z0-9\/\-]$/;
+const nroAfiliadoRegex = /^[a-zA-Z0-9\/\-]+$/;
 
 export const createPacienteObraSocialSchema = z.object({
   id_paciente: z

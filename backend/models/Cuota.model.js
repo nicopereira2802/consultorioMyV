@@ -43,11 +43,23 @@ export const Cuota = sequelize.define(
     metodo_pago: {
       type: DataTypes.ENUM("Efectivo", "Transferencia", "Tarjeta", "Otro"),
       allowNull: true,
+      validate: {
+        isIn: {
+          args: [["Efectivo", "Transferencia", "Tarjeta", "Otro"]],
+          msg: "El metodo de pago no es un valor permitido dentro del ENUM.",
+        },
+      },
     },
     estado: {
       type: DataTypes.ENUM("Pendiente", "Pagada", "Parcialmente pagada"),
       allowNull: false,
       defaultValue: "Pendiente",
+      validate: {
+        isIn: {
+          args: [["Pendiente", "Pagada", "Parcialmente pagada"]],
+          msg: "El estado no es un valor permitido dentro del ENUM.",
+        },
+      },
     },
     vencida: {
       type: DataTypes.VIRTUAL,

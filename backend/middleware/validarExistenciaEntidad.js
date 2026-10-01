@@ -16,14 +16,14 @@ export const validarExistencia = (Modelo, paramName, location = null) => {
       if (location === "body") id = req.body[paramName];
       else if (location === "params") id = req.params[paramName];
       else id = req.body[paramName] ?? req.params[paramName];
-
+      
       if (!id) {
         return res.status(400).json({
           status: "fail",
           message: `El parámetro '${paramName}' es requerido`,
         });
       }
-
+      
       // 2. Buscar en la BD
       const entidad = await Modelo.findByPk(id);
 

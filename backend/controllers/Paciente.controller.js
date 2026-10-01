@@ -1,7 +1,10 @@
 /** @format */
 
 import { Paciente } from "../models/Paciente.model.js";
-import { validarTelefono } from "../validations/Paciente.validation.js";
+import {
+  validarTelefono,
+  validarDni,
+} from "../validations/Paciente.validation.js";
 import { Op, Sequelize } from "sequelize";
 
 // Obtener todos los pacientes
@@ -12,8 +15,8 @@ export const getAllPacientes = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
     const search = req.query.search || "";
-    const sortField = req.query.sortField || "apellido"; 
-    const sortOrder = req.query.sortOrder || "ASC";       
+    const sortField = req.query.sortField || "apellido";
+    const sortOrder = req.query.sortOrder || "ASC";
     const where = {
       activo: true,
     };
@@ -80,13 +83,23 @@ export const createPaciente = async (req, res) => {
     const { nombre, apellido, fecha_nacimiento, dni, telefono, domicilio } =
       req.body;
 
-    const telefonoDuplicado = validarTelefono(telefono);
+    const telefonoDuplicado = await validarTelefono(telefono);
 
     if (!telefonoDuplicado) {
       return res.status(400).json({
         status: "error",
-        message: "Telefono duplicado. El paciente ya existe",
+        message: "El telefono esta duplicado. El paciente ya existe",
       });
+    }
+
+    if (dni) {
+      const dniDuplicado = await validarDni(dni);
+      if (!dniDuplicado) {
+        return res.status(400).json({
+          status: "error",
+          message: "El dni esta duplicado. El paciente ya existe",
+        });
+      }
     }
 
     const newPaciente = await Paciente.create({
@@ -117,12 +130,22 @@ export const updatePaciente = async (req, res) => {
     const paciente = req.paciente;
 
     if (telefono) {
-      const telefonoDuplicado = validarTelefono(telefono);
+      const telefonoDuplicado = await validarTelefono(telefono, paciente.id_paciente);
 
       if (!telefonoDuplicado) {
         return res.status(400).json({
           status: "error",
           message: "Telefono duplicado. El paciente ya existe",
+        });
+      }
+    }
+
+    if (dni) {
+      const dniDuplicado = await validarDni(dni, paciente.id_paciente);
+      if (!dniDuplicado) {
+        return res.status(400).json({
+          status: "error",
+          message: "El dni esta duplicado. El paciente ya existe",
         });
       }
     }
@@ -161,5 +184,3 @@ export const deletePaciente = async (req, res) => {
     res.status(500).json({ error: "Error al eliminar el paciente" });
   }
 };
-
-

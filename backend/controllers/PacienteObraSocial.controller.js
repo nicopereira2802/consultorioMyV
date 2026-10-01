@@ -5,7 +5,6 @@ import {
   Paciente,
   ObraSocial,
 } from "../models/index.model.js";
-import { validarEntidadUpdate } from "../validations/validarEntidadUpdate.validation.js";
 
 // Obtener todos los pacientes por obra social
 export const getAllPacientesPorObraSocial = async (req, res) => {
@@ -44,7 +43,9 @@ export const getPacientePorObraSocialById = async (req, res) => {
 // Crear un nuevo paciente por obra social
 export const createPacientePorObraSocial = async (req, res) => {
   try {
-    const { id_paciente, id_obra_social, nro_afiliado } = req.body;
+    const { nro_afiliado } = req.body;
+    const id_paciente = req.paciente.id_paciente;
+    const id_obra_social = req.obraSocial.id_obra_social;
 
     const newPacientePorObraSocial = await PacienteObraSocial.create({
       id_paciente,
@@ -72,14 +73,14 @@ export const updatePacientePorObraSocial = async (req, res) => {
     const pacientePorObraSocial = req.pacienteObraSocial;
 
     if (id_paciente || id_obra_social) {
-      const paciente = validarEntidadUpdate(Paciente, id_paciente);
-      const obraSocial = validarEntidadUpdate(ObraSocial, id_obra_social);
+      const paciente = await Paciente.findByPk(id_paciente);
+      const obraSocial = await ObraSocial.findByPk(id_obra_social);
 
       if (!paciente || !obraSocial) {
         return res.status(400).json({
           status: "error",
-          message: "El paciente o la obra social seleccionada no existen."
-        })
+          message: "El paciente o la obra social seleccionada no existen.",
+        });
       }
     }
 

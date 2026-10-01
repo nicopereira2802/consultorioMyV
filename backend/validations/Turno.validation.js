@@ -4,17 +4,9 @@ import { Op } from "sequelize";
 import { Turno, EstadoTurno } from "../models/index.model.js";
 
 export const validarEstadoProgramado = async () => {
-  const estadoProgramado = await EstadoTurno.findOne({
+  const [estadoProgramado, created] = await EstadoTurno.findOrCreate({
     where: { estado: "Programado" },
   });
-
-  if (!estadoProgramado) {
-    const nuevoEstado = await EstadoTurno.create({
-      estado: "Programado",
-    });
-
-    return nuevoEstado;
-  }
 
   return estadoProgramado;
 };
@@ -36,14 +28,9 @@ export const validarEstados = async (id_estado, estadoInicio, estadoFinal) => {
   }
 
   // Buscar o retornar el estado destino
-  const estadoDestino = await EstadoTurno.findOne({
+  const [estadoDestino, created] = await EstadoTurno.findOrCreate({
     where: { estado: estadoFinal },
   });
-
-  if (!estadoDestino) {
-    // Si la tabla catálogo no tiene el estado creado, lo crea (opcional)
-    return await EstadoTurno.create({ estado: estadoFinal });
-  }
 
   return estadoDestino;
 };
@@ -53,18 +40,17 @@ export const validarSolapaminetoHorarios = async (
   fechaFin,
   turnoIdExcluir = null,
 ) => {
-
   const inicio = new Date(fechaInicio);
   const fin = new Date(fechaFin);
 
-  const estadoCancelado = await EstadoTurno.findOne({
+  const [estadoCancelado, created] = await EstadoTurno.findOrCreate({
     where: { estado: "Cancelado" },
   });
 
   // Obtenemos los turnos en conflicto
   const turnoExistente = await Turno.findOne({
     where: {
-      estado: {[Op.ne]: estadoCancelado.id_estado},
+      id_estado: { [Op.ne]: estadoCancelado.id_estado },
       // Condición de solapamiento
       fecha_hora_inicio: { [Op.lt]: fin },
       fecha_hora_fin: { [Op.gt]: inicio },

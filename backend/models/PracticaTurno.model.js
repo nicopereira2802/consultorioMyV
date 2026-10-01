@@ -14,10 +14,12 @@ export const PracticaTurno = sequelize.define(
     },
     id_turno: {
       type: DataTypes.INTEGER,
+      allowNull: false,
       references: { model: Turno, key: "id_turno" },
     },
     id_practica: {
       type: DataTypes.INTEGER,
+      allowNull: false,
       references: { model: Practica, key: "id_practica" },
     },
     id_obra_social: {

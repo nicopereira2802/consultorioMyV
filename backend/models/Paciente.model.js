@@ -1,3 +1,5 @@
+/** @format */
+
 import { DataTypes } from "sequelize";
 import sequelize from "../config/database.js";
 
@@ -22,10 +24,12 @@ export const Paciente = sequelize.define(
       type: DataTypes.STRING,
       allowNull: true,
       unique: true,
+      defaultValue: null,
     },
     fecha_nacimiento: {
       type: DataTypes.DATEONLY,
       allowNull: true,
+      defaultValue: null,
     },
     telefono: {
       type: DataTypes.STRING,
@@ -34,6 +38,7 @@ export const Paciente = sequelize.define(
     domicilio: {
       type: DataTypes.STRING,
       allowNull: true,
+      defaultValue: null,
     },
     activo: {
       type: DataTypes.BOOLEAN,

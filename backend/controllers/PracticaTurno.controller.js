@@ -40,7 +40,9 @@ export const getPracticaTurnoById = async (req, res) => {
 // Crear una nueva práctica de turno
 export const createPracticaTurno = async (req, res) => {
   try {
-    const { id_turno, id_practica, id_obra_social } = req.body;
+    const { id_obra_social } = req.body;
+    const { id_turno } = req.turno;
+    const { id_practica } = req.practica;
 
     if (id_obra_social) {
       const obraSocial = await ObraSocial.findByPk(id_obra_social);
@@ -59,7 +61,7 @@ export const createPracticaTurno = async (req, res) => {
     });
 
     res.status(201).json({
-      stauts: "success",
+      status: "success",
       data: newPracticaTurno,
     });
   } catch (error) {

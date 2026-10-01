@@ -35,10 +35,6 @@ export const createCobroSchema = z.object({
       invalid_type_error: "La cantidad de cuotas debe ser un número",
     })
     .positive("La cantidad de cuotas debe ser mínimo 1"),
-
-  fecha_emision: z.coerce.date({
-    invalid_type_error: "Formato de fecha inválido",
-  }),
 });
 
 export const updateCobroSchema = z.object({
@@ -77,11 +73,5 @@ export const updateCobroSchema = z.object({
       invalid_type_error: "La cantidad de cuotas debe ser un número",
     })
     .positive("La cantidad de cuotas debe ser mínimo 1")
-    .optional(),
-
-  fecha_emision: z.coerce
-    .date({
-      invalid_type_error: "Formato de fecha inválido",
-    })
     .optional(),
 });

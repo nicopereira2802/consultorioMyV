@@ -4,6 +4,7 @@ import { z } from "zod";
 
 // Expresión regular que permite letras (A-Z, a-z), acentos, ñ, Ü y espacios
 const regex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/;
+const rolesValidos = ["admin", "odontologo"];
 
 export const createUsuarioSchema = z.object({
   nombre_usuario: z
@@ -35,15 +36,8 @@ export const createUsuarioSchema = z.object({
     ),
 
   rol: z
-    .enum(["admin", "odontologo"], {
-      errorMap: (issue, ctx) => {
-        if (issue.code === "invalid_enum_value") {
-          return {
-            message: 'El rol debe ser únicamente "admin" o "odontologo"',
-          };
-        }
-        return { message: ctx.defaultError };
-      },
+    .enum(rolesValidos, {
+      errorMap: () => ({ message: "Rol no válido" }).optional(),
     })
     .optional(),
 });
@@ -78,15 +72,8 @@ export const updateUsuarioSchema = z.object({
     ),
 
   rol: z
-    .enum(["admin", "odontologo"], {
-      errorMap: (issue, ctx) => {
-        if (issue.code === "invalid_enum_value") {
-          return {
-            message: 'El rol debe ser únicamente "admin" o "odontologo"',
-          };
-        }
-        return { message: ctx.defaultError };
-      },
+    .enum(rolesValidos, {
+      errorMap: () => ({ message: "Rol no válido" }).optional(),
     })
     .optional(),
 });

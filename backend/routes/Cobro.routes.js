@@ -16,16 +16,22 @@ const router = express.Router();
 
 // Rutas para Cobro
 router.get(
-  "/:id",
-  validarExistencia(Turno, "id", "params"),
+  "/:turnoId/cobros",
+  validarExistencia(Turno, "turnoId", "params"),
   CobroController.getCobroByTurnoId,
+);
+
+router.get(
+  "/:id",
+  validarExistencia(Cobro, "id", "params"),
+  CobroController.getCobroById,
 );
 
 router.post(
   "/",
   validateSchema(createCobroSchema),
-  validarExistencia(Turno, "id", "body"),
-  validarExistencia(Paciente, "id", "body"),
+  validarExistencia(Turno, "id_turno", "body"),
+  validarExistencia(Paciente, "id_paciente", "body"),
   CobroController.createCobro,
 );
 

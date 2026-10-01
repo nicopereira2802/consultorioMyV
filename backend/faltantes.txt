@@ -1,0 +1,18 @@
+Toda la parte de usuario (Validacion, login, token -> bcrypt y jwtoken, etc)
+
+ObraSocialTurno controller y route
+Dejamos como unique el telefono?
+Validaciones de zod de decimales no funcionan
+
+TESTS:
+Usuario --- PENDIENTE PARA CUANDO ESTE TODO (Validacion, login, token, ...)
+
+
+Validar enum asi:
+
+const metodosPagoValidos = ["Efectivo", "Transferencia", "Tarjeta"];
+metodo_pago: z
+    .enum(metodosPagoValidos, {
+      errorMap: () => ({ message: "Método de pago no válido" }),
+    })
+    .optional(),

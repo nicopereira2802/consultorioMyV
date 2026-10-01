@@ -26,6 +26,7 @@ router.get(
   validarExistencia(PacienteObraSocial, "id", "params"),
   PacienteObraSocialController.getPacientePorObraSocialById,
 );
+
 router.post(
   "/",
   validateSchema(createPacienteObraSocialSchema),

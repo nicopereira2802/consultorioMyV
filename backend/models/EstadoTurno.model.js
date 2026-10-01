@@ -21,6 +21,12 @@ export const EstadoTurno = sequelize.define(
       ),
       allowNull: false,
       unique: true,
+      validate: {
+        isIn: {
+          args: [["Programado", "Cancelado", "Atendido", "Inasistente"]],
+          msg: "El estado no es un valor permitido dentro del ENUM.",
+        },
+      },
     },
   },
   {

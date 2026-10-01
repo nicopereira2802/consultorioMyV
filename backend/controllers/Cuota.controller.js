@@ -1,7 +1,6 @@
 /** @format */
 
 import { Cuota, Cobro } from "../models/index.model.js";
-import { validarEntidadUpdate } from "../validations/validarEntidadUpdate.validation.js";
 
 // Obtener una Cuota por cobro ID
 export const getCuotaByCobroId = async (req, res) => {
@@ -79,7 +78,7 @@ export const updateCuota = async (req, res) => {
     const cuota = req.cuota;
 
     if (id_cobro) {
-      const cobro = validarEntidadUpdate(Cobro, id_cobro);
+      const cobro = await Cobro.findByPk(id_cobro);
 
       if (!cobro) {
         res.status(400).json({
@@ -117,7 +116,9 @@ export const deleteCuota = async (req, res) => {
       activo: false,
     });
 
-    res.status(200).json({ message: "Cuota eliminada correctamente" });
+    res
+      .status(200)
+      .json({ status: "success", message: "Cuota eliminada correctamente" });
   } catch (error) {
     console.error("Error al eliminar la cuota:", error);
     res.status(500).json({ error: "Error al eliminar la cuota" });
@@ -133,10 +134,10 @@ export const cobrarCuota = async (req, res) => {
 
     let estado;
 
-    if (monto_cobrado < cuota.monto_cuota) {
-      estado = "Parcialmente pagada";
-    } else if ((monto_cobrado = cuota.monto_cuota)) {
+    if (monto_cobrado === cuota.monto_cuota) {
       estado = "Pagada";
+    } else if (monto_cobrado < cuota.monto_cuota) {
+      estado = "Parcialmente pagada";
     } else {
       res.status(400).json({
         status: "error",
@@ -148,7 +149,7 @@ export const cobrarCuota = async (req, res) => {
       monto_cobrado: monto_cobrado,
       fecha_cobro: fecha_cobro,
       metodo_pago: metodo_pago,
-      esatdo: estado,
+      estado: estado,
     });
 
     res.status(200).json({

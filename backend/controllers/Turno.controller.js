@@ -17,7 +17,11 @@ import {
 export const getAllTurnos = async (req, res) => {
   try {
     const turnos = await Turno.findAll();
-    res.status(200).json(turnos);
+
+    res.status(200).json({
+      status: "success",
+      data: turnos,
+    });
   } catch (error) {
     console.error("Error al obtener los turnos:", error);
     res.status(500).json({ error: "Error al obtener los turnos" });
@@ -49,7 +53,6 @@ export const createTurno = async (req, res) => {
       precio_final,
       notas_consulta,
     } = req.body;
-    console.log(fecha_hora_inicio);
 
     const inicio = new Date(fecha_hora_inicio);
     const fecha_hora_fin = new Date(

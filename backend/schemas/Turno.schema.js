@@ -2,7 +2,6 @@
 
 import { z } from "zod";
 
-const regex = /^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\s]+$/;
 const hoy = new Date();
 
 export const createTurnoSchema = z.object({

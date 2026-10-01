@@ -24,8 +24,8 @@ router.get(
 router.post(
   "/",
   validateSchema(createPracticaTurnoSchema),
-  validarExistencia(Turno, "turno_id", "body"),
-  validarExistencia(Practica, "practica_id", "body"),
+  validarExistencia(Turno, "id_turno", "body"),
+  validarExistencia(Practica, "id_practica", "body"),
   PracticaTurnoController.createPracticaTurno,
 );
 router.put(

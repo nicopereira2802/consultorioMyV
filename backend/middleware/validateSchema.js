@@ -1,3 +1,5 @@
+/** @format */
+
 export const validateSchema = (schema) => (req, res, next) => {
   // safeParse realiza la validación sin lanzar excepciones inesperadas
   const result = schema.safeParse(req.body);
@@ -11,8 +13,8 @@ export const validateSchema = (schema) => (req, res, next) => {
     }, {});
 
     return res.status(400).json({
-      status: 'error',
-      message: 'Error de validación en los datos enviados',
+      status: "error",
+      message: "Error de validación en los datos enviados",
       errors: formattedErrors,
     });
   }
