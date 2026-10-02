@@ -1,0 +1,188 @@
+
+.header-volver-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1.5px solid var(--color-border-card, #e5e9f0);
+  background-color: var(--color-bg-card, #ffffff);
+  gap: 12px;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .header-volver-container {
+    padding: 20px 32px;
+    gap: 20px;
+  }
+}
+
+/* --- Lado Izquierdo: Botón Hamburguesa, Logotipo y Título --- */
+.header-volver-branding {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0; /* Previene desbordes en móviles */
+}
+
+@media (min-width: 768px) {
+  .header-volver-branding {
+    gap: 14px;
+  }
+}
+
+/* Botón Hamburguesa Oficial (> 44x44 px) */
+.header-btn-hamburger {
+  background: none;
+  border: none;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: var(--radius-btn, 12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--color-text-main, #1f2937);
+  transition: background-color 0.18s ease, color 0.18s ease;
+  touch-action: manipulation;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.header-btn-hamburger:hover {
+  background-color: var(--color-bg-subtle, #f8fafc);
+  color: var(--color-primary, #2eb086);
+}
+
+.header-btn-hamburger:active {
+  transform: scale(0.94);
+}
+
+.header-volver-logo-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: var(--radius-pill, 9999px);
+  background-color: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.header-volver-logo-badge img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.header-volver-title {
+  font-size: 1.25rem; /* ~20px en mobile */
+  font-weight: var(--font-weight-bold, 700);
+  color: var(--color-text-main, #1f2937);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.01em;
+}
+
+@media (min-width: 768px) {
+  .header-volver-logo-badge {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+  }
+  
+  .header-volver-title {
+    font-size: 1.5rem; /* ~24px en desktop */
+  }
+}
+
+/* --- Lado Derecho: Acciones (Volver, Confirmar, etc.) --- */
+.header-volver-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 480px) {
+  .header-volver-actions {
+    gap: 8px;
+  }
+}
+
+/* Botón Volver Oficial (Coral) */
+.header-btn-volver {
+  background-color: var(--color-coral, #fa7070);
+  color: var(--color-coral-text, #ffffff);
+  border: none;
+  border-radius: var(--radius-btn, 12px);
+  font-size: 15px;
+  font-weight: var(--font-weight-semibold, 600);
+  min-height: var(--touch-target-min, 44px);
+  padding: 8px 22px;
+  cursor: pointer;
+  transition: background-color 0.18s ease, transform 0.1s ease, box-shadow 0.18s ease;
+  box-shadow: var(--shadow-btn, 0 2px 4px rgba(0, 0, 0, 0.08));
+  touch-action: manipulation;
+}
+
+.header-btn-volver:hover {
+  background-color: var(--color-coral-hover, #e55a5a);
+}
+
+.header-btn-volver:active {
+  transform: scale(0.97);
+}
+
+@media (max-width: 480px) {
+  .header-btn-volver {
+    padding: 8px 16px;
+    font-size: 14px;
+  }
+}
+
+/* ==========================================================================
+   Adaptación Mobile (<= 768px): Navegación via Bottom Navigation Bar
+   ========================================================================== */
+@media (max-width: 768px) {
+  /* Ocultar botón Volver en móviles */
+  .btn-volver,
+  .header-btn-volver {
+    display: none !important;
+  }
+
+  /* Ocultar menú hamburguesa superior izquierdo en móviles */
+  .btn-menu-lateral,
+  .menu-hamburguesa,
+  .header-btn-hamburger {
+    display: none !important;
+  }
+
+  /* Distribución amplia y holgada del branding */
+  .header-volver-container {
+    padding: 14px 18px;
+    justify-content: flex-start;
+  }
+
+  .header-volver-branding {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .header-volver-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: -0.01em;
+  }
+}

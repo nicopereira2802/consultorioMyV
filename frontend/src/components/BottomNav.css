@@ -1,0 +1,119 @@
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  background-color: #2eb086;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  box-sizing: border-box;
+
+  /* Altura fija + soporte para la barra de gestos de iPhone/Android */
+  height: calc(64px + env(safe-area-inset-bottom, 0px));
+  padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px)) 12px;
+
+  z-index: 1000;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.08);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Ocultar en pantallas de escritorio (Desktop / Tablet horizontal) */
+@media (min-width: 769px) {
+  .bottom-nav,
+  .bottom-nav-toast {
+    display: none !important;
+  }
+}
+
+/* Botón contenedor del ícono */
+.bottom-nav-item,
+.bottom-nav button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  height: 48px;
+  width: 48px;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Normalización del tamaño de los íconos/SVG */
+.bottom-nav-item svg,
+.bottom-nav button svg,
+.bottom-nav-item span,
+.bottom-nav-icon-container svg {
+  width: 24px;
+  height: 24px;
+  display: block;
+  object-fit: contain;
+  stroke: #ffffff;
+}
+
+/* Contenedor del icono con soporte de estado activo */
+.bottom-nav-icon-container {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.18s ease, transform 0.12s ease;
+  color: #ffffff;
+}
+
+/* Estado activo: recuadro redondeado verde oscuro idéntico a las capturas */
+.bottom-nav-item.active .bottom-nav-icon-container {
+  background-color: rgba(0, 0, 0, 0.18);
+}
+
+/* Feedback táctil al presionar */
+.bottom-nav-item:active .bottom-nav-icon-container {
+  transform: scale(0.92);
+}
+
+/* Toast flotante informativo sobre la barra */
+.bottom-nav-toast {
+  position: fixed;
+  bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1050;
+  background-color: rgba(15, 23, 42, 0.94);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #ffffff;
+  padding: 10px 18px;
+  border-radius: 24px;
+  font-size: 13.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  max-width: 90vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  pointer-events: none;
+  animation: bottomNavToastIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes bottomNavToastIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 10px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}

@@ -1,0 +1,300 @@
+
+.modal-paciente-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 1100;
+  animation: modalPacienteFadeIn 0.2s ease-out;
+}
+
+@keyframes modalPacienteFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-paciente-card {
+  background-color: #ffffff;
+  border-radius: var(--radius-card, 20px);
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: modalPacienteScaleUp 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalPacienteScaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Cabecera del Modal */
+.modal-paciente-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px 14px 24px;
+  border-bottom: 1.5px solid var(--color-border-card, #e5e9f0);
+}
+
+.modal-paciente-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.modal-paciente-icon-badge {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #e8f7f1;
+  color: var(--color-primary, #2eb086);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.modal-paciente-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text-main, #1f2937);
+  margin: 0;
+  line-height: 1.25;
+}
+
+.modal-paciente-subtitle {
+  font-size: 0.85rem;
+  color: var(--color-text-muted, #6b7280);
+  margin-top: 2px;
+  margin-bottom: 0;
+}
+
+.modal-paciente-close-btn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: var(--color-text-muted, #6b7280);
+  width: 40px;
+  height: 40px;
+  min-height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  touch-action: manipulation;
+}
+
+.modal-paciente-close-btn:hover:not(:disabled) {
+  background-color: #f1f5f9;
+  color: var(--color-text-main, #1f2937);
+}
+
+/* Formulario */
+.modal-paciente-form {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+
+.modal-paciente-body {
+  padding: 20px 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Banner sobrio para ficha de alta rápida incompleta */
+.modal-paciente-banner-incompleto {
+  background-color: #f1f5f9;
+  border-left: 3px solid #64748b;
+  padding: 10px 14px;
+  border-radius: 4px 8px 8px 4px;
+  color: #334155;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  font-weight: 500;
+}
+
+/* Banner de Alerta / Error */
+.modal-paciente-alerta-error {
+  padding: 12px 14px;
+  background-color: #fef2f2;
+  border: 1.5px solid #fca5a5;
+  border-radius: var(--radius-subcard, 12px);
+  color: #b91c1c;
+  font-size: 13.5px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  line-height: 1.4;
+  box-shadow: 0 1px 3px rgba(239, 68, 68, 0.1);
+}
+
+.modal-paciente-alerta-error svg {
+  flex-shrink: 0;
+  color: #ef4444;
+}
+
+/* Filas y Campos */
+.modal-paciente-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+@media (max-width: 520px) {
+  .modal-paciente-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.modal-paciente-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.modal-paciente-field label {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-text-main, #1f2937);
+}
+
+.asterisco-obligatorio,
+.campo-requerido {
+  color: #ef4444; /* Rojo sobrio */
+  margin-left: 2px;
+  font-weight: bold;
+}
+
+.modal-paciente-input,
+.modal-paciente-select {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 14px;
+  font-size: 16px !important; /* Previene autozoom en iOS */
+  border: 1.5px solid var(--color-border-input, #cfd7df);
+  border-radius: var(--radius-input, 12px);
+  background-color: #ffffff;
+  color: var(--color-text-main, #1f2937);
+  outline: none;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  font-family: inherit;
+}
+
+.modal-paciente-input:focus,
+.modal-paciente-select:focus {
+  border-color: var(--color-primary, #2eb086);
+  box-shadow: 0 0 0 3px rgba(46, 176, 134, 0.15);
+}
+
+.modal-paciente-input.is-invalid,
+.modal-paciente-select.is-invalid {
+  border-color: #ef4444;
+  background-color: #fffaf0;
+}
+
+.modal-paciente-input:disabled,
+.modal-paciente-select:disabled {
+  background-color: #f8fafc;
+  color: #64748b;
+  cursor: not-allowed;
+  border-color: #e2e8f0;
+}
+
+.campo-error-msg {
+  font-size: 12px;
+  color: #ef4444;
+  font-weight: 500;
+}
+
+/* Acciones en la base del Modal */
+.modal-paciente-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 24px 20px 24px;
+  border-top: 1.5px solid var(--color-border-card, #e5e9f0);
+  background-color: var(--color-bg-subtle, #f8fafc);
+}
+
+.btn-modal-paciente-cancelar {
+  background-color: #ffffff !important;
+  border: 1.5px solid #d1d5db !important;
+  color: #374151 !important;
+  border-radius: var(--radius-btn, 12px);
+  min-height: 44px;
+  height: 44px;
+  padding: 10px 20px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  touch-action: manipulation;
+}
+
+.btn-modal-paciente-cancelar:hover:not(:disabled) {
+  background-color: #f3f4f6 !important;
+  color: #111827 !important;
+  border-color: #9ca3af !important;
+}
+
+.btn-modal-paciente-confirmar {
+  background-color: #2eb086 !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: var(--radius-btn, 12px);
+  min-height: 44px;
+  height: 44px;
+  padding: 10px 24px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(46, 176, 134, 0.25);
+  transition: all 0.18s ease;
+  touch-action: manipulation;
+}
+
+.btn-modal-paciente-confirmar:hover:not(:disabled) {
+  background-color: #259571 !important;
+  box-shadow: 0 4px 12px rgba(46, 176, 134, 0.35);
+  transform: translateY(-1px);
+}
+
+.btn-modal-paciente-confirmar:disabled,
+.btn-modal-paciente-cancelar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}

@@ -1,0 +1,80 @@
+
+
+:root {
+  /* --- Paleta Primaria Odontológica --- */
+  --color-primary: #2eb086;           /* Verde menta oficial (Disponible, acciones principales) */
+  --color-primary-hover: #259571;     /* Verde hover/activo */
+  --color-primary-light: #e8f7f1;     /* Fondo suave verde */
+  --color-primary-border: #24916e;
+
+  /* --- Botón Confirmar / Éxito --- */
+  --color-confirm: #98e2a3;           /* Verde pastel suave del botón Confirmar */
+  --color-confirm-hover: #83d690;
+  --color-confirm-text: #175429;      /* Texto de alto contraste sobre verde claro */
+
+  /* --- Azul Clínico / Asignado / Paciente --- */
+  --color-assigned: #2a79c3;          /* Azul de turnos asignados ("Nombre Apellido", "Detalle...") */
+  --color-assigned-hover: #2064a3;
+  --color-assigned-light: #eaf2fb;
+  --color-assigned-border: #1e5e99;
+
+  /* --- Acciones Secundarias (Detalle Turno) --- */
+  --color-teal-action: #2e9f97;       /* Botón "Registrar inasistencia" */
+  --color-teal-action-hover: #24817a;
+  --color-slate-action: #3a96a5;      /* Botón "Cancelar" en detalle */
+  --color-slate-action-hover: #2f7a87;
+
+  /* --- Coral / Rojo Alerta / Crítico --- */
+  --color-coral: #fa7070;             /* Botón "Volver" oficial y estados críticos */
+  --color-coral-hover: #e55a5a;
+  --color-coral-light: #feefef;
+  --color-coral-text: #ffffff;
+
+  /* --- Amarillo / Ocupado / Parcial --- */
+  --color-warning: #f5a623;           /* Días con cupos limitados en calendario */
+  --color-warning-light: #fef7ec;
+  --color-warning-text: #8a5800;
+
+  /* --- Neutros y Estados Inactivos --- */
+  --color-bg-app: #3f444d;            /* Fondo gris sobrio / antracita (image_787ade.png) */
+  --color-bg-card: #ffffff;           /* Fondo de contenedores y tarjetas */
+  --color-bg-subtle: #f8fafc;         /* Fondo gris perla de tarjeta de turno seleccionado */
+  --color-border-card: #e5e9f0;        /* Borde sutil exterior */
+  --color-border-input: #cfd7df;       /* Borde de inputs y campos */
+  --color-border-input-focus: #2eb086;
+  
+  --color-inactive-day: #e2e8f0;      /* Celdas sábado y domingo / no laborable */
+  --color-inactive-text: #8b95a5;
+
+  /* --- Textos y Tipografía --- */
+  --color-text-main: #1f2937;         /* Texto principal */
+  --color-text-muted: #6b7280;        /* Textos secundarios / etiquetas */
+  --color-text-light: #9ca3af;        /* Placeholders ("...") */
+  --color-text-white: #ffffff;
+
+  --font-family-base: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* --- Radios de Borde (Fieles al Diseño redondeado) --- */
+  --radius-card: 20px;                /* Gran tarjeta contenedora blanca */
+  --radius-subcard: 16px;             /* Tarjeta interior (Turno seleccionado) */
+  --radius-btn: 12px;                 /* Botones principales rectangulares redondeados */
+  --radius-pill: 9999px;              /* Botones circulares / badges */
+  --radius-input: 10px;               /* Inputs de texto y selectores */
+  --radius-badge: 8px;                /* Bloques de turnos en calendario */
+
+  /* --- Sombras --- */
+  --shadow-card: 0 10px 25px -5px rgba(0, 0, 0, 0.35), 0 8px 10px -6px rgba(0, 0, 0, 0.25);
+  --shadow-subtle: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-btn: 0 2px 4px rgba(0, 0, 0, 0.08);
+
+  /* --- Métricas Táctiles y PWA (Mobile-First) --- */
+  --touch-target-min: 44px;           /* Requisito táctil mínimo WCAG / Apple HIG */
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
+}
