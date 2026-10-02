@@ -64,7 +64,7 @@ export const validarSolapaminetoHorarios = async (
   // Obtenemos los turnos en conflicto
   const turnoExistente = await Turno.findOne({
     where: {
-      estado: {[Op.ne]: estadoCancelado.id_estado},
+      id_estado: {[Op.ne]: estadoCancelado.id_estado},
       // Condición de solapamiento
       fecha_hora_inicio: { [Op.lt]: fin },
       fecha_hora_fin: { [Op.gt]: inicio },

@@ -1,17 +1,12 @@
 /** @format */
 
+import { Op } from "sequelize";
 import {
   PacienteObraSocial,
   Paciente,
   ObraSocial,
 } from "../models/index.model.js";
 import { validarEntidadUpdate } from "../validations/validarEntidadUpdate.validation.js";
-
-// Obtener todos los pacientes por obra social
-import { Op } from "sequelize";
-import { PacienteObraSocial } from "../models/PacienteObraSocial.model.js";
-import { Paciente, ObraSocial } from "../models/index.model.js";
-
 // Obtener todos los pacientes por obra social con paginación y orden dinámico
 export const getAllPacientesPorObraSocial = async (req, res) => {
   try {
@@ -24,7 +19,6 @@ export const getAllPacientesPorObraSocial = async (req, res) => {
 
     const where = {};
 
-    // Filtros ?id_paciente=3 o ?id_obra_social=1
     if (req.query.id_paciente) {
       where.id_paciente = req.query.id_paciente;
     }
@@ -125,18 +119,6 @@ export const updatePacientePorObraSocial = async (req, res) => {
     const { id_paciente, id_obra_social, nro_afiliado } = req.body;
 
     const pacientePorObraSocial = req.pacienteObraSocial;
-
-    if (id_paciente || id_obra_social) {
-      const paciente = validarEntidadUpdate(Paciente, id_paciente);
-      const obraSocial = validarEntidadUpdate(ObraSocial, id_obra_social);
-
-      if (!paciente || !obraSocial) {
-        return res.status(400).json({
-          status: "error",
-          message: "El paciente o la obra social seleccionada no existen."
-        })
-      }
-    }
 
     await pacientePorObraSocial.update({
       id_paciente: id_paciente || pacientePorObraSocial.id_paciente,
