@@ -20,9 +20,9 @@ const formatTime = (dateStr) => {
 
 const ESTADOS_MAP = {
   1: 'Programado',
-  2: 'Cancelado',
-  3: 'Atendido',
-  4: 'Inasistente',
+  3: 'Cancelado',
+  4: 'Atendido',
+  5: 'Inasistente',
 };
 
 export default function TurnoRegistration({
