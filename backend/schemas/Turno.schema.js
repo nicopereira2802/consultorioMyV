@@ -105,4 +105,9 @@ export const updateTurnoSchema = z.object({
     .string({ invalid_type_error: "La observacion debe ser un texto" })
     .trim()
     .optional(),
+
+  notas_atencion: z
+    .string({ invalid_type_error: "La observacion de atencion debe ser un texto" })
+    .trim()
+    .optional(),
 });

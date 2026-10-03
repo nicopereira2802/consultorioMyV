@@ -39,11 +39,11 @@ INSERT INTO practica (id_practica, codigo_nomenclador, nombre_nomenclador, nombr
 (4, '05.01', 'Extracción Simple', 'Extracción dental', 'Cirugía', 30000.00, TRUE),
 (5, '08.01', 'Tratamiento de Conducto Unirradicular', 'Endodoncia simple', 'Endodoncia', 55000.00, TRUE);
 
-INSERT INTO turno (id_turno, id_paciente, id_estado, fecha_hora_inicio, fecha_hora_fin, precio_final, notas_consulta) VALUES
-(1, 1, 1, '2026-09-20 09:00:00', '2026-09-20 09:40:00', 15000.00, 'Primera consulta de diagnóstico.'),
-(2, 2, 4, '2026-09-15 10:30:00', '2026-09-15 11:15:00', 25000.00, 'Limpieza completada sin complicaciones.'),
-(3, 3, 3, '2026-09-16 14:00:00', '2026-09-16 14:30:00', 0.00, 'Avisó que no puede asistir por trabajo.'),
-(4, 4, 1, '2026-09-21 16:00:00', '2026-09-21 17:00:00', 32000.00, 'Control y posible restauración pieza 16.');
+INSERT INTO turnos (id_turno, id_paciente, id_estado, fecha_hora_inicio, fecha_hora_fin, precio_final, notas_consulta, notas_atencion) VALUES
+(1, 1, 1, '2026-09-20 09:00:00', '2026-09-20 09:40:00', 15000.00, 'Primera consulta de diagnóstico.', 'Sin complicaciones'),
+(2, 2, 4, '2026-09-15 10:30:00', '2026-09-15 11:15:00', 25000.00, 'Limpieza completada sin complicaciones.', 'Queja de paciente'),
+(3, 3, 3, '2026-09-16 14:00:00', '2026-09-16 14:30:00', 0.00, 'Avisó que no puede asistir por trabajo.', 'Sin complicaciones'),
+(4, 4, 1, '2026-09-21 16:00:00', '2026-09-21 17:00:00', 32000.00, 'Control y posible restauración pieza 16.', 'No se realizó la practica solicitada.');
 
 INSERT INTO practica_turno (id_turno, id_practica) VALUES
 (1, 1),

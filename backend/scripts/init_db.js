@@ -27,8 +27,18 @@ async function initDB() {
       multipleStatements: true
     });
 
-    const sqlPath = path.join(__dirname, '../database/init_db.sql');
+    /* Sincroniza y recrea las tablas según los modelos (agrega notas_atencion, id_obra_social, etc.)
     
+        const dbName = process.env.DB_NAME || 'consultorio_myv';
+        await connection.query(`CREATE DATABASE IF NOT EXISTS \`${dbName}\`;`);
+    
+        const { default: sequelize } = await import('../config/database.js');
+        await import('../models/index.model.js');
+        console.log('Recreando tablas según los modelos...');
+        await sequelize.sync({ force: true });
+    */
+    const sqlPath = path.join(__dirname, '../database/init_db.sql');
+
     if (!fs.existsSync(sqlPath)) {
       throw new Error(`No se encontró el archivo SQL en: ${sqlPath}`);
     }
@@ -38,12 +48,20 @@ async function initDB() {
     console.log('Ejecutando database/init_db.sql...');
     await connection.query(sqlScript);
 
-    console.log('¡Base de datos consultorio_myv inicializada y cargada con éxito!');
+    console.log(`¡Base de datos ${dbName} inicializada y cargada con éxito!`);
   } catch (error) {
     console.error('Error al inicializar la base de datos:', error.message);
     process.exit(1);
   } finally {
     if (connection) await connection.end();
+
+    /* Cierra la conexión con la base de datos
+    try {
+      const { default: sequelize } = await import('../config/database.js');
+      await sequelize.close();
+    } catch (_) {}
+     */
+
   }
 }
 

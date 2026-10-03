@@ -42,6 +42,10 @@ export const Turno = sequelize.define(
       type: DataTypes.STRING,
       allowNull: true,
     },
+    notas_atencion: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
   },
   {
     tableName: "turnos",

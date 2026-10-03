@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Menu, Plus, Clock, User, Phone, FileText, DollarSign, X, AlertCircle, CheckCircle, Ban } from 'lucide-react';
+import { Menu, Plus, Clock, User, Phone, FileText, DollarSign, X, AlertCircle, CheckCircle, Ban, CheckCircle2 } from 'lucide-react';
 import DentalLogo from '../assets/DentalLogo';
 import { api, extractDataArray, extractErrorMessage } from '../services/api';
+import AtencionTurno from './AtencionTurno';
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '-';
@@ -34,8 +35,10 @@ export default function CalendarView({
   const [turnosList, setTurnosList] = useState(turnos);
   const [pacientesList, setPacientesList] = useState([]);
   const [selectedEventForDetail, setSelectedEventForDetail] = useState(null);
+  const [turnoParaAtender, setTurnoParaAtender] = useState(null);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [statusActionMessage, setStatusActionMessage] = useState('');
+  const [successToast, setSuccessToast] = useState('');
 
   const goToRegistrarTurno = onNavigateToRegistrarTurno || (() => navigate('/turnos/nuevo'));
 
@@ -172,13 +175,12 @@ export default function CalendarView({
                         {pacienteNombre}
                       </td>
                       <td className="py-3.5 px-4">
-                        <span className={`inline-block text-xs px-2.5 py-0.5 rounded-full font-semibold ${
-                          estado === 'Atendido' ? 'bg-blue-100 text-blue-800' :
-                          estado === 'Cancelado' ? 'bg-red-100 text-red-800' :
-                          estado === 'Inasistente' ? 'bg-gray-100 text-gray-800' :
-                          estado === 'Reprogramado' ? 'bg-amber-100 text-amber-800' :
-                          'bg-emerald-100 text-emerald-800'
-                        }`}>
+                        <span className={`inline-block text-xs px-2.5 py-0.5 rounded-full font-semibold ${estado === 'Atendido' ? 'bg-blue-100 text-blue-800' :
+                            estado === 'Cancelado' ? 'bg-red-100 text-red-800' :
+                              estado === 'Inasistente' ? 'bg-gray-100 text-gray-800' :
+                                estado === 'Reprogramado' ? 'bg-amber-100 text-amber-800' :
+                                  'bg-emerald-100 text-emerald-800'
+                          }`}>
                           {estado}
                         </span>
                       </td>
@@ -275,13 +277,12 @@ export default function CalendarView({
 
               <div className="flex items-center gap-2 text-sm text-gray-700">
                 <span className="font-semibold text-gray-700">Estado:</span>
-                <span className={`inline-block text-xs px-2.5 py-0.5 rounded-full font-semibold ${
-                  selectedEventForDetail.EstadoTurno?.estado === 'Atendido' ? 'bg-blue-100 text-blue-800' :
-                  selectedEventForDetail.EstadoTurno?.estado === 'Cancelado' ? 'bg-red-100 text-red-800' :
-                  selectedEventForDetail.EstadoTurno?.estado === 'Inasistente' ? 'bg-gray-100 text-gray-800' :
-                  selectedEventForDetail.EstadoTurno?.estado === 'Reprogramado' ? 'bg-amber-100 text-amber-800' :
-                  'bg-emerald-100 text-emerald-800'
-                }`}>
+                <span className={`inline-block text-xs px-2.5 py-0.5 rounded-full font-semibold ${selectedEventForDetail.EstadoTurno?.estado === 'Atendido' ? 'bg-blue-100 text-blue-800' :
+                    selectedEventForDetail.EstadoTurno?.estado === 'Cancelado' ? 'bg-red-100 text-red-800' :
+                      selectedEventForDetail.EstadoTurno?.estado === 'Inasistente' ? 'bg-gray-100 text-gray-800' :
+                        selectedEventForDetail.EstadoTurno?.estado === 'Reprogramado' ? 'bg-amber-100 text-amber-800' :
+                          'bg-emerald-100 text-emerald-800'
+                  }`}>
                   {selectedEventForDetail.EstadoTurno?.estado || 'Programado'}
                 </span>
               </div>
@@ -307,8 +308,12 @@ export default function CalendarView({
                 <button
                   type="button"
                   disabled={isUpdatingStatus}
-                  onClick={() => handleCambiarEstado(selectedEventForDetail.id_turno, 'atender')}
-                  className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow-2xs transition-colors cursor-pointer disabled:opacity-50"
+                  onClick={() => {
+                    const turnoSeleccionado = selectedEventForDetail;
+                    setSelectedEventForDetail(null);
+                    setTurnoParaAtender(turnoSeleccionado);
+                  }}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow-2xs transition-colors cursor-pointer disabled:opacity-50"
                 >
                   <CheckCircle className="w-3.5 h-3.5" />
                   <span>Marcar Atendido</span>
@@ -334,6 +339,29 @@ export default function CalendarView({
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Modal / Componente de Atención de Turno */}
+      {turnoParaAtender && (
+        <AtencionTurno
+          turno={turnoParaAtender}
+          paciente={turnoParaAtender.Paciente || pacientesMap[turnoParaAtender.id_paciente]}
+          onClose={() => setTurnoParaAtender(null)}
+          onSuccess={({ message }) => {
+            setTurnoParaAtender(null);
+            loadData();
+            setSuccessToast(message);
+            setTimeout(() => setSuccessToast(''), 4500);
+          }}
+        />
+      )}
+
+      {/* Toast de Éxito */}
+      {successToast && (
+        <div className="fixed top-6 right-6 z-50 flex items-center gap-2.5 bg-emerald-600 text-white px-5 py-3 rounded-xl shadow-xl font-medium text-sm animate-in slide-in-from-top-4 duration-200">
+          <CheckCircle2 className="w-5 h-5 text-emerald-200" />
+          <span>{successToast}</span>
         </div>
       )}
     </div>
