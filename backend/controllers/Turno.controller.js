@@ -1,6 +1,7 @@
 /** @format */
 
 import sequelize from "../config/database.js";
+import { Op } from "sequelize";
 import {
   Turno,
   HistorialEstadoTurno,

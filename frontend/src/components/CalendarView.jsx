@@ -36,6 +36,7 @@ export default function CalendarView({
   const [selectedEventForDetail, setSelectedEventForDetail] = useState(null);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [statusActionMessage, setStatusActionMessage] = useState('');
+  const [motivoCancelacion, setMotivoCancelacion] = useState('');
 
   const goToRegistrarTurno = onNavigateToRegistrarTurno || (() => navigate('/turnos/nuevo'));
 
@@ -72,7 +73,9 @@ export default function CalendarView({
     setStatusActionMessage('');
     try {
       if (accion === 'cancelar') {
-        await api.patch(`/turnos/${idTurno}/cancelar`);
+        await api.patch(`/turnos/${idTurno}/cancelar`, {
+        notas_consulta: motivoCancelacion.trim() || 'Turno cancelado por el profesional'
+      });
       } else if (accion === 'atender') {
         await api.patch(`/turnos/${idTurno}/atender`, {
           notas_consulta: 'Atención completada',
@@ -83,6 +86,7 @@ export default function CalendarView({
       }
       loadData();
       setSelectedEventForDetail(null);
+      setMotivoCancelacion('');
     } catch (err) {
       setStatusActionMessage(extractErrorMessage(err, 'No se pudo actualizar el estado del turno'));
     } finally {
