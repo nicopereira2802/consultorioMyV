@@ -1,21 +1,18 @@
-/** @format */
-
 import sequelize from "../config/database.js";
 import { Op } from "sequelize";
 import {
   Turno,
   HistorialEstadoTurno,
   PracticaTurno,
+  Practica,    
   EstadoTurno,
-  
 } from "../models/index.model.js";
 import {
   validarEstadoProgramado,
-  validarEstados,
   validarSolapaminetoHorarios,
 } from "../validations/Turno.validation.js";
+import { obtenerEstadoTurno } from "../states/TurnoState.js"; 
 
-// Obtener todos los turnos
 export const getAllTurnos = async (req, res) => {
   try {
     const page = parseInt(req.query.page, 10) || 1;
@@ -129,7 +126,7 @@ export const createTurno = async (req, res) => {
           id_turno: nuevoTurno.id_turno,
           id_estado: estado.id_estado,
           fecha_hora_cambio: new Date(),
-          descripcion: "Turno programado",
+          descripcion: notas_consulta || "Turno programado inicialmente",
         },
         { transaction: t },
       );
@@ -205,40 +202,15 @@ export const updateTurno = async (req, res) => {
 export const turnoAtendido = async (req, res) => {
   try {
     const { notas_consulta, practicas_realizadas } = req.body;
-
     const turno = req.turno;
 
-    const estado = await validarEstados(
-      turno.id_estado,
-      "Programado",
-      "Atendido",
-    );
-
-    if (!estado) {
-      return res.status(400).json({
-        error:
-          "El turno debe estar programado para poder marcarlo como atendido.",
-      });
-    }
-
     const result = await sequelize.transaction(async (t) => {
-      await turno.update(
-        {
-          id_estado: estado.id_estado,
-          notas_consulta: notas_consulta || null,
-        },
-        { transaction: t },
-      );
-
-      // Guardar historial
-      await HistorialEstadoTurno.create(
-        {
-          id_turno: turno.id_turno,
-          id_estado: estado.id_estado,
-          fecha_hora_cambio: new Date(),
-          descripcion: "Turno atendido",
-        },
-        { transaction: t },
+      // Obtener la instancia del estado actual
+      const estadoActual = await obtenerEstadoTurno(turno.id_estado, t);
+      await estadoActual.atender(
+        turno,
+        { observacion: notas_consulta, practicas_realizadas },
+        t
       );
 
       // Guardar las prácticas en la tabla intermedia
@@ -249,7 +221,6 @@ export const turnoAtendido = async (req, res) => {
       ) {
         const idsUnicos = [...new Set(practicas_realizadas)];
 
-        // 2. Verificar la existencia de TODAS las prácticas en UNA sola consulta
         const practicasEncontradas = await Practica.findAll({
           where: {
             id_practica: { [Op.in]: idsUnicos },
@@ -257,15 +228,10 @@ export const turnoAtendido = async (req, res) => {
           transaction: t,
         });
 
-        // 3. Comparar la cantidad hallada con la cantidad solicitada
         if (practicasEncontradas.length !== idsUnicos.length) {
-          console.error("Una o más prácticas especificadas no existen.", error);
-          res
-            .status(400)
-            .json({ error: "Una o más prácticas especificadas no existen" });
+          throw new Error("Una o más prácticas especificadas no existen.");
         }
 
-        // 4. Mapear e insertar en lote (bulkCreate)
         const registrosPracticas = idsUnicos.map((id_practica) => ({
           id_turno: turno.id_turno,
           id_practica,
@@ -283,51 +249,19 @@ export const turnoAtendido = async (req, res) => {
     });
   } catch (error) {
     console.error("Error al finalizar la atención:", error);
-    res.status(500).json({ error: "Error interno al registrar la atención" });
+    res.status(400).json({ error: error.message });
   }
 };
 
-// Cambiar estado del turno
+// Cambiar estado del turno a Cancelado
 export const turnoCancelado = async (req, res) => {
   try {
     const turno = req.turno;
     const { notas_consulta } = req.body;
 
-    const estado = await validarEstados(
-      turno.id_estado,
-      ["Programado", "Inasistente"],
-      "Cancelado",
-    );
-
-    if (!estado) {
-      return res.status(400).json({
-        error:
-          "El turno debe estar programado o inasistente para poder cancelarlo.",
-      });
-    }
-
     const result = await sequelize.transaction(async (t) => {
-      await turno.update(
-        {
-          id_estado: estado.id_estado,
-          notas_consulta: notas_consulta,
-        },
-        { transaction: t },
-      );
-
-      // Guardar historial
-      await HistorialEstadoTurno.create(
-        {
-          id_turno: turno.id_turno,
-          id_estado: estado.id_estado,
-          fecha_hora_cambio: new Date(),
-          descripcion: "Turno cancelado",
-        },
-        { transaction: t },
-      );
-
-      // Guardar las prácticas en la tabla intermedia
-
+      const estadoActual = await obtenerEstadoTurno(turno.id_estado, t);
+      await estadoActual.cancelar(turno, notas_consulta, t);
       return turno;
     });
 
@@ -336,49 +270,23 @@ export const turnoCancelado = async (req, res) => {
       data: result,
     });
   } catch (error) {
-    console.error("Error al actualizar estado:", error);
-    res.status(500).json({ error: "Error interno al actualizar el estado" });
+    console.error("Error al cancelar turno:", error);
+    res.status(400).json({ error: error.message });
   }
 };
 
 export const turnoInasistido = async (req, res) => {
   try {
     const turno = req.turno;
-
-    const estado = await validarEstados(
-      turno.id_estado,
-      "Programado",
-      "Inasistente",
-    );
-
-    if (!estado) {
-      return res.status(400).json({
-        error:
-          "El turno debe estar programado para poder marcarlo como inasistente.",
-      });
-    }
+    const { notas_consulta } = req.body;
 
     const result = await sequelize.transaction(async (t) => {
-      await turno.update(
-        {
-          id_estado: estado.id_estado,
-        },
-        { transaction: t },
+      const estadoActual = await obtenerEstadoTurno(turno.id_estado, t);
+      await estadoActual.marcarInasistente(
+        turno,
+        notas_consulta || "El profesional constató la inasistencia del paciente.",
+        t
       );
-
-      // Guardar historial
-      await HistorialEstadoTurno.create(
-        {
-          id_turno: turno.id_turno,
-          id_estado: estado.id_estado,
-          fecha_hora_cambio: new Date(),
-          descripcion: "Turno cancelado",
-        },
-        { transaction: t },
-      );
-
-      // Guardar las prácticas en la tabla intermedia
-
       return turno;
     });
 
@@ -387,33 +295,22 @@ export const turnoInasistido = async (req, res) => {
       data: result,
     });
   } catch (error) {
-    console.error("Error al actualizar estado:", error);
-    res.status(500).json({ error: "Error interno al actualizar el estado" });
+    console.error("Error al marcar inasistencia:", error);
+    res.status(400).json({ error: error.message });
   }
 };
 
+// DEFINIR POLITICA DEL REPROGRAMADO
+/*
 export const turnoReprogramado = async (req, res) => {
   try {
     const turno = req.turno;
-    const { fecha_hora_inicio, duracion_minutos } = req.body;
+    const { fecha_hora_inicio, duracion_minutos, notas_consulta } = req.body;
 
     const inicio = new Date(fecha_hora_inicio);
     const fecha_hora_fin = new Date(
       inicio.getTime() + duracion_minutos * 60000,
     );
-
-    const estado = await validarEstados(
-      turno.id_estado,
-      ["Inasistente", "Cancelado"],
-      "Programado",
-    );
-
-    if (!estado) {
-      return res.status(400).json({
-        error:
-          "El turno debe estar inasistente o cancelado para poder marcarlo como programado.",
-      });
-    }
 
     const haySolapamiento = await validarSolapaminetoHorarios(
       fecha_hora_inicio,
@@ -429,27 +326,18 @@ export const turnoReprogramado = async (req, res) => {
     }
 
     const result = await sequelize.transaction(async (t) => {
-      await turno.update(
-        {
-          fecha_hora_inicio: fecha_hora_inicio,
-          fecha_hora_fin: fecha_hora_fin,
-          id_estado: estado.id_estado,
-        },
-        { transaction: t },
-      );
+      const estadoActual = await obtenerEstadoTurno(turno.id_estado, t);
 
-      // Guardar historial
-      await HistorialEstadoTurno.create(
+      // Si el turno estaba Cancelado, Inasistente o Atendido, lanzará error aquí
+      await estadoActual.reprogramar(
+        turno,
         {
-          id_turno: turno.id_turno,
-          id_estado: estado.id_estado,
-          fecha_hora_cambio: new Date(),
-          descripcion: "Turno reprogramado",
+          fecha_hora_inicio,
+          fecha_hora_fin,
+          observacion: notas_consulta || "Turno reprogramado a nueva fecha/hora.",
         },
-        { transaction: t },
+        t,
       );
-
-      // Guardar las prácticas en la tabla intermedia
 
       return turno;
     });
@@ -459,10 +347,12 @@ export const turnoReprogramado = async (req, res) => {
       data: result,
     });
   } catch (error) {
-    console.error("Error al actualizar estado:", error);
-    res.status(500).json({ error: "Error interno al actualizar el estado" });
+    console.error("Error al reprogramar el turno:", error);
+    res.status(400).json({ error: error.message });
   }
 };
+
+*/
 
 // Eliminar un turno existente
 export const deleteTurno = async (req, res) => {

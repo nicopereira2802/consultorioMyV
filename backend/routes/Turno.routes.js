@@ -5,6 +5,7 @@ import * as TurnoController from "../controllers/Turno.controller.js";
 
 import { Turno } from "../models/index.model.js";
 import { validarExistencia } from "../middleware/validarExistenciaEntidad.js";
+import * as HistorialController from "../controllers/HistorialEstadoTurno.controller.js";
 
 import { validateSchema } from "../middleware/validateSchema.js";
 import {
@@ -70,20 +71,29 @@ router.patch(
   "/:id/inasistente",
   validateSchema(updateTurnoSchema),
   validarExistencia(Turno, "id", "params"),
-  TurnoController.turnoCancelado,
+  TurnoController.turnoInasistido,
 );
 
 // Marcar como reprogramado
+/*
 router.patch(
   "/:id/reprogramado",
   validarExistencia(Turno, "id", "params"),
   TurnoController.turnoReprogramado,
 );
+*/
 
 router.delete(
   "/:id",
   validarExistencia(Turno, "id", "params"),
   TurnoController.deleteTurno,
+);
+
+//Traer el historial por el turno
+router.get(
+  "/:id/historial",
+  validarExistencia(Turno, "id", "params"),
+  HistorialController.getHistorialTurnoByTurnoId
 );
 
 export default router;
