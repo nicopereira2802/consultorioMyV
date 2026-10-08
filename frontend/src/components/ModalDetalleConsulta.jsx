@@ -19,13 +19,40 @@ export const ModalDetalleConsulta = ({
   turno,
   onGuardar
 }) => {
-  const [notas, setNotas] = useState(turno?.notas_consulta || turno?.observaciones || '');
+  const extraerEvolucionClinica = (t) => {
+    if (!t) return '';
+    // 1. Buscar en el historial de estados la entrada de atención médica (la más reciente con id_estado = 3: Atendido)
+    if (Array.isArray(t.historial)) {
+      const regAtendido = [...t.historial].reverse().find(
+        (h) => h.id_estado === 3 || h.EstadoTurno?.estado === 'Atendido' || h.estado === 'Atendido'
+      );
+      if (regAtendido && regAtendido.descripcion) {
+        return regAtendido.descripcion;
+      }
+      if (t.id_estado === 4 || t.id_estado === 5) {
+        const regInasistente = [...t.historial].reverse().find(
+          (h) => h.id_estado === 4 || h.id_estado === 5 || h.EstadoTurno?.estado === 'Inasistente' || h.estado === 'Inasistente'
+        );
+        if (regInasistente && regInasistente.descripcion) {
+          return regInasistente.descripcion;
+        }
+      }
+    }
+    // 2. Si viene explicitamente evolucion_clinica u observaciones
+    if (t.evolucion_clinica) return t.evolucion_clinica;
+    if (t.observaciones && t.id_estado === 3) return t.observaciones;
+    // 3. Si el turno está atendido no pisar con el motivo de reserva
+    if (t.id_estado === 3) return t.notas_atencion || '';
+    return t.notas_consulta || t.observaciones || '';
+  };
+
+  const [notas, setNotas] = useState(extraerEvolucionClinica(turno));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setNotas(turno?.notas_consulta || turno?.observaciones || '');
+    setNotas(extraerEvolucionClinica(turno));
     setErrorMsg('');
     setIsSubmitting(false);
   }, [turno]);
@@ -209,7 +236,7 @@ export const ModalDetalleConsulta = ({
                 <div className="modal-detalle-grid-item modal-detalle-grid-full">
                   <span className="detalle-item-label">Motivo de Consulta (Reserva)</span>
                   <strong className="detalle-item-value">
-                    {turno.motivo_consulta || 'Sin motivo especificado al agendar'}
+                    {turno.motivo_consulta || turno.notas_consulta || 'Sin motivo especificado al agendar'}
                   </strong>
                 </div>
 

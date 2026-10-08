@@ -179,14 +179,20 @@ export const AgendaDiaria = () => {
       precio_final: totalCalculado,
       observaciones:
         turnoActualizadoRecibido?.observaciones ||
+        turnoActualizadoRecibido?.evolucion_clinica ||
         datosExtras.observaciones ||
-        turnoActualizadoRecibido?.notas_consulta ||
         '',
       notas_consulta:
-        turnoActualizadoRecibido?.observaciones ||
-        datosExtras.observaciones ||
+        turnoActualizadoRecibido?.motivo_consulta ||
+        turnoBase?.motivo_consulta ||
         turnoActualizadoRecibido?.notas_consulta ||
-        ''
+        turnoBase?.notas_consulta ||
+        '',
+      motivo_consulta:
+        turnoActualizadoRecibido?.motivo_consulta ||
+        turnoBase?.motivo_consulta ||
+        turnoBase?.notas_consulta ||
+        '',
     };
 
     setTurnos((prevTurnos) =>

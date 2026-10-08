@@ -367,8 +367,8 @@ export const ModalHistorialPaciente = ({
                             </span>
                           </div>
                           <div className="atencion-detalle-text">
-                            {item.notas_consulta ? (
-                              <p>{item.notas_consulta}</p>
+                            {item.evolucion_clinica || item.observaciones || item.notas_consulta ? (
+                              <p>{item.evolucion_clinica || item.observaciones || item.notas_consulta}</p>
                             ) : (
                               <p className="notas-default-text">
                                 Se completó la sesión según lo previsto. Evolución clínica favorable sin complicaciones inmediatas.

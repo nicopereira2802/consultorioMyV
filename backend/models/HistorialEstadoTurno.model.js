@@ -2,7 +2,6 @@
 
 import { DataTypes } from "sequelize";
 import sequelize from "../config/database.js";
-import { Turno, EstadoTurno } from "./index.model.js";
 
 export const HistorialEstadoTurno = sequelize.define(
   "HistorialEstadoTurno",
@@ -16,7 +15,7 @@ export const HistorialEstadoTurno = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: Turno,
+        model: "turno",
         key: "id_turno",
       },
     },
@@ -24,7 +23,7 @@ export const HistorialEstadoTurno = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: EstadoTurno,
+        model: "estado_turno",
         key: "id_estado",
       },
     },

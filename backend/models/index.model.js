@@ -92,7 +92,7 @@ Paciente.addScope("conObrasSociales", {
 });
 
 //configuracion FK historial
-Turno.hasMany(HistorialEstadoTurno, { foreignKey: "id_turno" });
+Turno.hasMany(HistorialEstadoTurno, { foreignKey: "id_turno", as: "historial" });
 HistorialEstadoTurno.belongsTo(Turno, { foreignKey: "id_turno" });
 
 EstadoTurno.hasMany(HistorialEstadoTurno, { foreignKey: "id_estado" });
