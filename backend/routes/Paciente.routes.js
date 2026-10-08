@@ -24,6 +24,12 @@ router.get(
   PacienteController.getPacienteById,
 );
 
+router.get(
+  "/:id/historial",
+  validarExistencia(Paciente, "id", "params"),
+  PacienteController.getHistorialPaciente,
+);
+
 router.post(
   "/",
   validateSchema(createPacienteSchema),
@@ -37,10 +43,31 @@ router.put(
   PacienteController.updatePaciente,
 );
 
+router.delete(
+  "/:id",
+  validarExistencia(Paciente, "id", "params"),
+  PacienteController.deletePaciente,
+);
+
 router.patch(
   "/:id/delete",
   validarExistencia(Paciente, "id", "params"),
   PacienteController.deletePaciente,
+);
+
+router.put(
+  "/:id/reactivar",
+  PacienteController.reactivarPaciente,
+);
+
+router.patch(
+  "/:id/reactivar",
+  PacienteController.reactivarPaciente,
+);
+
+router.post(
+  "/:id/reactivar",
+  PacienteController.reactivarPaciente,
 );
 
 export default router;

@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import DentalLogo from '../assets/DentalLogo';
 import { api, extractDataArray, extractErrorMessage } from '../services/api';
 
 export default function PatientRegistration({ 
@@ -120,7 +119,6 @@ export default function PatientRegistration({
       {/* Top Header Card Bar matching Image 4 */}
       <div className="flex items-center justify-between pb-6 border-b border-gray-100">
         <div className="flex items-center gap-3.5">
-          <DentalLogo className="w-11 h-11" />
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
             Registrar Paciente
           </h1>

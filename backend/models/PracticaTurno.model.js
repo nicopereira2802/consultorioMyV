@@ -2,7 +2,6 @@
 
 import { DataTypes } from "sequelize";
 import sequelize from "../config/database.js";
-import { Practica, Turno, ObraSocial } from "./index.model.js";
 
 export const PracticaTurno = sequelize.define(
   "PracticaTurno",
@@ -15,17 +14,21 @@ export const PracticaTurno = sequelize.define(
     id_turno: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      references: { model: Turno, key: "id_turno" },
+      references: { model: "turno", key: "id_turno" },
     },
     id_practica: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      references: { model: Practica, key: "id_practica" },
+      references: { model: "practica", key: "id_practica" },
+    },
+    precio_aplicado: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: true,
     },
     id_obra_social: {
       type: DataTypes.INTEGER,
-      references: { model: ObraSocial, key: "id_obra_social" },
       allowNull: true,
+      references: { model: "obra_social", key: "id_obra_social" },
     },
   },
   {
@@ -39,3 +42,5 @@ export const PracticaTurno = sequelize.define(
     ],
   },
 );
+
+export default PracticaTurno;

@@ -1,6 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import { Calendar, UserPlus, Users, CalendarPlus, X } from 'lucide-react';
-import DentalLogo from '../assets/DentalLogo';
 
 export default function NavigationDrawer({ isOpen, onClose }) {
   const location = useLocation();
@@ -26,7 +25,6 @@ export default function NavigationDrawer({ isOpen, onClose }) {
       <div className="relative w-80 max-w-full bg-white h-full shadow-2xl z-10 flex flex-col p-6 animate-in slide-in-from-left duration-200">
         <div className="flex items-center justify-between pb-6 border-b border-gray-100">
           <div className="flex items-center gap-3">
-            <DentalLogo className="w-10 h-10" />
             <div>
               <h2 className="text-xl font-bold text-gray-800 tracking-tight">Consultorio M&V</h2>
               <p className="text-xs text-teal-600 font-medium">Gestión Odontológica</p>

@@ -1,0 +1,257 @@
+
+.modal-eliminar-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 1200;
+  animation: modalEliminarFadeIn 0.18s ease-out;
+}
+
+@keyframes modalEliminarFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Tarjeta centrada (Desktop >768px: ancho máx 440px, border-radius: 16px) */
+.modal-eliminar-card {
+  width: 100%;
+  max-width: 440px;
+  background-color: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.22), 0 8px 16px -4px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: modalEliminarScaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalEliminarScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.94) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Encabezado */
+.modal-eliminar-header {
+  padding: 18px 22px 14px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.modal-eliminar-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Círculo suave con fondo rojo tenue (#fee2e2) e ícono en rojo (#dc2626) */
+.modal-eliminar-icon-badge {
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  border-radius: 50%;
+  background-color: #fee2e2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.modal-eliminar-title {
+  font-size: 1.18rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+  line-height: 1.25;
+}
+
+/* Botón de cierre en la esquina superior derecha */
+.modal-eliminar-close-btn {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  color: #64748b;
+  cursor: pointer;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  touch-action: manipulation;
+}
+
+.modal-eliminar-close-btn:hover:not(:disabled) {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+/* Cuerpo del mensaje */
+.modal-eliminar-body {
+  padding: 18px 22px;
+}
+
+.modal-eliminar-texto-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.modal-eliminar-pregunta {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #1e293b;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.modal-eliminar-pregunta strong {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+/* Subtexto aclaratorio en gris (#64748b) */
+.modal-eliminar-subtexto {
+  font-size: 0.86rem;
+  color: #64748b;
+  line-height: 1.45;
+  margin: 0;
+}
+
+/* Botones de acción inferiores */
+.modal-eliminar-actions {
+  padding: 14px 22px 18px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  border-top: 1px solid #f1f5f9;
+  background-color: #fafbfc;
+}
+
+/* Botón secundario: Cancelar */
+.btn-modal-eliminar-cancelar {
+  background-color: #fa7070 !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  min-height: 44px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  touch-action: manipulation;
+  box-shadow: 0 2px 4px rgba(250, 112, 112, 0.25);
+}
+
+.btn-modal-eliminar-cancelar:hover:not(:disabled) {
+  background-color: #ef4444 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.35);
+}
+
+/* Botón de confirmación destructivo */
+.btn-modal-eliminar-confirmar {
+  background-color: #dc2626;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 22px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  min-height: 44px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 10px rgba(220, 38, 38, 0.25);
+  transition: background-color 0.18s ease, transform 0.1s ease, box-shadow 0.18s ease;
+  touch-action: manipulation;
+}
+
+.btn-modal-eliminar-confirmar:hover:not(:disabled) {
+  background-color: #b91c1c;
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.35);
+}
+
+.btn-modal-eliminar-confirmar:active:not(:disabled) {
+  background-color: #991b1b;
+  transform: scale(0.97);
+}
+
+.btn-modal-eliminar-confirmar:disabled,
+.btn-modal-eliminar-cancelar:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ==========================================================================
+   Adaptación Mobile (<= 768px): Formato tarjeta flotante / bottom-sheet
+   ========================================================================== */
+@media (max-width: 768px) {
+  .modal-eliminar-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .modal-eliminar-card {
+    max-width: 100%;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.2);
+    animation: modalEliminarSlideUp 0.22s ease-out;
+  }
+
+  @keyframes modalEliminarSlideUp {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+
+  .modal-eliminar-header {
+    padding: 16px 18px 12px 18px;
+  }
+
+  .modal-eliminar-body {
+    padding: 16px 18px;
+  }
+
+  .modal-eliminar-actions {
+    flex-direction: column-reverse;
+    gap: 10px;
+    padding: 14px 18px calc(14px + env(safe-area-inset-bottom, 12px)) 18px;
+  }
+
+  .btn-modal-eliminar-cancelar,
+  .btn-modal-eliminar-confirmar {
+    width: 100%;
+    min-height: 48px;
+    font-size: 1rem;
+  }
+}

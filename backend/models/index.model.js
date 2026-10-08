@@ -28,14 +28,68 @@ PracticaTurno.belongsTo(Practica, { foreignKey: "id_practica" });
 Turno.hasMany(PracticaTurno, { foreignKey: "id_turno" });
 PracticaTurno.belongsTo(Turno, { foreignKey: "id_turno" });
 
-ObraSocial.hasMany(PracticaTurno, { foreignKey: "id_obra_social" });
-PracticaTurno.belongsTo(ObraSocial, { foreignKey: "id_obra_social" });
+Turno.belongsToMany(Practica, {
+  through: PracticaTurno,
+  foreignKey: "id_turno",
+  otherKey: "id_practica",
+});
+Practica.belongsToMany(Turno, {
+  through: PracticaTurno,
+  foreignKey: "id_practica",
+  otherKey: "id_turno",
+});
 
 Paciente.hasMany(PacienteObraSocial, { foreignKey: "id_paciente" });
 PacienteObraSocial.belongsTo(Paciente, { foreignKey: "id_paciente" });
 
 ObraSocial.hasMany(PacienteObraSocial, { foreignKey: "id_obra_social" });
 PacienteObraSocial.belongsTo(ObraSocial, { foreignKey: "id_obra_social" });
+
+Paciente.belongsToMany(ObraSocial, {
+  through: PacienteObraSocial,
+  foreignKey: "id_paciente",
+  otherKey: "id_obra_social",
+});
+ObraSocial.belongsToMany(Paciente, {
+  through: PacienteObraSocial,
+  foreignKey: "id_obra_social",
+  otherKey: "id_paciente",
+});
+
+// Relación PracticaTurno <-> ObraSocial (Obra social registrada para las prácticas del turno)
+PracticaTurno.belongsTo(ObraSocial, { foreignKey: "id_obra_social" });
+ObraSocial.hasMany(PracticaTurno, { foreignKey: "id_obra_social" });
+
+// Scope por defecto para Paciente: incluye automáticamente obras sociales activas
+Paciente.addScope(
+  "defaultScope",
+  {
+    include: [
+      {
+        model: ObraSocial,
+        through: {
+          attributes: ["nro_afiliado", "activo"],
+          where: { activo: true },
+        },
+        required: false,
+      },
+    ],
+  },
+  { override: true },
+);
+
+Paciente.addScope("conObrasSociales", {
+  include: [
+    {
+      model: ObraSocial,
+      through: {
+        attributes: ["nro_afiliado", "activo"],
+        where: { activo: true },
+      },
+      required: false,
+    },
+  ],
+});
 
 //configuracion FK historial
 Turno.hasMany(HistorialEstadoTurno, { foreignKey: "id_turno" });
@@ -51,12 +105,13 @@ Paciente.hasMany(Cobro, { foreignKey: "id_paciente" });
 Cobro.belongsTo(Paciente, { foreignKey: "id_paciente" });
 
 Cobro.hasMany(Cuota, { foreignKey: "id_cobro" });
-Cuota.belongsTo(Turno, { foreignKey: "id_cobro" });
+Cuota.belongsTo(Cobro, { foreignKey: "id_cobro" });
 
 const sincronizarModelos = async () => {
   try {
-    await sequelize.sync({ alter: false }); // Poner en true para sincronizar los modelos con la base de datos (crear tablas si no existen)
-    console.log("Base de datos sincronizada correctamente");
+    await sequelize.authenticate();
+    await sequelize.sync(); // NUNCA usar force: true ni alter: true; protege y preserva las tablas existentes
+    console.log("Base de datos autenticada y sincronizada de forma segura (sin alter ni force).");
     return true;
   } catch (error) {
     console.error("Error al sincronizar la base de datos:", error);

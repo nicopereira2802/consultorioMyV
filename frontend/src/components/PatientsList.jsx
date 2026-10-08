@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import DentalLogo from '../assets/DentalLogo';
 import { api, extractDataArray } from '../services/api';
 import { X, Calendar, AlertCircle } from 'lucide-react';
 
@@ -62,7 +61,6 @@ export default function PatientsList({
       {/* Top Header Card Bar matching Image 3 */}
       <div className="flex items-center justify-between pb-6 border-b border-gray-100">
         <div className="flex items-center gap-3.5">
-          <DentalLogo className="w-11 h-11" />
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
             Pacientes
           </h1>
@@ -197,7 +195,7 @@ export default function PatientsList({
               {patientTurnos.length > 0 ? (
                 patientTurnos.map((t) => {
                   const inicio = t.fecha_hora_inicio ? new Date(t.fecha_hora_inicio).toLocaleString('es-AR') : 'Fecha no definida';
-                  const estadoMap = { 1: 'Programado', 2: 'Cancelado', 3: 'Atendido', 4: 'Inasistente', 5: 'Reprogramado' };
+                  const estadoMap = { 1: 'Programado', 2: 'Cancelado', 3: 'Atendido', 4: 'Inasistente' };
                   const estado = t.EstadoTurno?.estado || estadoMap[t.id_estado] || 'Programado';
                   return (
                     <div key={t.id_turno} className="p-3 bg-gray-50 rounded-xl border border-gray-200 text-left">
@@ -210,7 +208,6 @@ export default function PatientsList({
                           estado === 'Atendido' ? 'bg-blue-100 text-blue-800' :
                           estado === 'Cancelado' ? 'bg-red-100 text-red-800' :
                           estado === 'Inasistente' ? 'bg-gray-100 text-gray-800' :
-                          estado === 'Reprogramado' ? 'bg-amber-100 text-amber-800' :
                           'bg-emerald-100 text-emerald-800'
                         }`}>
                           {estado}

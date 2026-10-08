@@ -1,0 +1,400 @@
+
+
+.modal-asignar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 1000;
+  animation: modalAsignarFadeIn 0.2s ease-out;
+}
+
+@keyframes modalAsignarFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-asignar-card {
+  background-color: #ffffff;
+  border-radius: var(--radius-card, 20px);
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.22);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: modalAsignarScaleUp 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalAsignarScaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modal-asignar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px 14px 22px;
+  border-bottom: 1px solid var(--color-border-card, #e5e9f0);
+}
+
+.modal-asignar-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.modal-asignar-icon-badge {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #e8f7f1;
+  color: var(--color-primary, #2eb086);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.modal-asignar-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text-main, #1f2937);
+  margin: 0;
+  line-height: 1.25;
+}
+
+.modal-asignar-close-btn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: var(--color-text-muted, #6b7280);
+  width: 38px;
+  height: 38px;
+  min-height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  touch-action: manipulation;
+}
+
+.modal-asignar-close-btn:hover {
+  background-color: var(--color-bg-subtle, #f8fafc);
+  color: var(--color-text-main, #1f2937);
+}
+
+.modal-asignar-form {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+
+.modal-asignar-body {
+  padding: 18px 22px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.modal-asignar-feedback {
+  background-color: #feefef;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.modal-asignar-tab-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.modal-asignar-tab-btn {
+  flex: 1;
+  min-height: 44px;
+  padding: 8px 14px;
+  border-radius: var(--radius-pill, 9999px);
+  font-size: 14px;
+  font-weight: 600;
+  border: 1.5px solid var(--color-border-input, #cfd7df);
+  background-color: #ffffff;
+  color: var(--color-text-muted, #6b7280);
+  cursor: pointer;
+  transition: all 0.18s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: manipulation;
+}
+
+.modal-asignar-tab-btn:hover {
+  background-color: var(--color-bg-subtle, #f8fafc);
+  color: var(--color-text-main, #1f2937);
+}
+
+.modal-asignar-tab-btn.is-active {
+  background-color: var(--color-primary, #2eb086);
+  color: #ffffff;
+  border-color: var(--color-primary, #2eb086);
+  box-shadow: 0 2px 8px rgba(46, 176, 134, 0.25);
+}
+
+.modal-asignar-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.modal-asignar-field label {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--color-text-main, #1f2937);
+}
+
+.asterisco-obligatorio {
+  color: #ef4444; /* Rojo sobrio */
+  margin-left: 2px;
+  font-weight: bold;
+}
+
+.modal-asignar-input,
+.modal-asignar-select {
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 14px;
+  border: 1.5px solid var(--color-border-input, #cfd7df);
+  border-radius: var(--radius-input, 12px);
+  font-size: 16px !important; /* Evita zoom automático en Safari iOS */
+  color: var(--color-text-main, #1f2937);
+  background-color: #ffffff;
+  outline: none;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  font-family: inherit;
+}
+
+.modal-asignar-input:focus,
+.modal-asignar-select:focus {
+  border-color: var(--color-primary, #2eb086);
+  box-shadow: 0 0 0 3px rgba(46, 176, 134, 0.15);
+}
+
+.modal-asignar-input:disabled,
+.modal-asignar-select:disabled {
+  background-color: #f8fafc;
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+.modal-asignar-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 480px) {
+  .modal-asignar-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.modal-asignar-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 22px;
+  border-top: 1px solid var(--color-border-card, #e5e9f0);
+  background-color: var(--color-bg-subtle, #f8fafc);
+}
+
+.btn-modal-cancelar {
+  background-color: #fa7070 !important;
+  border: none !important;
+  color: #ffffff !important;
+  border-radius: var(--radius-btn, 12px);
+  min-height: 44px;
+  padding: 8px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  touch-action: manipulation;
+  box-shadow: 0 2px 4px rgba(250, 112, 112, 0.25);
+}
+
+.btn-modal-cancelar:hover:not(:disabled) {
+  background-color: #ef4444 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.35);
+}
+
+.btn-modal-confirmar {
+  background-color: var(--color-primary, #2eb086);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-btn, 12px);
+  min-height: 44px;
+  padding: 8px 22px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  box-shadow: 0 2px 8px rgba(46, 176, 134, 0.3);
+  touch-action: manipulation;
+}
+
+.btn-modal-confirmar:hover:not(:disabled) {
+  background-color: var(--color-primary-hover, #259571);
+  transform: translateY(-1px);
+}
+
+.btn-modal-confirmar:disabled,
+.btn-modal-cancelar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ==========================================================================
+   Selector de Horario con Stepper (+ / - 15 minutos)
+   ========================================================================== */
+.modal-asignar-steppers-grid {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+  margin: 0.25rem 0;
+}
+
+.selector-horario-stepper {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 0.25rem 0;
+}
+
+.horario-resumen-container {
+  display: flex;
+  align-items: center;
+  margin-top: 0.15rem;
+  margin-bottom: 0.25rem;
+}
+
+.horario-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.stepper-contenedor {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.input-hora-display {
+  min-width: 80px;
+  padding: 0.45rem 0.75rem;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 1rem;
+  color: #0f172a;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.btn-stepper {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+}
+
+.btn-stepper:active {
+  transform: scale(0.95);
+}
+
+.btn-stepper:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Botón rojo coral para restar */
+.btn-restar {
+  background-color: #f87171;
+  color: #ffffff;
+}
+
+/* Botón verde menta para sumar */
+.btn-sumar {
+  background-color: #86efac;
+  color: #065f46;
+}
+
+.horario-fin-indicador {
+  font-size: 0.85rem;
+  color: #64748b;
+  font-weight: 500;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 0.35rem 0.65rem;
+  border-radius: 8px;
+}
+
+.alerta-horario-conflicto {
+  margin-top: -0.25rem;
+  margin-bottom: 0.25rem;
+  padding: 8px 12px;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #b91c1c;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+

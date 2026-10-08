@@ -1,0 +1,498 @@
+
+
+.modal-historial-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 1000;
+  animation: modalHistorialFadeIn 0.2s ease-out;
+}
+
+@keyframes modalHistorialFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-historial-card {
+  background-color: #ffffff;
+  border-radius: var(--radius-card, 20px);
+  width: 100%;
+  max-width: 640px;
+  max-height: 88vh;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: modalHistorialScaleUp 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalHistorialScaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Cabecera del Modal */
+.modal-historial-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 18px 24px 14px 24px;
+  border-bottom: 1.5px solid var(--color-border-card, #e5e9f0);
+  gap: 12px;
+}
+
+.modal-historial-branding {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.modal-historial-logo-badge {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #e8f7f1;
+  color: var(--color-primary, #2eb086);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.modal-historial-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  line-height: 1.25;
+}
+
+.modal-historial-subtitle {
+  font-size: 0.88rem;
+  color: #64748b;
+  margin-top: 4px;
+  margin-bottom: 0;
+  line-height: 1.35;
+}
+
+.modal-historial-close-btn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #64748b;
+  width: 38px;
+  height: 38px;
+  min-height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  touch-action: manipulation;
+  flex-shrink: 0;
+}
+
+.modal-historial-close-btn:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+/* Cuerpo del Modal */
+.modal-historial-body {
+  padding: 20px 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Estado de carga */
+.historial-loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px 16px;
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+.historial-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2.5px solid #cbd5e1;
+  border-top-color: #2eb086;
+  border-radius: 50%;
+  animation: historialSpin 0.7s linear infinite;
+}
+
+@keyframes historialSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Estado vacío sobrio */
+.historial-empty-container {
+  text-align: center;
+  padding: 48px 20px;
+  background-color: #f8fafc;
+  border: 1.5px dashed #cbd5e1;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.historial-empty-icon {
+  font-size: 2.2rem;
+  margin-bottom: 4px;
+}
+
+.historial-empty-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #334155;
+  margin: 0;
+}
+
+.historial-empty-desc {
+  font-size: 0.88rem;
+  color: #64748b;
+  margin: 0;
+  max-width: 420px;
+  line-height: 1.4;
+}
+
+/* Lista de Atenciones Clínicas */
+.historial-atenciones-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.atencion-card-item {
+  background-color: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+  transition: border-color 0.18s ease;
+}
+
+.atencion-card-item:hover {
+  border-color: #cbd5e1;
+}
+
+.atencion-card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.atencion-meta-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.atencion-fecha-badge {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+/* Badges de Estado del Turno en Historial (100% idénticos a Agenda Diaria) */
+.badge-estado,
+.badge-estado-historial {
+  display: inline-block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+/* PROGRAMADO: La misma píldora celeste con texto azul que se ve en la agenda */
+.badge-programado,
+.badge-confirmado,
+.badge-estado-historial.programado {
+  background-color: #eaf2fb;
+  color: #2a79c3;
+  border: 1px solid #b8d7f5;
+}
+
+/* REPROGRAMADO: La misma píldora celeste de reprogramación que se ve en la agenda */
+.badge-reprogramado,
+.badge-en-sillon,
+.badge-estado-historial.reprogramado {
+  background-color: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+
+/* ATENDIDO: La misma píldora gris clara con texto oscuro que se ve en la agenda */
+.badge-atendido,
+.badge-realizado,
+.badge-estado-historial.atendido {
+  background-color: #f1f3f5;
+  color: #495057;
+  border: 1px solid #dee2e6;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
+  font-weight: 700;
+}
+
+/* INASISTENTE: La misma píldora con borde y texto rojo suave que se ve en la agenda */
+.badge-inasistente,
+.badge-inasistencia,
+.badge-estado-historial.inasistente {
+  background-color: #fee2e2;
+  color: #b91c1c;
+  font-weight: 600;
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  border: 1px solid #fca5a5;
+}
+
+/* CANCELADO: La clase correspondiente que ya utiliza el sistema */
+.badge-cancelado,
+.badge-estado-historial.cancelado {
+  background-color: #feefef;
+  color: #fa7070;
+  border: 1px solid #fecaca;
+}
+
+.atencion-card-main {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.atencion-practica-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 200px;
+}
+
+.atencion-practica-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.atencion-practicas-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.atencion-practica-tag-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.practica-codigo-tag {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #2eb086;
+  background-color: #e6f7f0;
+  padding: 2px 7px;
+  border-radius: 6px;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+
+.atencion-practica-nombre {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+
+
+/* Fila de Acción: Botón interactivo [ Ver Detalle / Evolución ] */
+.atencion-action-row {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 2px;
+}
+
+.btn-ver-detalle-evolucion {
+  background-color: #f8fafc;
+  color: #2563eb;
+  border: 1.5px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.18s ease;
+  touch-action: manipulation;
+}
+
+.btn-ver-detalle-evolucion:hover {
+  background-color: #eff6ff;
+  border-color: #93c5fd;
+  color: #1d4ed8;
+}
+
+.btn-ver-detalle-evolucion.is-active {
+  background-color: #eff6ff;
+  border-color: #2563eb;
+  color: #1d4ed8;
+}
+
+
+.accordion-arrow {
+  font-size: 10px;
+  transition: transform 0.2s ease;
+  margin-left: 2px;
+}
+
+.accordion-arrow.is-open {
+  transform: rotate(180deg);
+}
+
+/* Contenido del Detalle Clínico desplegable */
+.atencion-detalle-box {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: detalleSlideDown 0.18s ease-out;
+}
+
+@keyframes detalleSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+
+.atencion-notas-seccion {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.atencion-detalle-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.atencion-detalle-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.atencion-detalle-text {
+  font-size: 0.92rem;
+  color: #334155;
+  line-height: 1.45;
+}
+
+.atencion-detalle-text p {
+  margin: 0;
+  white-space: pre-line;
+}
+
+.notas-default-text {
+  font-style: italic;
+  color: #64748b;
+}
+
+/* Pie del Modal */
+.modal-historial-footer {
+  padding: 14px 24px 18px 24px;
+  border-top: 1.5px solid #e2e8f0;
+  background-color: #f8fafc;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-historial-cerrar {
+  background-color: #fa7070 !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 10px;
+  min-height: 42px;
+  height: 42px;
+  padding: 8px 24px;
+  font-size: 14.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  touch-action: manipulation;
+  box-shadow: 0 2px 4px rgba(250, 112, 112, 0.25);
+}
+
+.btn-historial-cerrar:hover {
+  background-color: #ef4444 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.35);
+}
+
+@media (max-width: 600px) {
+  .atencion-card-main {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+}
+

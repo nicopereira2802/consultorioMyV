@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import DentalLogo from '../assets/DentalLogo';
 import { api, extractDataArray, extractErrorMessage } from '../services/api';
 import { AlertCircle, Clock, User, Phone, FileText, DollarSign, X } from 'lucide-react';
 
@@ -176,7 +175,8 @@ export default function TurnoRegistration({
         fecha_hora_inicio: startDateTime,
         duracion_minutos: Number(duracionMinutos),
         precio_final: Number(parsedPrecio.toFixed(2)),
-        notas_consulta: notasConsulta.trim() || 'Consulta odontológica'
+        motivo_consulta: notasConsulta.trim() || 'Consulta odontológica',
+        notas_consulta: null
       };
 
       await api.post('/turnos', turnoData);
@@ -202,7 +202,6 @@ export default function TurnoRegistration({
       {/* Top Header */}
       <div className="flex items-center justify-between pb-6 border-b border-gray-100">
         <div className="flex items-center gap-3.5">
-          <DentalLogo className="w-11 h-11" />
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
             Registrar turno
           </h1>
@@ -319,16 +318,16 @@ export default function TurnoRegistration({
           </div>
         </div>
 
-        {/* Notas / Motivo de consulta */}
+        {/* Motivo de consulta / Reserva */}
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
           <label className="text-lg sm:text-xl font-medium text-gray-900 w-28 text-left">
-            Notas:
+            Motivo:
           </label>
           <input
             type="text"
             value={notasConsulta}
             onChange={(e) => setNotasConsulta(e.target.value)}
-            placeholder="Motivo o notas de la consulta..."
+            placeholder="Motivo de la consulta / reserva..."
             className="flex-1 max-w-lg px-4 py-2.5 rounded-xl border border-gray-400 focus:border-teal-600 focus:ring-2 focus:ring-teal-100 outline-none text-gray-800 text-base shadow-2xs"
           />
         </div>
@@ -385,7 +384,6 @@ export default function TurnoRegistration({
                             estado === 'Atendido' ? 'bg-blue-100 text-blue-800' :
                             estado === 'Cancelado' ? 'bg-red-100 text-red-800' :
                             estado === 'Inasistente' ? 'bg-gray-100 text-gray-800' :
-                            estado === 'Reprogramado' ? 'bg-amber-100 text-amber-800' :
                             'bg-emerald-100 text-emerald-800'
                           }`}>
                             {estado}
@@ -476,7 +474,7 @@ export default function TurnoRegistration({
           <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl animate-in zoom-in-95 duration-150 text-left">
             <div className="flex items-center justify-between pb-3 border-b border-gray-100">
               <div className="flex items-center gap-2.5">
-                <DentalLogo className="w-8 h-8" />
+                <Clock className="w-6 h-6 text-teal-600" />
                 <h3 className="text-lg font-bold text-gray-900">
                   Detalles del Turno
                 </h3>
@@ -527,17 +525,23 @@ export default function TurnoRegistration({
                   selectedEventForDetail.EstadoTurno?.estado === 'Atendido' ? 'bg-blue-100 text-blue-800' :
                   selectedEventForDetail.EstadoTurno?.estado === 'Cancelado' ? 'bg-red-100 text-red-800' :
                   selectedEventForDetail.EstadoTurno?.estado === 'Inasistente' ? 'bg-gray-100 text-gray-800' :
-                  selectedEventForDetail.EstadoTurno?.estado === 'Reprogramado' ? 'bg-amber-100 text-amber-800' :
                   'bg-emerald-100 text-emerald-800'
                 }`}>
                   {selectedEventForDetail.EstadoTurno?.estado || 'Programado'}
                 </span>
               </div>
 
+              {selectedEventForDetail.motivo_consulta && (
+                <div className="flex items-start gap-2 text-sm text-gray-600 pt-1">
+                  <FileText className="w-4 h-4 text-teal-600 mt-0.5" />
+                  <span><strong>Motivo de consulta:</strong> {selectedEventForDetail.motivo_consulta}</span>
+                </div>
+              )}
+
               {selectedEventForDetail.notas_consulta && (
                 <div className="flex items-start gap-2 text-sm text-gray-600 pt-1">
                   <FileText className="w-4 h-4 text-teal-600 mt-0.5" />
-                  <span>{selectedEventForDetail.notas_consulta}</span>
+                  <span><strong>Evolución clínica:</strong> {selectedEventForDetail.notas_consulta}</span>
                 </div>
               )}
 

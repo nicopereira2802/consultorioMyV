@@ -1,0 +1,668 @@
+
+.catalogo-page {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 0;
+}
+
+@media (min-width: 768px) {
+  .catalogo-page {
+    padding: 0;
+  }
+}
+
+.catalogo-card {
+  width: 100%;
+  max-width: 1100px;
+  background-color: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.35), 0 8px 10px -6px rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--color-border-card, #e5e9f0);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .catalogo-card {
+    border-radius: 16px;
+  }
+}
+
+.catalogo-content {
+  padding: 20px 16px 32px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+@media (min-width: 768px) {
+  .catalogo-content {
+    padding: 28px 36px 36px 36px;
+    gap: 24px;
+  }
+}
+
+/* --- Barra de Acciones y Búsqueda --- */
+.catalogo-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .catalogo-toolbar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+}
+
+.catalogo-search-wrapper {
+  position: relative;
+  flex: 1;
+  width: 100%;
+}
+
+.catalogo-search-wrapper svg {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-light, #9ca3af);
+  pointer-events: none;
+}
+
+.catalogo-search-input {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 16px 10px 42px !important;
+  font-size: 16px !important;
+  border: 1.5px solid var(--color-border-input, #cfd7df);
+  border-radius: var(--radius-btn, 12px);
+  text-align: left !important;
+}
+
+.catalogo-search-input::placeholder {
+  text-align: left !important;
+  letter-spacing: normal !important;
+}
+
+/* Botón Destacado "+ Nueva Práctica" (Verde Primario) */
+.btn-nueva-practica {
+  background-color: var(--color-primary, #2eb086);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-btn, 12px);
+  font-size: 15px;
+  font-weight: var(--font-weight-semibold, 600);
+  min-height: var(--touch-target-min, 44px);
+  padding: 10px 22px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+  box-shadow: var(--shadow-btn, 0 2px 4px rgba(0, 0, 0, 0.08));
+  transition: background-color 0.18s ease, transform 0.1s ease;
+  touch-action: manipulation;
+}
+
+.btn-nueva-practica:hover {
+  background-color: var(--color-primary-hover, #259571);
+}
+
+.btn-nueva-practica:active {
+  transform: scale(0.97);
+}
+
+/* Contador y estadísticas */
+.catalogo-stats {
+  font-size: 0.9rem;
+  color: var(--color-text-muted, #6b7280);
+  font-weight: 500;
+}
+
+/* --- TABLA DESKTOP --- */
+.practicas-table-container {
+  display: none;
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--color-border-card, #e5e9f0);
+  border-radius: var(--radius-subcard, 16px);
+}
+
+.practicas-table-container {
+  display: none;
+  width: 100%;
+  overflow-x: auto;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+@media (min-width: 768px) {
+  .practicas-table-container {
+    display: block;
+  }
+}
+
+.practicas-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  text-align: left;
+  font-size: 0.95rem;
+  background-color: #ffffff;
+}
+
+/* Cabecera con fondo gris pizarra sólido idéntico a Gestión de Pacientes */
+.practicas-table thead tr {
+  background-color: #94a3b8;
+}
+
+.practicas-table th {
+  background-color: #94a3b8 !important;
+  color: #0f172a !important; /* Texto oscuro de alto contraste */
+  font-weight: 700 !important;
+  font-size: 15px !important;
+  padding: 16px 18px !important;
+  border: none !important;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+}
+
+.practicas-table th:first-child {
+  border-top-left-radius: 13px;
+}
+
+.practicas-table th:last-child {
+  border-top-right-radius: 13px;
+}
+
+.practicas-table th.th-acciones {
+  text-align: center;
+}
+
+.practicas-table tbody tr {
+  border-bottom: 1.5px solid #e2e8f0;
+  transition: background-color 0.15s ease;
+}
+
+.practicas-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.practicas-table tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+.practicas-table td {
+  padding: 16px 18px;
+  color: #1e293b;
+  vertical-align: middle;
+  border-bottom: 1.5px solid #e2e8f0;
+}
+
+.practicas-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.practicas-table td.td-acciones {
+  text-align: center;
+  white-space: nowrap;
+}
+
+.practica-nombre-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.practica-nombre-texto {
+  font-weight: 600;
+  color: #0f172a;
+  font-size: 15px;
+}
+
+.practica-desc-texto {
+  font-size: 0.85rem;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.badge-codigo {
+  display: inline-block;
+  background-color: var(--color-bg-subtle, #f8fafc);
+  color: var(--color-text-muted, #6b7280);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--color-border-card, #e5e9f0);
+  font-family: monospace;
+}
+
+.arancel-texto {
+  font-weight: 700;
+  color: var(--color-primary-hover, #259571);
+}
+
+/* Botones de acción en tabla de prácticas */
+.practicas-actions-group,
+.table-actions-group {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* Botón Editar: Outline azul */
+.practica-btn-action.practica-btn-editar,
+.btn-card-edit {
+  background-color: #ffffff !important;
+  color: #2563eb !important;
+  border: 1.5px solid #bfdbfe !important;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 13.5px;
+  font-weight: 600;
+  min-height: 36px;
+  height: 36px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.18s ease;
+  touch-action: manipulation;
+  box-sizing: border-box;
+}
+
+.practica-btn-action.practica-btn-editar:hover,
+.btn-card-edit:hover {
+  background-color: #eff6ff !important;
+  border-color: #60a5fa !important;
+  color: #1d4ed8 !important;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.15);
+  transform: translateY(-1px);
+}
+
+/* Botón Eliminar: Fondo coral sólido con texto blanco */
+.practica-btn-action.practica-btn-eliminar,
+.btn-card-delete {
+  background-color: #fa7070 !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 13.5px;
+  font-weight: 600;
+  min-height: 36px;
+  height: 36px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.18s ease;
+  touch-action: manipulation;
+  box-sizing: border-box;
+  box-shadow: 0 1px 3px rgba(250, 112, 112, 0.25);
+}
+
+.practica-btn-action.practica-btn-eliminar:hover,
+.btn-card-delete:hover {
+  background-color: #ef4444 !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.35);
+  transform: translateY(-1px);
+}
+
+/* --- TARJETAS MOBILE (PWA < 800px) --- */
+.practicas-cards-mobile {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .practicas-cards-mobile {
+    display: none;
+  }
+}
+
+.practica-card-item {
+  background-color: #ffffff;
+  border: 1.5px solid var(--color-border-card, #e5e9f0);
+  border-radius: var(--radius-subcard, 16px);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: var(--shadow-subtle, 0 2px 8px rgba(0, 0, 0, 0.04));
+}
+
+.practica-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.practica-card-titulo {
+  font-size: 1.1rem;
+  font-weight: var(--font-weight-bold, 700);
+  color: var(--color-text-main, #1f2937);
+}
+
+.practica-card-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background-color: var(--color-bg-subtle, #f8fafc);
+  padding: 10px 14px;
+  border-radius: var(--radius-input, 10px);
+}
+
+.practica-card-desc {
+  font-size: 0.9rem;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.practica-card-actions {
+  display: flex;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.practica-card-actions button {
+  flex: 1;
+  min-height: 46px; /* Cumple holgadamente el área mínima táctil */
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: var(--radius-btn, 12px);
+}
+
+.btn-card-edit {
+  background-color: #ffffff !important;
+  color: #2563eb !important;
+  border: 1.5px solid #bfdbfe !important;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.btn-card-edit:hover {
+  background-color: #eff6ff !important;
+  border-color: #60a5fa !important;
+  color: #1d4ed8 !important;
+}
+
+.btn-card-delete {
+  background-color: #ffffff !important;
+  color: #ef4444 !important;
+  border: 1.5px solid #fecaca !important;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.btn-card-delete:hover {
+  background-color: #fef2f2 !important;
+  border-color: #f87171 !important;
+  color: #dc2626 !important;
+}
+
+/* --- MODAL / FORMULARIO DE ALTA --- */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(15, 23, 42, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 999;
+  backdrop-filter: blur(3px);
+}
+
+.modal-content-practica {
+  background-color: #ffffff;
+  border-radius: var(--radius-card, 22px);
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  animation: modalFade 0.2s ease-out;
+}
+
+@keyframes modalFade {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.modal-header-practica {
+  padding: 18px 24px;
+  border-bottom: 1.5px solid var(--color-border-card, #e5e9f0);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header-practica h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text-main, #1f2937);
+}
+
+.modal-form-body {
+  padding: 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.form-group label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-text-main, #1f2937);
+}
+
+/* --- Control Táctil de Módulos [ - ] [ + ] --- */
+.modulos-stepper-container {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+}
+
+.btn-stepper {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  min-height: 48px; /* Táctil PWA > 44px */
+  background-color: #ffffff;
+  border: 2px solid var(--color-primary, #2eb086);
+  color: var(--color-primary, #2eb086);
+  border-radius: var(--radius-btn, 12px);
+  font-size: 1.4rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  touch-action: manipulation;
+}
+
+.btn-stepper:hover {
+  background-color: var(--color-primary, #2eb086);
+  color: #ffffff;
+}
+
+.btn-stepper:active {
+  transform: scale(0.92);
+}
+
+.btn-stepper:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  border-color: var(--color-border-input, #cfd7df);
+  color: var(--color-text-light, #9ca3af);
+}
+
+.modulos-display-card {
+  flex: 1;
+  background-color: var(--color-bg-subtle, #f8fafc);
+  border: 1.5px solid var(--color-border-card, #e5e9f0);
+  border-radius: var(--radius-input, 10px);
+  padding: 10px 16px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 48px;
+}
+
+.modulos-count-text {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--color-primary, #2eb086);
+}
+
+.modulos-duration-text {
+  font-size: 0.8rem;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.modal-footer-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 10px;
+}
+
+.btn-modal-cancelar {
+  background-color: var(--color-coral, #fa7070);
+  color: #ffffff;
+  min-height: 44px;
+  padding: 8px 20px;
+  border-radius: var(--radius-btn, 12px);
+  font-weight: 600;
+}
+
+.btn-modal-cancelar:hover {
+  background-color: var(--color-coral-hover, #e55a5a);
+}
+
+.btn-modal-guardar {
+  background-color: var(--color-primary, #2eb086);
+  color: #ffffff;
+  min-height: 44px;
+  padding: 8px 24px;
+  border-radius: var(--radius-btn, 12px);
+  font-weight: 600;
+}
+
+.btn-modal-guardar:hover {
+  background-color: var(--color-primary-hover, #259571);
+}
+
+/* Feedback banner */
+.catalogo-feedback-banner {
+  padding: 12px 18px;
+  border-radius: var(--radius-btn, 12px);
+  font-size: 0.95rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.catalogo-feedback-banner.success {
+  background-color: var(--color-primary-light, #e8f7f1);
+  color: #175429;
+  border: 1px solid #b6e4d2;
+}
+
+.catalogo-feedback-banner.info {
+  background-color: var(--color-assigned-light, #eaf2fb);
+  color: var(--color-assigned, #2a79c3);
+  border: 1px solid #b8d7f5;
+}
+
+/* ==========================================================================
+   Botón Flotante (+ / FAB) Mobile & Adaptación de Cabecera
+   ========================================================================== */
+.btn-flotante-agregar,
+.btn-fab-agregar {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  /* 1. Ocultar el botón Volver en móviles */
+  .btn-volver,
+  .header-btn-volver {
+    display: none !important;
+  }
+
+  /* 2. Ocultar el botón verde superior "+ Nueva Práctica" en móviles */
+  .btn-nueva-practica {
+    display: none !important;
+  }
+
+  /* 3. Botón Flotante de Agregar (+) en Mobile Estandarizado */
+  .btn-flotante-agregar,
+  .btn-fab-agregar {
+    position: fixed;
+    bottom: calc(70px + env(safe-area-inset-bottom, 12px));
+    right: 1.25rem;
+    width: 50px;
+    height: 50px;
+    background-color: #2eb086;
+    color: #ffffff;
+    border: none;
+    border-radius: 14px; /* Mismo radio exacto de cuadradito redondeado */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    line-height: 1;
+    box-shadow: 0 4px 14px rgba(46, 176, 134, 0.35);
+    z-index: 900;
+    cursor: pointer;
+    transition: transform 0.15s ease, background-color 0.2s ease;
+    touch-action: manipulation;
+  }
+
+  .btn-flotante-agregar:active,
+  .btn-fab-agregar:active {
+    transform: scale(0.95);
+    background-color: #259a74;
+  }
+}
+

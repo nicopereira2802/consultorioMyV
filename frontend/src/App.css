@@ -1,0 +1,142 @@
+/* ==========================================================================
+   App.css - Contenedor principal en formato tarjeta flotante M&V Turnos
+   Diseño de tarjeta blanca unificada, idéntica a Agenda Diaria en todas las vistas
+   ========================================================================== */
+
+/* Fondo exterior gris uniforme */
+html, body, #root {
+  min-height: 100vh;
+  min-height: 100dvh; /* Dynamic Viewport Height para móviles */
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body, #root {
+  background-color: #3f444d;
+}
+
+.agenda-container,
+.pacientes-container,
+.main-content {
+  padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+}
+
+/* Envoltorio exterior de vistas (centrado y márgenes idénticos a Agenda Diaria) */
+.app-page-wrapper,
+.panel-diario-page,
+.gestion-pacientes-page,
+.catalogo-page,
+.atencion-page,
+.registrar-paciente-page {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 0 !important;
+  box-sizing: border-box;
+}
+
+/* Tarjeta blanca contenedora uniforme para todas las vistas */
+.app-view-container,
+.panel-diario-card,
+.agenda-container,
+.gestion-pacientes-card,
+.pacientes-container,
+.catalogo-card,
+.atencion-card,
+.registrar-paciente-card,
+.vista-contenedor,
+.main-card-container,
+.card-layout,
+.main-container {
+  width: 100%;
+  max-width: 1100px;
+  background-color: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.35), 0 8px 10px -6px rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--color-border-card, #e5e9f0);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+/* Tarjetas independientes sin cabecera oficial llevan padding generoso en el contenedor */
+.main-card-container:not(:has(.header-volver-container)),
+.card-layout:not(:has(.header-volver-container)),
+.main-container:not(:has(.header-volver-container)) {
+  padding: 2rem;
+}
+
+/* Adaptación responsive en pantallas pequeñas (Mobile <= 768px) */
+@media (max-width: 768px) {
+  .app-view-container,
+  .panel-diario-card,
+  .agenda-container,
+  .gestion-pacientes-card,
+  .pacientes-container,
+  .catalogo-card,
+  .atencion-card,
+  .registrar-paciente-card,
+  .vista-contenedor,
+  .main-card-container,
+  .card-layout,
+  .main-container {
+    border-radius: 16px;
+  }
+
+  .main-card-container:not(:has(.header-volver-container)),
+  .card-layout:not(:has(.header-volver-container)),
+  .main-container:not(:has(.header-volver-container)) {
+    padding: 1.25rem 1rem;
+  }
+
+  /* Contenedor principal de vistas en mobile: resguardo para BottomNav fija */
+  .main-content,
+  .agenda-container,
+  .pacientes-container,
+  .vista-contenedor {
+    padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
+
+/* ==========================================================================
+   Botón Flotante (+ / FAB) Mobile Global Compartido
+   ========================================================================== */
+.btn-flotante-agregar,
+.btn-fab-agregar {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .btn-flotante-agregar,
+  .btn-fab-agregar {
+    position: fixed;
+    bottom: calc(70px + env(safe-area-inset-bottom, 12px));
+    right: 1.25rem;
+    width: 50px;
+    height: 50px;
+    background-color: #2eb086;
+    color: #ffffff;
+    border: none;
+    border-radius: 14px; /* Mismo radio exacto de cuadradito redondeado */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    line-height: 1;
+    box-shadow: 0 4px 14px rgba(46, 176, 134, 0.35);
+    z-index: 900;
+    cursor: pointer;
+    transition: transform 0.15s ease, background-color 0.2s ease;
+    touch-action: manipulation;
+  }
+
+  .btn-flotante-agregar:active,
+  .btn-fab-agregar:active {
+    transform: scale(0.95);
+    background-color: #259a74;
+  }
+}
+

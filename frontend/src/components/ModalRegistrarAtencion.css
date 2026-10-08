@@ -1,0 +1,804 @@
+
+/* Overlay oscuro con blur suave */
+.modal-registrar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 1000;
+  animation: modalRegFadeIn 0.2s ease-out;
+}
+
+@keyframes modalRegFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Tarjeta del Modal */
+.modal-registrar-card {
+  background-color: #ffffff;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.25), 0 10px 20px -5px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  animation: modalRegSlideUp 0.22s ease-out;
+}
+
+@keyframes modalRegSlideUp {
+  from { transform: translateY(16px) scale(0.97); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+/* Cabecera */
+.modal-registrar-header {
+  padding: 18px 24px;
+  border-bottom: 1.5px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  background-color: #ffffff;
+}
+
+.modal-registrar-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.modal-registrar-icon-badge {
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  border-radius: 12px;
+  background-color: #e6f7f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.modal-registrar-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+  line-height: 1.25;
+}
+
+.modal-registrar-subtitle {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin: 2px 0 0 0;
+}
+
+.modal-registrar-close-btn {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  color: #64748b;
+  cursor: pointer;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  touch-action: manipulation;
+}
+
+.modal-registrar-close-btn:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+/* Formulario y Cuerpo con Scroll */
+.modal-registrar-form {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex: 1;
+}
+
+.modal-registrar-body {
+  padding: 22px 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-height: calc(90vh - 150px);
+}
+
+/* Alerta de Error */
+.modal-registrar-alert-error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* 1. Resumen del Turno (Solo Lectura) */
+.modal-registrar-resumen-card {
+  background-color: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 14px 16px;
+}
+
+.resumen-card-title {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 700;
+  color: #64748b;
+  margin: 0 0 10px 0;
+}
+
+.resumen-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px 16px;
+}
+
+.resumen-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.resumen-label {
+  font-size: 0.78rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.resumen-value {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.resumen-sub {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.badge-estado-programado {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  padding: 2px 10px;
+  border-radius: 9999px;
+  background-color: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+/* 2. Secciones del Formulario */
+.modal-registrar-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.modal-registrar-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.label-required {
+  font-size: 0.85rem;
+  color: #059669;
+  font-weight: 500;
+}
+
+/* Selector de Prácticas */
+.selector-practicas-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.select-practica-catalogo {
+  flex: 1;
+  min-height: 44px;
+  height: 44px;
+  padding: 8px 14px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 10px;
+  background-color: #ffffff;
+  color: #1e293b;
+  font-size: 0.92rem;
+  font-weight: 500;
+  outline: none;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  touch-action: manipulation;
+}
+
+.select-practica-catalogo:focus {
+  border-color: #2eb086;
+  box-shadow: 0 0 0 3px rgba(46, 176, 134, 0.15);
+}
+
+.btn-agregar-practica {
+  background-color: #2eb086;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  padding: 8px 18px;
+  min-height: 44px;
+  height: 44px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  transition: background-color 0.18s ease, transform 0.1s ease;
+  touch-action: manipulation;
+}
+
+.btn-agregar-practica:hover:not(:disabled) {
+  background-color: #259a74;
+}
+
+.btn-agregar-practica:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.btn-agregar-practica:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Lista de Prácticas Añadidas */
+.lista-practicas-añadidas {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.practicas-vacio-texto {
+  background-color: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 0.85rem;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.chip-practica-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background-color: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-left: 4px solid #2eb086;
+  border-radius: 10px;
+  padding: 10px 14px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.chip-practica-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 0.9rem;
+}
+
+.chip-practica-codigo {
+  background-color: #e0f2fe;
+  color: #0369a1;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+}
+
+.chip-practica-nombre {
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.chip-practica-especialidad {
+  background-color: #f1f5f9;
+  color: #475569;
+  font-size: 0.75rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.chip-practica-arancel {
+  color: #059669;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.btn-quitar-practica {
+  background-color: #fee2e2;
+  color: #dc2626;
+  border: none;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 700;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  touch-action: manipulation;
+}
+
+.btn-quitar-practica:hover {
+  background-color: #fecaca;
+  color: #b91c1c;
+}
+
+/* Cabecera de sección con helper */
+.section-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.helper-label-coberturas {
+  font-size: 0.8rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* Badge particular */
+.badge-particular-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background-color: #f8fafc;
+  border: 1.5px dashed #cbd5e1;
+  border-radius: 10px;
+}
+
+.badge-particular-tag {
+  background-color: #e2e8f0;
+  color: #334155;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+}
+
+.badge-particular-desc {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+/* Selector de coberturas / chips */
+.coberturas-selector-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.coberturas-chips-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip-cobertura-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  background-color: #f8fafc;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 20px;
+  color: #475569;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.chip-cobertura-toggle:hover:not(:disabled) {
+  background-color: #f1f5f9;
+  border-color: #94a3b8;
+  color: #1e293b;
+}
+
+.chip-cobertura-toggle.selected {
+  background-color: #ecfdf5;
+  border-color: #2eb086;
+  color: #065f46;
+  box-shadow: 0 1px 3px rgba(46, 176, 134, 0.15);
+}
+
+.chip-cobertura-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1.5px solid #94a3b8;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: transparent;
+  transition: all 0.15s ease;
+}
+
+.chip-cobertura-check.checked {
+  background-color: #2eb086;
+  border-color: #2eb086;
+  color: #ffffff;
+}
+
+.chip-cobertura-nombre {
+  font-weight: 600;
+}
+
+.chip-cobertura-credencial {
+  font-size: 0.78rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.chip-cobertura-toggle.selected .chip-cobertura-credencial {
+  color: #047857;
+}
+
+.nota-atencion-particular {
+  font-size: 0.82rem;
+  color: #b45309;
+  background-color: #fffbeb;
+  border: 1px solid #fef3c7;
+  border-radius: 8px;
+  padding: 6px 12px;
+  margin: 2px 0 0 0;
+}
+
+/* Desglose de Costos y Cobro */
+.resumen-cobro-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px;
+  background-color: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  margin-top: 8px;
+}
+
+.fila-total-referencia {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px dashed #cbd5e1;
+}
+
+.info-referencia-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.label-referencia {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.sub-referencia {
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+.badge-monto-referencia {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #475569;
+  background-color: #f1f5f9;
+  padding: 4px 12px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.fila-precio-final-cobro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.label-precio-final-group {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.label-precio-final {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.btn-restablecer-precio {
+  background: none;
+  border: none;
+  color: #0d9488;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-align: left;
+  transition: color 0.15s ease;
+}
+
+.btn-restablecer-precio:hover {
+  color: #0f766e;
+}
+
+.input-precio-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 180px;
+  max-width: 180px;
+}
+
+.input-precio-prefix {
+  position: absolute;
+  left: 12px;
+  font-weight: 700;
+  color: #2eb086;
+  font-size: 1.1rem;
+  pointer-events: none;
+}
+
+.input-precio-final {
+  width: 100%;
+  height: 42px;
+  padding: 6px 12px 6px 28px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #1e293b;
+  border: 2px solid #2eb086;
+  border-radius: 10px;
+  background-color: #ffffff;
+  outline: none;
+  transition: all 0.18s ease;
+  box-shadow: 0 1px 3px rgba(46, 176, 134, 0.15);
+}
+
+.input-precio-final:focus {
+  border-color: #259a74;
+  box-shadow: 0 0 0 3px rgba(46, 176, 134, 0.25);
+}
+
+.resumen-total-atencion {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 10px 16px;
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+  margin-top: 6px;
+}
+
+.resumen-total-atencion span {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.resumen-total-atencion strong {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #2eb086;
+  letter-spacing: -0.01em;
+}
+
+/* 3. Textarea de Observaciones Clínicas */
+.textarea-observaciones-clinicas {
+  width: 100%;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  color: #1e293b;
+  outline: none;
+  resize: vertical;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  box-sizing: border-box;
+}
+
+.textarea-observaciones-clinicas:focus {
+  border-color: #2eb086;
+  box-shadow: 0 0 0 3px rgba(46, 176, 134, 0.15);
+}
+
+.helper-text-observaciones {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-top: -2px;
+}
+
+/* Footer y Botones */
+.modal-registrar-footer {
+  padding: 16px 24px;
+  border-top: 1.5px solid #e2e8f0;
+  background-color: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.btn-modal-reg-cancelar {
+  background-color: #fa7070 !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 12px;
+  padding: 10px 20px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  min-height: 46px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  touch-action: manipulation;
+  box-shadow: 0 2px 4px rgba(250, 112, 112, 0.25);
+}
+
+.btn-modal-reg-cancelar:hover:not(:disabled) {
+  background-color: #ef4444 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.35);
+}
+
+.btn-modal-reg-confirmar {
+  background-color: #2eb086;
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  padding: 10px 26px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  min-height: 46px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 10px rgba(46, 176, 134, 0.3);
+  transition: background-color 0.18s ease, transform 0.1s ease;
+  touch-action: manipulation;
+}
+
+.btn-modal-reg-confirmar:hover:not(:disabled) {
+  background-color: #259a74;
+}
+
+.btn-modal-reg-confirmar:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.btn-modal-reg-confirmar:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* ==========================================================================
+   Adaptación Mobile (<= 768px): PWA / iOS Safe Area
+   ========================================================================== */
+@media (max-width: 768px) {
+  .modal-registrar-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .modal-registrar-card {
+    max-width: 100%;
+    border-radius: 20px 20px 0 0;
+    max-height: 92vh;
+  }
+
+  .modal-registrar-header {
+    padding: 16px 18px;
+  }
+
+  .modal-registrar-body {
+    padding: 16px 18px;
+    gap: 16px;
+  }
+
+  /* font-size: 16px para evitar auto-zoom molesto en iOS */
+  .select-practica-catalogo,
+  .textarea-observaciones-clinicas {
+    font-size: 16px !important;
+  }
+
+  .selector-practicas-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .btn-agregar-practica {
+    width: 100%;
+  }
+
+  .resumen-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .fila-precio-final-cobro {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .input-precio-wrapper {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .input-precio-final {
+    font-size: 16px !important;
+  }
+
+  .modal-registrar-footer {
+    padding: 14px 18px calc(14px + env(safe-area-inset-bottom, 15px)) 18px;
+    flex-direction: column-reverse;
+    gap: 10px;
+  }
+
+  .btn-modal-reg-cancelar,
+  .btn-modal-reg-confirmar {
+    width: 100%;
+    min-height: 48px;
+    font-size: 1rem;
+  }
+}

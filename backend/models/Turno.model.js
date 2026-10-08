@@ -1,6 +1,5 @@
 import { DataTypes } from "sequelize";
 import sequelize from "../config/database.js";
-import { EstadoTurno, Paciente } from "./index.model.js";
 
 export const Turno = sequelize.define(
   "Turno",
@@ -14,7 +13,7 @@ export const Turno = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: Paciente,
+        model: "paciente",
         key: "id_paciente",
       },
     },
@@ -22,7 +21,7 @@ export const Turno = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: EstadoTurno,
+        model: "estado_turno",
         key: "id_estado",
       },
     },
@@ -42,9 +41,13 @@ export const Turno = sequelize.define(
       type: DataTypes.STRING,
       allowNull: true,
     },
+    motivo_consulta: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
   },
   {
-    tableName: "turnos",
+    tableName: "turno",
     timestamps: false,
   }
 );

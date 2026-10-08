@@ -36,6 +36,12 @@ router.put(
   PracticaController.updatePractica,
 );
 
+router.delete(
+  "/:id",
+  validarExistencia(Practica, "id", "params"),
+  PracticaController.deletePractica,
+);
+
 router.patch(
   "/:id/delete",
   validarExistencia(Practica, "id", "params"),

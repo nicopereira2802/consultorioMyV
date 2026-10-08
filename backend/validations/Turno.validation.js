@@ -40,8 +40,14 @@ export const validarSolapaminetoHorarios = async (
   fechaFin,
   turnoIdExcluir = null,
 ) => {
-  const inicio = new Date(fechaInicio);
-  const fin = new Date(fechaFin);
+  const inicio =
+    typeof fechaInicio === "string" && fechaInicio.trim().length >= 10
+      ? fechaInicio.trim().replace("T", " ")
+      : new Date(fechaInicio);
+  const fin =
+    typeof fechaFin === "string" && fechaFin.trim().length >= 10
+      ? fechaFin.trim().replace("T", " ")
+      : new Date(fechaFin);
 
   const [estadoCancelado, created] = await EstadoTurno.findOrCreate({
     where: { estado: "Cancelado" },

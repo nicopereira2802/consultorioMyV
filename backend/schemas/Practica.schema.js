@@ -45,20 +45,18 @@ export const createPracticaSchema = z.object({
       "La especialidad no puede contener caracteres especiales como (), [], {}, comillas o comas",
     ),
 
-  precio_referencia: z
+  precio_referencia: z.coerce
     .number({
-      required_error: "El precio de referencia es obligatorio",
       invalid_type_error: "El precio de referencia debe ser un número",
     })
-    .positive("El precio de referencia debe ser mayor a 0")
-    .refine((val) => Number.isInteger(val * 100), {
-      message: "El precio no puede tener más de 2 decimales",
-    }),
+    .min(0, "El precio de referencia debe ser mayor o igual a 0")
+    .optional()
+    .default(0),
 
   activo: z
     .boolean({ invalid_type_error: "El campo activo debe ser booleano" })
     .optional(),
-});
+}).passthrough();
 
 export const updatePracticaSchema = z.object({
   codigo_nomenclador: z
@@ -105,18 +103,14 @@ export const updatePracticaSchema = z.object({
     )
     .optional(),
 
-  precio_referencia: z
+  precio_referencia: z.coerce
     .number({
-      required_error: "El precio de referencia es obligatorio",
       invalid_type_error: "El precio de referencia debe ser un número",
     })
-    .positive("El precio de referencia debe ser mayor a 0")
-    .refine((val) => Number.isInteger(val * 100), {
-      message: "El precio no puede tener más de 2 decimales",
-    })
+    .min(0, "El precio de referencia debe ser mayor o igual a 0")
     .optional(),
 
   activo: z
     .boolean({ invalid_type_error: "El campo activo debe ser booleano" })
     .optional(),
-});
+}).passthrough();

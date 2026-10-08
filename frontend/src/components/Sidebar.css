@@ -1,0 +1,211 @@
+
+/* --- Backdrop / Overlay Oscuro con Desenfoque --- */
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-overlay.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* --- Panel Deslizante Drawer --- */
+.sidebar-drawer {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 290px;
+  max-width: 82vw;
+  background-color: var(--color-bg-card, #ffffff);
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(-100%);
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: var(--safe-area-top, 0px) 0 var(--safe-area-bottom, 0px) 0;
+  will-change: transform;
+}
+
+.sidebar-drawer.is-open {
+  transform: translateX(0);
+}
+
+/* --- Cabecera del Sidebar --- */
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 20px 18px 20px;
+  border-bottom: 1.5px solid var(--color-border-card, #e5e9f0);
+}
+
+.sidebar-branding {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sidebar-logo-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: var(--radius-pill, 9999px);
+  background-color: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.sidebar-logo-badge img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.sidebar-title-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-app-name {
+  font-size: 1.15rem;
+  font-weight: var(--font-weight-bold, 700);
+  color: var(--color-text-main, #1f2937);
+  line-height: 1.2;
+}
+
+.sidebar-app-desc {
+  font-size: 0.78rem;
+  color: var(--color-text-muted, #6b7280);
+  font-weight: 500;
+}
+
+.sidebar-close-btn {
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  color: var(--color-text-muted, #6b7280);
+  cursor: pointer;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px; /* Táctil > 44px */
+  border-radius: var(--radius-pill, 9999px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.18s ease;
+  touch-action: manipulation;
+}
+
+.sidebar-close-btn:hover {
+  background-color: var(--color-bg-subtle, #f8fafc);
+  color: var(--color-text-main, #1f2937);
+}
+
+.sidebar-close-btn:active {
+  transform: scale(0.92);
+}
+
+/* --- Cuerpo y Navegación --- */
+.sidebar-nav {
+  flex: 1;
+  padding: 16px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+}
+
+.sidebar-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  min-height: 48px; /* Táctil holgado para dedo */
+  border-radius: var(--radius-btn, 12px);
+  font-size: 0.95rem;
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text-main, #1f2937);
+  text-decoration: none;
+  transition: background-color 0.18s ease, color 0.18s ease;
+  touch-action: manipulation;
+  border-left: 3px solid transparent;
+}
+
+.sidebar-nav-item svg {
+  color: var(--color-text-muted, #6b7280);
+  transition: color 0.18s ease;
+  flex-shrink: 0;
+}
+
+.sidebar-nav-item:hover {
+  background-color: var(--color-bg-subtle, #f8fafc);
+  color: var(--color-primary, #2eb086);
+}
+
+.sidebar-nav-item:hover svg {
+  color: var(--color-primary, #2eb086);
+}
+
+/* Ruta Activa Oficial: Fondo verde claro y acento verde primario */
+.sidebar-nav-item.active {
+  background-color: var(--color-primary-light, #e8f7f1);
+  color: var(--color-primary, #2eb086);
+  font-weight: 700;
+  border-left: 3px solid var(--color-primary, #2eb086);
+}
+
+.sidebar-nav-item.active svg {
+  color: var(--color-primary, #2eb086);
+}
+
+/* --- Pie del Drawer --- */
+.sidebar-footer {
+  padding: 16px 20px;
+  border-top: 1.5px solid var(--color-border-card, #e5e9f0);
+  background-color: var(--color-bg-subtle, #f8fafc);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sidebar-status-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #15803d;
+}
+
+.sidebar-status-dot {
+  width: 8px;
+  height: 8px;
+  background-color: var(--color-primary, #2eb086);
+  border-radius: var(--radius-pill, 9999px);
+  animation: pulseDot 2s infinite ease-in-out;
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
+}
+
+.sidebar-version-text {
+  font-size: 0.75rem;
+  color: var(--color-text-muted, #6b7280);
+  font-weight: 500;
+}

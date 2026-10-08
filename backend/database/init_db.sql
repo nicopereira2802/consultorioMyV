@@ -1,12 +1,92 @@
--- ==========================================================
--- SCRIPT DE INICIALIZACIÓN: consultorio_myv
--- ==========================================================
 
+---------------------------- SCRIPT DE INICIALIZACIÓN: consultorio_myv
+
+CREATE DATABASE IF NOT EXISTS consultorio_myv;
 USE consultorio_myv;
 
--- ==========================================================
--- CARGA DE DATOS DE PRUEBA (SEEDERS)
--- ==========================================================
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- Eliminar tablas si ya existían para evitar conflictos
+--DROP TABLE IF EXISTS practica_turno;
+--DROP TABLE IF EXISTS turno;
+--DROP TABLE IF EXISTS practica;
+--DROP TABLE IF EXISTS paciente_obra_social;
+--DROP TABLE IF EXISTS paciente;
+--DROP TABLE IF EXISTS obra_social;
+--DROP TABLE IF EXISTS estado_turno;
+
+
+-------------------------- DEFINICIÓN DE TABLAS 
+
+
+CREATE TABLE estado_turno (
+    id_estado INT PRIMARY KEY,
+    estado VARCHAR(50) NOT NULL
+);
+
+CREATE TABLE obra_social (
+    id_obra_social INT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    activo BOOLEAN DEFAULT TRUE
+);
+
+CREATE TABLE paciente (
+    id_paciente INT PRIMARY KEY AUTO_INCREMENT,
+    nombre VARCHAR(100) NOT NULL,
+    apellido VARCHAR(100) NOT NULL,
+    dni VARCHAR(20) NOT NULL UNIQUE,
+    fecha_nacimiento DATE,
+    telefono VARCHAR(50),
+    domicilio VARCHAR(255),
+    activo BOOLEAN DEFAULT TRUE
+);
+
+CREATE TABLE paciente_obra_social (
+    id_paciente INT NOT NULL,
+    id_obra_social INT NOT NULL,
+    nro_afiliado VARCHAR(100),
+    PRIMARY KEY (id_paciente, id_obra_social),
+    FOREIGN KEY (id_paciente) REFERENCES paciente(id_paciente) ON DELETE CASCADE,
+    FOREIGN KEY (id_obra_social) REFERENCES obra_social(id_obra_social)
+);
+
+CREATE TABLE practica (
+    id_practica INT PRIMARY KEY AUTO_INCREMENT,
+    codigo_nomenclador VARCHAR(20),
+    nombre_nomenclador VARCHAR(255) NOT NULL,
+    nombre_referencia VARCHAR(255),
+    especialidad VARCHAR(100),
+    precio_referencia DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+    activo BOOLEAN DEFAULT TRUE
+);
+
+CREATE TABLE turno (
+    id_turno INT PRIMARY KEY AUTO_INCREMENT,
+    id_paciente INT NOT NULL,
+    id_estado INT NOT NULL,
+    motivo_consulta VARCHAR(255) NULL,
+    fecha_hora_inicio DATETIME NOT NULL,
+    fecha_hora_fin DATETIME NOT NULL,
+    precio_final DECIMAL(10, 2) DEFAULT 0.00,
+    notas_consulta TEXT,
+    FOREIGN KEY (id_paciente) REFERENCES paciente(id_paciente) ON DELETE CASCADE,
+    FOREIGN KEY (id_estado) REFERENCES estado_turno(id_estado)
+);
+
+CREATE TABLE practica_turno (
+  id_practica_turno INT AUTO_INCREMENT PRIMARY KEY,
+  id_turno INT NOT NULL,
+  id_practica INT NOT NULL,
+  precio_aplicado DECIMAL(10, 2) NULL,
+  CONSTRAINT fk_pt_turno FOREIGN KEY (id_turno) REFERENCES turno(id_turno) ON DELETE CASCADE,
+  CONSTRAINT fk_pt_practica FOREIGN KEY (id_practica) REFERENCES practica(id_practica) ON DELETE CASCADE
+);
+
+SET FOREIGN_KEY_CHECKS = 1;
+
+
+---------------------------- SEEDERS
+
 
 INSERT INTO estado_turno (id_estado, estado) VALUES
 (1, 'Programado'),
@@ -39,11 +119,11 @@ INSERT INTO practica (id_practica, codigo_nomenclador, nombre_nomenclador, nombr
 (4, '05.01', 'Extracción Simple', 'Extracción dental', 'Cirugía', 30000.00, TRUE),
 (5, '08.01', 'Tratamiento de Conducto Unirradicular', 'Endodoncia simple', 'Endodoncia', 55000.00, TRUE);
 
-INSERT INTO turno (id_turno, id_paciente, id_estado, fecha_hora_inicio, fecha_hora_fin, precio_final, notas_consulta) VALUES
-(1, 1, 1, '2026-09-20 09:00:00', '2026-09-20 09:40:00', 15000.00, 'Primera consulta de diagnóstico.'),
-(2, 2, 4, '2026-09-15 10:30:00', '2026-09-15 11:15:00', 25000.00, 'Limpieza completada sin complicaciones.'),
-(3, 3, 3, '2026-09-16 14:00:00', '2026-09-16 14:30:00', 0.00, 'Avisó que no puede asistir por trabajo.'),
-(4, 4, 1, '2026-09-21 16:00:00', '2026-09-21 17:00:00', 32000.00, 'Control y posible restauración pieza 16.');
+INSERT INTO turno (id_turno, id_paciente, id_estado, motivo_consulta, fecha_hora_inicio, fecha_hora_fin, precio_final, notas_consulta) VALUES
+(1, 1, 1, 'Dolor agudo en molar superior', '2026-09-20 09:00:00', '2026-09-20 09:40:00', 15000.00, 'Primera consulta de diagnóstico.'),
+(2, 2, 4, , NULL'2026-09-15 10:30:00', '2026-09-15 11:15:00', 25000.00, 'Limpieza completada sin complicaciones.'),
+(3, 3, 3, , NULL'2026-09-16 14:00:00', '2026-09-16 14:30:00', 0.00, 'Avisó que no puede asistir por trabajo.'),
+(4, 4, 1, 'Revisión de prótesis' , '2026-09-21 16:00:00', '2026-09-21 17:00:00', 32000.00, 'Control y posible restauración pieza 16.');
 
 INSERT INTO practica_turno (id_turno, id_practica) VALUES
 (1, 1),

@@ -4,10 +4,14 @@ import { Op } from "sequelize";
 import { Paciente } from "../models/Paciente.model.js";
 
 export const validarTelefono = async (telefono, pacienteIdExcluir = null) => {
+  if (!telefono || String(telefono).trim() === "" || telefono === "S/D") {
+    return true;
+  }
   const telefonoDuplicado = await Paciente.findOne({
     where: {
-      telefono,
-      // Si estamos editando un turno existente, lo excluimos de la búsqueda
+      telefono: String(telefono).trim(),
+      activo: true,
+      // Si estamos editando un paciente existente, lo excluimos de la búsqueda
       ...(pacienteIdExcluir && { id_paciente: { [Op.ne]: pacienteIdExcluir } }),
     },
   });
@@ -18,10 +22,14 @@ export const validarTelefono = async (telefono, pacienteIdExcluir = null) => {
 };
 
 export const validarDni = async (dni, pacienteIdExcluir = null) => {
+  if (!dni || String(dni).trim() === "") {
+    return true;
+  }
   const dniDuplicado = await Paciente.findOne({
     where: {
-      dni,
-      // Si estamos editando un turno existente, lo excluimos de la búsqueda
+      dni: String(dni).trim(),
+      activo: true,
+      // Si estamos editando un paciente existente, lo excluimos de la búsqueda
       ...(pacienteIdExcluir && { id_paciente: { [Op.ne]: pacienteIdExcluir } }),
     },
   });

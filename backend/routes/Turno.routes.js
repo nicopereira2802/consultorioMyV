@@ -38,7 +38,11 @@ router.put(
 // Finalizar atención en consultorio y registrar prácticas
 router.patch(
   "/:id/atender",
-  validateSchema(updateTurnoSchema),
+  validarExistencia(Turno, "id", "params"),
+  TurnoController.turnoAtendido,
+);
+router.post(
+  "/:id/atencion",
   validarExistencia(Turno, "id", "params"),
   TurnoController.turnoAtendido,
 );
@@ -46,7 +50,6 @@ router.patch(
 // Cancelar turno
 router.patch(
   "/:id/cancelar",
-  validateSchema(updateTurnoSchema),
   validarExistencia(Turno, "id", "params"),
   TurnoController.turnoCancelado,
 );
@@ -54,16 +57,31 @@ router.patch(
 // Marcar como inasistente
 router.patch(
   "/:id/inasistente",
-  validateSchema(updateTurnoSchema),
   validarExistencia(Turno, "id", "params"),
-  TurnoController.turnoCancelado,
+  TurnoController.turnoInasistido,
 );
 
-// Marcar como reprogramado
+// Reprogramar turno
+router.post(
+  "/reprogramar",
+  TurnoController.turnoReprogramado,
+);
 router.patch(
   "/:id/reprogramado",
   validarExistencia(Turno, "id", "params"),
   TurnoController.turnoReprogramado,
+);
+router.post(
+  "/:id/reprogramar",
+  validarExistencia(Turno, "id", "params"),
+  TurnoController.turnoReprogramado,
+);
+
+// Liberar o eliminar turno
+router.put(
+  "/:id/liberar",
+  validarExistencia(Turno, "id", "params"),
+  TurnoController.deleteTurno,
 );
 
 router.delete(

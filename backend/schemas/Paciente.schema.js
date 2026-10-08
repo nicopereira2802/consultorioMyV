@@ -18,139 +18,207 @@ fechaMaxima.setFullYear(hoy.getFullYear() - 1);
 const fechaMinima = new Date();
 fechaMinima.setFullYear(hoy.getFullYear() - 120);
 
-export const createPacienteSchema = z.object({
-  nombre: z
-    .string({
-      required_error: "El nombre es obligatorio",
-      invalid_type_error: "El nombre debe ser un texto",
-    })
-    .trim()
-    .min(2, "El nombre debe tener al menos 2 caracteres")
-    .max(50, "El nombre no puede superar los 50 caracteres")
-    .regex(
-      regex,
-      "El nombre no puede contener números ni caracteres especiales como (), [], {}, comillas o comas",
+const emptyToUndefined = (val) =>
+  val === "" || val === null || val === undefined ? undefined : val;
+
+export const createPacienteSchema = z
+  .object({
+    nombre: z
+      .string({
+        required_error: "El nombre es obligatorio",
+        invalid_type_error: "El nombre debe ser un texto",
+      })
+      .trim()
+      .min(2, "El nombre debe tener al menos 2 caracteres")
+      .max(50, "El nombre no puede superar los 50 caracteres")
+      .regex(
+        regex,
+        "El nombre no puede contener números ni caracteres especiales como (), [], {}, comillas o comas",
+      ),
+
+    apellido: z
+      .string({
+        required_error: "El apellido es obligatorio",
+        invalid_type_error: "El apellido debe ser un texto",
+      })
+      .trim()
+      .min(2, "El apellido debe tener al menos 2 caracteres")
+      .max(50, "El apellido no puede superar los 50 caracteres")
+      .regex(
+        regex,
+        "El apellido no puede contener números ni caracteres especiales como (), [], {}, comillas o comas",
+      ),
+
+    dni: z.preprocess(
+      emptyToUndefined,
+      z
+        .string({
+          invalid_type_error: "El dni debe ser un texto",
+        })
+        .trim()
+        .min(2, "El dni debe tener al menos 2 caracteres")
+        .max(50, "El dni no puede superar los 50 caracteres")
+        .regex(
+          dniRegex,
+          "El dni no puede contener números ni caracteres especiales como (), [], {}, comillas o comas",
+        )
+        .optional(),
     ),
 
-  apellido: z
-    .string({
-      required_error: "El apellido es obligatorio",
-      invalid_type_error: "El apellido debe ser un texto",
-    })
-    .trim()
-    .min(2, "El apellido debe tener al menos 2 caracteres")
-    .max(50, "El apellido no puede superar los 50 caracteres")
-    .regex(
-      regex,
-      "El apellido no puede contener números ni caracteres especiales como (), [], {}, comillas o comas",
+    fecha_nacimiento: z.preprocess(
+      emptyToUndefined,
+      z.coerce
+        .date({
+          invalid_type_error: "Formato de fecha inválido",
+        })
+        .max(fechaMaxima, {
+          message: "El paciente debe tener al menos 1 año de edad",
+        })
+        .min(fechaMinima, { message: "La fecha de nacimiento no es válida" })
+        .optional(),
     ),
 
-  dni: z
-    .string({
-      required_error: "El dni es obligatorio",
-      invalid_type_error: "El dni debe ser un texto",
-    })
-    .trim()
-    .min(2, "El dni debe tener al menos 2 caracteres")
-    .max(50, "El dni no puede superar los 50 caracteres")
-    .regex(
-      dniRegex,
-      "El dni no puede contener números ni caracteres especiales como (), [], {}, comillas o comas",
-    )
-    .optional(),
+    telefono: z
+      .string({
+        required_error: "El teléfono es obligatorio",
+        invalid_type_error: "El teléfono debe ser un texto",
+      })
+      .trim()
+      .min(8, "El teléfono debe tener al menos 8 dígitos"),
 
-  fecha_nacimiento: z.coerce
-    .date({
-      invalid_type_error: "Formato de fecha inválido",
-    })
-    .max(fechaMaxima, {
-      message: "El paciente debe tener al menos 1 año de edad",
-    })
-    .min(fechaMinima, { message: "La fecha de nacimiento no es válida" })
-    .optional(),
+    domicilio: z.preprocess(
+      emptyToUndefined,
+      z
+        .string({ invalid_type_error: "El domicilio debe ser un texto" })
+        .trim()
+        .min(2, "El domicilio debe tener al menos 2 caracteres")
+        .regex(
+          domicilioRegex,
+          "El domicilio no puede contener caracteres especiales como (), [], {}",
+        )
+        .optional(),
+    ),
 
-  telefono: z
-    .string()
-    .trim()
-    .min(8, "El teléfono debe tener al menos 8 dígitos"),
+    id_obra_social: z.preprocess(
+      (val) =>
+        val === "" || val === null || val === undefined ? 1 : Number(val),
+      z.number().int().positive().optional().default(1),
+    ),
 
-  domicilio: z
-    .string({ invalid_type_error: "El apellido debe ser un texto" })
-    .trim()
-    .min(2, "El domicilio debe tener al menos 2 caracteres")
-    .regex(
-      domicilioRegex,
-      "El domicilio no puede contener caracteres especiales como (), [], {}",
-    )
-    .optional(),
-});
+    nro_afiliado: z.preprocess(
+      (val) =>
+        val === null || val === undefined ? undefined : String(val).trim(),
+      z.string().optional(),
+    ),
 
-export const updatePacienteSchema = z.object({
-  nombre: z
-    .string({
-      required_error: "El nombre es obligatorio",
-      invalid_type_error: "El nombre debe ser un texto",
-    })
-    .trim()
-    .min(2, "El nombre debe tener al menos 2 caracteres")
-    .max(50, "El nombre no puede superar los 50 caracteres")
-    .regex(
-      regex,
-      "El nombre no puede contener números ni caracteres especiales como (), [], {}, comillas o comas",
-    )
-    .optional(),
+    obras_sociales: z
+      .array(
+        z.object({
+          id_obra_social: z.union([z.number(), z.string()]),
+          nro_afiliado: z.string().optional().or(z.literal("")),
+        }),
+      )
+      .optional()
+      .default([]),
+  })
+  .passthrough();
 
-  apellido: z
-    .string({
-      required_error: "El apellido es obligatorio",
-      invalid_type_error: "El apellido debe ser un texto",
-    })
-    .trim()
-    .min(2, "El apellido debe tener al menos 2 caracteres")
-    .max(50, "El apellido no puede superar los 50 caracteres")
-    .regex(
-      regex,
-      "El apellido no puede contener números ni caracteres especiales como (), [], {}, comillas o comas",
-    )
-    .optional(),
+export const updatePacienteSchema = z
+  .object({
+    nombre: z
+      .string({
+        invalid_type_error: "El nombre debe ser un texto",
+      })
+      .trim()
+      .min(2, "El nombre debe tener al menos 2 caracteres")
+      .max(50, "El nombre no puede superar los 50 caracteres")
+      .regex(
+        regex,
+        "El nombre no puede contener números ni caracteres especiales como (), [], {}, comillas o comas",
+      )
+      .optional(),
 
-  dni: z
-    .string({
-      required_error: "El dni es obligatorio",
-      invalid_type_error: "El dni debe ser un texto",
-    })
-    .trim()
-    .min(2, "El dni debe tener al menos 2 caracteres")
-    .max(50, "El dni no puede superar los 50 caracteres")
-    .regex(
-      dniRegex,
-      "El dni no puede contener números ni caracteres especiales como (), [], {}, comillas o comas",
-    )
-    .optional(),
+    apellido: z
+      .string({
+        invalid_type_error: "El apellido debe ser un texto",
+      })
+      .trim()
+      .min(2, "El apellido debe tener al menos 2 caracteres")
+      .max(50, "El apellido no puede superar los 50 caracteres")
+      .regex(
+        regex,
+        "El apellido no puede contener números ni caracteres especiales como (), [], {}, comillas o comas",
+      )
+      .optional(),
 
-  fecha_nacimiento: z.coerce
-    .date({
-      invalid_type_error: "Formato de fecha inválido",
-    })
-    .max(fechaMaxima, {
-      message: "El paciente debe tener al menos 1 año de edad",
-    })
-    .min(fechaMinima, { message: "La fecha de nacimiento no es válida" })
-    .optional(),
+    dni: z.preprocess(
+      emptyToUndefined,
+      z
+        .string({
+          invalid_type_error: "El dni debe ser un texto",
+        })
+        .trim()
+        .min(2, "El dni debe tener al menos 2 caracteres")
+        .max(50, "El dni no puede superar los 50 caracteres")
+        .regex(
+          dniRegex,
+          "El dni no puede contener números ni caracteres especiales como (), [], {}, comillas o comas",
+        )
+        .optional(),
+    ),
 
-  telefono: z
-    .string()
-    .trim()
-    .min(8, "El teléfono debe tener al menos 8 dígitos")
-    .optional(),
+    fecha_nacimiento: z.preprocess(
+      emptyToUndefined,
+      z.coerce
+        .date({
+          invalid_type_error: "Formato de fecha inválido",
+        })
+        .max(fechaMaxima, {
+          message: "El paciente debe tener al menos 1 año de edad",
+        })
+        .min(fechaMinima, { message: "La fecha de nacimiento no es válida" })
+        .optional(),
+    ),
 
-  domicilio: z
-    .string({ invalid_type_error: "El apellido debe ser un texto" })
-    .trim()
-    .min(2, "El domicilio debe tener al menos 2 caracteres")
-    .regex(
-      domicilioRegex,
-      "El domicilio no puede contener caracteres especiales como (), [], {}",
-    )
-    .optional(),
-});
+    telefono: z
+      .string()
+      .trim()
+      .min(8, "El teléfono debe tener al menos 8 dígitos")
+      .optional(),
+
+    domicilio: z.preprocess(
+      emptyToUndefined,
+      z
+        .string({ invalid_type_error: "El domicilio debe ser un texto" })
+        .trim()
+        .min(2, "El domicilio debe tener al menos 2 caracteres")
+        .regex(
+          domicilioRegex,
+          "El domicilio no puede contener caracteres especiales como (), [], {}",
+        )
+        .optional(),
+    ),
+
+    id_obra_social: z.preprocess(
+      (val) =>
+        val === "" || val === null || val === undefined ? undefined : Number(val),
+      z.number().int().positive().optional(),
+    ),
+
+    nro_afiliado: z.preprocess(
+      (val) =>
+        val === null || val === undefined ? undefined : String(val).trim(),
+      z.string().optional(),
+    ),
+
+    obras_sociales: z
+      .array(
+        z.object({
+          id_obra_social: z.union([z.number(), z.string()]),
+          nro_afiliado: z.string().optional().or(z.literal("")),
+        }),
+      )
+      .optional()
+      .default([]),
+  })
+  .passthrough();

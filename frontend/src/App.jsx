@@ -1,73 +1,50 @@
-import { useState, useEffect } from 'react';
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import Layout from './components/Layout';
-import CalendarView from './components/CalendarView';
-import TurnoRegistration from './components/TurnoRegistration';
-import PatientsList from './components/PatientsList';
-import PatientRegistration from './components/PatientRegistration';
-import NavigationDrawer from './components/NavigationDrawer';
-import { CheckCircle2 } from 'lucide-react';
+import { useEffect } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 
-export default function App() {
-  const [isNavOpen, setIsNavOpen] = useState(false);
-  const [toastMessage, setToastMessage] = useState(null);
-  const location = useLocation();
+import AgendaDiaria from './pages/AgendaDiaria';
+import GestionPacientes from './pages/GestionPacientes';
+import CatalogoPracticas from './pages/CatalogoPracticas';
+import BottomNav from './components/BottomNav';
 
-  // Escuchar mensajes pasados por navigate(..., { state: { message: '...' } })
+/**
+ * App - Enrutador Principal Operativo (Sprint 1)
+ * Conecta todas las pantallas operativas de M&V Turnos sin barreras de autenticación.
+ */
+function App() {
   useEffect(() => {
-    const msg = location.state?.message;
-    if (msg) {
-      window.history.replaceState({}, document.title);
-      const showTimer = setTimeout(() => {
-        setToastMessage(msg);
-      }, 0);
-      const hideTimer = setTimeout(() => {
-        setToastMessage(null);
-      }, 4000);
-      return () => {
-        clearTimeout(showTimer);
-        clearTimeout(hideTimer);
-      };
+    const splash = document.getElementById('splash-screen');
+    if (splash) {
+      const timer = setTimeout(() => {
+        splash.classList.add('oculto');
+        setTimeout(() => splash.remove(), 400);
+      }, 300);
+
+      return () => clearTimeout(timer);
     }
-  }, [location.state?.message]);
+  }, []);
 
   return (
-    <Layout>
-      {/* Notificación Toast */}
-      {toastMessage && (
-        <div className="fixed top-6 right-6 z-50 flex items-center gap-2.5 bg-emerald-600 text-white px-5 py-3 rounded-xl shadow-xl font-medium text-sm animate-in slide-in-from-top-4 duration-200">
-          <CheckCircle2 className="w-5 h-5 text-emerald-200" />
-          <span>{toastMessage}</span>
-        </div>
-      )}
-
-      {/* Menú de navegación lateral */}
-      <NavigationDrawer
-        isOpen={isNavOpen}
-        onClose={() => setIsNavOpen(false)}
-      />
-
-      {/* Definición de rutas */}
+    <>
       <Routes>
-        <Route path="/" element={<Navigate to="/turnos" replace />} />
-        <Route
-          path="/turnos"
-          element={<CalendarView onOpenMenu={() => setIsNavOpen(true)} />}
-        />
-        <Route
-          path="/turnos/nuevo"
-          element={<TurnoRegistration />}
-        />
-        <Route
-          path="/pacientes"
-          element={<PatientsList />}
-        />
-        <Route
-          path="/pacientes/nuevo"
-          element={<PatientRegistration />}
-        />
-        <Route path="*" element={<Navigate to="/turnos" replace />} />
+        <Route path="/" element={<Navigate to="/agenda" replace />} />
+
+        <Route path="/agenda" element={<AgendaDiaria />} />
+
+        <Route path="/atencion" element={<Navigate to="/agenda" replace />} />
+        <Route path="/atencion/:idTurno" element={<Navigate to="/agenda" replace />} />
+
+        <Route path="/pacientes" element={<GestionPacientes />} />
+        <Route path="/pacientes/nuevo" element={<Navigate to="/pacientes" replace />} />
+        <Route path="/registrar-paciente" element={<Navigate to="/pacientes" replace />} />
+
+        <Route path="/practicas" element={<CatalogoPracticas />} />
+
+        <Route path="*" element={<Navigate to="/agenda" replace />} />
       </Routes>
-    </Layout>
+
+      <BottomNav />
+    </>
   );
 }
+
+export default App;

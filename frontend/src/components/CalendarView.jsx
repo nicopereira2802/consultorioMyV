@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Menu, Plus, Clock, User, Phone, FileText, DollarSign, X, AlertCircle, CheckCircle, Ban } from 'lucide-react';
-import DentalLogo from '../assets/DentalLogo';
+import { Menu, Plus, Clock, User, Phone, FileText, DollarSign, X, AlertCircle, CheckCircle, Ban, Calendar } from 'lucide-react';
 import { api, extractDataArray, extractErrorMessage } from '../services/api';
 
 const formatDate = (dateStr) => {
@@ -104,9 +103,6 @@ export default function CalendarView({
             <Menu className="w-7 h-7" />
           </button>
 
-          {/* Dental Logo */}
-          <DentalLogo className="w-11 h-11" />
-
           {/* Title */}
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
             Calendario
@@ -176,7 +172,6 @@ export default function CalendarView({
                           estado === 'Atendido' ? 'bg-blue-100 text-blue-800' :
                           estado === 'Cancelado' ? 'bg-red-100 text-red-800' :
                           estado === 'Inasistente' ? 'bg-gray-100 text-gray-800' :
-                          estado === 'Reprogramado' ? 'bg-amber-100 text-amber-800' :
                           'bg-emerald-100 text-emerald-800'
                         }`}>
                           {estado}
@@ -223,7 +218,7 @@ export default function CalendarView({
           <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl animate-in zoom-in-95 duration-150 text-left">
             <div className="flex items-center justify-between pb-3 border-b border-gray-100">
               <div className="flex items-center gap-2.5">
-                <DentalLogo className="w-8 h-8" />
+                <Calendar className="w-6 h-6 text-teal-600" />
                 <h3 className="text-lg font-bold text-gray-900">
                   Detalles del Turno
                 </h3>
@@ -279,7 +274,6 @@ export default function CalendarView({
                   selectedEventForDetail.EstadoTurno?.estado === 'Atendido' ? 'bg-blue-100 text-blue-800' :
                   selectedEventForDetail.EstadoTurno?.estado === 'Cancelado' ? 'bg-red-100 text-red-800' :
                   selectedEventForDetail.EstadoTurno?.estado === 'Inasistente' ? 'bg-gray-100 text-gray-800' :
-                  selectedEventForDetail.EstadoTurno?.estado === 'Reprogramado' ? 'bg-amber-100 text-amber-800' :
                   'bg-emerald-100 text-emerald-800'
                 }`}>
                   {selectedEventForDetail.EstadoTurno?.estado || 'Programado'}
@@ -328,7 +322,7 @@ export default function CalendarView({
             <div className="pt-3 border-t border-gray-100 flex justify-end">
               <button
                 onClick={() => setSelectedEventForDetail(null)}
-                className="px-5 py-2 text-sm bg-teal-600 hover:bg-teal-700 text-white rounded-xl font-medium transition-colors cursor-pointer"
+                className="px-5 py-2 text-sm bg-[#f87171] hover:bg-[#ef4444] text-white font-medium rounded-xl transition-all shadow-sm cursor-pointer"
               >
                 Cerrar
               </button>

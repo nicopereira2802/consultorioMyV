@@ -1,24 +1,168 @@
-@import "tailwindcss";
+/* ==========================================================================
+   index.css - Esquema visual de fondo general M&V Turnos
+   Fondo gris pizarra / charcoal oscuro (#2c3440) y layout flex centrado horizontal y verticalmente
+   ========================================================================== */
 
-@layer base {
-  body {
-    background-color: hsl(210, 9%, 96%);
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-    color: hsl(220, 43%, 99%);
-    margin: 0;
-    padding: 0;
-    min-height: 100vh;
+html, body, #root {
+  min-height: 100vh;
+  min-height: 100dvh; /* Dynamic Viewport Height para móviles */
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: #2c3440; /* Gris pizarra / charcoal oscuro oficial */
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  color: #1f2937;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* Control táctil y prevención de zoom/rebotes en iOS */
+  touch-action: pan-x pan-y;
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior: none;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #2c3440;
+  padding: 1.5rem 1rem;
+}
+
+/* --- Utilidades de Maquetación y Centrado --- */
+.min-h-screen { min-height: 100vh; }
+.w-full { width: 100%; }
+.flex { display: flex; }
+.flex-col { flex-direction: column !important; }
+.items-center { align-items: center; }
+.justify-center { justify-content: center; }
+.justify-between { justify-content: space-between !important; }
+.justify-end { justify-content: flex-end !important; }
+.gap-2 { gap: 0.5rem !important; }
+.gap-2\.5 { gap: 0.625rem !important; }
+.gap-3 { gap: 0.75rem !important; }
+.gap-4 { gap: 1rem !important; }
+
+/* Posicionamiento y Superposición */
+.fixed { position: fixed !important; }
+.inset-0 { top: 0 !important; right: 0 !important; bottom: 0 !important; left: 0 !important; }
+.z-50 { z-index: 1050 !important; }
+.z-\[60\] { z-index: 1200 !important; }
+
+/* Fondos y Efectos */
+.bg-black\/50 { background-color: rgba(0, 0, 0, 0.5) !important; }
+.bg-\[\#2c3440\] { background-color: #2c3440 !important; }
+.bg-\[\#2b303a\] { background-color: #2b303a !important; }
+.bg-slate-800 { background-color: #1e293b !important; }
+.bg-white { background-color: #ffffff !important; }
+.bg-emerald-50 { background-color: #ecfdf5 !important; }
+.bg-emerald-600 { background-color: #059669 !important; }
+.hover\:bg-emerald-700:hover { background-color: #047857 !important; }
+.bg-\[\#f87171\] { background-color: #f87171 !important; }
+.hover\:bg-\[\#ef4444\]:hover { background-color: #ef4444 !important; }
+.backdrop-blur-xs { backdrop-filter: blur(2px) !important; -webkit-backdrop-filter: blur(2px) !important; }
+.backdrop-blur-sm { backdrop-filter: blur(4px) !important; -webkit-backdrop-filter: blur(4px) !important; }
+
+/* Textos y Colores */
+.text-slate-800 { color: #1e293b !important; }
+.text-slate-600 { color: #475569 !important; }
+.text-slate-400 { color: #94a3b8 !important; }
+.hover\:text-slate-600:hover { color: #475569 !important; }
+.text-emerald-600 { color: #059669 !important; }
+.text-white { color: #ffffff !important; }
+.font-bold { font-weight: 700 !important; }
+.font-medium { font-weight: 500 !important; }
+.text-lg { font-size: 1.125rem !important; line-height: 1.75rem !important; }
+.text-sm { font-size: 0.875rem !important; line-height: 1.25rem !important; }
+.leading-relaxed { line-height: 1.625 !important; }
+
+/* Bordes y Sombras */
+.border { border: 1px solid #e2e8f0 !important; }
+.border-slate-100 { border-color: #f1f5f9 !important; }
+.border-t { border-top: 1px solid #f1f5f9 !important; }
+.rounded-lg { border-radius: 8px !important; }
+.rounded-xl { border-radius: 12px !important; }
+.rounded-2xl { border-radius: 16px !important; }
+.rounded-3xl { border-radius: 24px !important; }
+.rounded-full { border-radius: 9999px !important; }
+.shadow-sm { box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important; }
+.shadow-2xl { box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important; }
+
+/* Dimensiones y Espaciados */
+.max-w-5xl { max-width: 1024px !important; }
+.max-w-2xl { max-width: 672px !important; }
+.max-w-md { max-width: 28rem !important; }
+.w-9 { width: 2.25rem !important; }
+.h-9 { height: 2.25rem !important; }
+.p-1 { padding: 0.25rem !important; }
+.p-4 { padding: 1rem !important; }
+.p-6 { padding: 1.5rem !important; }
+.pt-2 { padding-top: 0.5rem !important; }
+.px-4 { padding-left: 1rem !important; padding-right: 1rem !important; }
+.py-2\.5 { padding-top: 0.625rem !important; padding-bottom: 0.625rem !important; }
+.cursor-pointer { cursor: pointer !important; }
+.transition-all { transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1) !important; }
+.transition-colors { transition: color 150ms cubic-bezier(0.4, 0, 0.2, 1), background-color 150ms cubic-bezier(0.4, 0, 0.2, 1), border-color 150ms cubic-bezier(0.4, 0, 0.2, 1) !important; }
+
+/* Animaciones */
+@keyframes modalConfirmFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes modalConfirmZoomIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+.animate-in.fade-in { animation: modalConfirmFadeIn 0.2s ease-out forwards; }
+.animate-in.zoom-in-95 { animation: modalConfirmZoomIn 0.2s ease-out forwards; }
+
+@media (min-width: 640px) {
+  .sm\:p-6 { padding: 1.5rem !important; }
+  .sm\:rounded-3xl { border-radius: 24px !important; }
+}
+
+.agenda-container,
+.pacientes-container,
+.vista-contenedor,
+.main-content {
+  padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+}
+
+/* Adaptación responsive en móviles: 0.5rem de padding y resguardo para BottomNav */
+@media (max-width: 768px) {
+  #root {
+    padding: 0.5rem;
+    padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .main-content,
+  .agenda-container,
+  .pacientes-container,
+  .vista-contenedor {
+    padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Evitar auto-zoom indeseado en Safari iOS al hacer foco en campos de formulario */
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+
+  /* Ocultar botones flotantes o redundantes de volver en dispositivos móviles (la navegación es nativa vía BottomNav) */
+  .btn-volver-flotante,
+  .boton-regresar,
+  .btn-regresar,
+  .btn-volver-circle,
+  .btn-volver,
+  .header-btn-volver,
+  button[aria-label="Volver"],
+  button[aria-label^="Regresar" i] {
+    display: none !important;
   }
 }
-
-/* Schedule-X custom styling to match UI theme */
-.sx__calendar-wrapper {
-  border-radius: 1rem;
-  overflow: hidden;
-  border: 1px solid #E5E7EB;
-}
-
-.sx__view-container {
-  min-height: 520px;
-}
-
