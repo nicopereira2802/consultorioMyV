@@ -75,3 +75,20 @@ export const updateCobroSchema = z.object({
     .positive("La cantidad de cuotas debe ser mínimo 1")
     .optional(),
 });
+
+export const createPlanPagoSchema = z.object({
+  id_turno: z.number().int().positive(),
+  id_paciente: z.number().int().positive(),
+  monto_total: z.number().positive(),
+  cant_cuotas: z.number().int().min(1).default(1),
+  primer_vencimiento: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Formato debe ser YYYY-MM-DD"),
+  intervalo_dias: z.number().int().min(1).default(30),
+  pago_inmediato: z.boolean().optional().default(false),
+  metodo_pago: z
+    .enum(["Efectivo", "Transferencia", "Tarjeta", "Otro"])
+    .optional()
+    .nullable(),
+});
+

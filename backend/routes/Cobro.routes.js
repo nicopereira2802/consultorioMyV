@@ -10,6 +10,7 @@ import { validateSchema } from "../middleware/validateSchema.js";
 import {
   createCobroSchema,
   updateCobroSchema,
+  createPlanPagoSchema,
 } from "../schemas/Cobro.schema.js";
 
 const router = express.Router();
@@ -25,6 +26,14 @@ router.get(
   "/:id",
   validarExistencia(Cobro, "id", "params"),
   CobroController.getCobroById,
+);
+
+router.post(
+  "/plan-pago",
+  validateSchema(createPlanPagoSchema),
+  validarExistencia(Turno, "id_turno", "body"),
+  validarExistencia(Paciente, "id_paciente", "body"),
+  CobroController.crearPlanPago,
 );
 
 router.post(

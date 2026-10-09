@@ -4,7 +4,7 @@ import { z } from "zod";
 
 // Fecha de hoy
 const hoyString = new Date().toLocaleDateString("sv-SE");
-const metodosPagoValidos = ["Efectivo", "Transferencia", "Tarjeta"];
+const metodosPagoValidos = ["Efectivo", "Transferencia", "Tarjeta", "Otro"];
 
 export const createCuotaSchema = z.object({
   id_cobro: z
@@ -60,7 +60,8 @@ export const createCuotaSchema = z.object({
     .enum(metodosPagoValidos, {
       errorMap: () => ({ message: "Método de pago no válido" }),
     })
-    .optional(),
+    .optional()
+    .nullable(),
 });
 
 export const updateCuotaSchema = z.object({
@@ -120,5 +121,6 @@ export const updateCuotaSchema = z.object({
     .enum(metodosPagoValidos, {
       errorMap: () => ({ message: "Método de pago no válido" }),
     })
-    .optional(),
+    .optional()
+    .nullable(),
 });

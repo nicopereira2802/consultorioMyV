@@ -151,6 +151,89 @@ describe("Suite de Tests Completa para /api/cobros", () => {
   });
 
   // ==========================================
+  // 1.1 POST /api/cobros/plan-pago (Plan Atómico)
+  // ==========================================
+  describe("POST /api/cobros/plan-pago", () => {
+    test("201: Debería crear un plan de pago atómico de 3 cuotas con distribución exacta de centavos", async () => {
+      const payload = {
+        id_paciente: pacienteId,
+        id_turno: turnoId,
+        monto_total: 10000.0,
+        cant_cuotas: 3,
+        primer_vencimiento: "2026-11-15",
+        intervalo_dias: 30,
+        pago_inmediato: false,
+      };
+
+      const res = await request(app).post("/api/cobros/plan-pago").send(payload);
+
+      expect(res.status).toBe(201);
+      expect(res.body.status).toBe("success");
+      expect(res.body.data).toHaveProperty("cobro");
+      expect(res.body.data).toHaveProperty("cuotas");
+      expect(res.body.data.cuotas.length).toBe(3);
+
+      const cuotas = res.body.data.cuotas;
+      expect(Number(cuotas[0].monto_cuota)).toBe(3333.33);
+      expect(Number(cuotas[1].monto_cuota)).toBe(3333.33);
+      expect(Number(cuotas[2].monto_cuota)).toBe(3333.34);
+      expect(cuotas[0].estado).toBe("Pendiente");
+      expect(cuotas[0].fecha_vencimiento).toBe("2026-11-15");
+
+      const totalSuma = cuotas.reduce((acc, c) => acc + Number(c.monto_cuota), 0);
+      expect(Math.round(totalSuma * 100) / 100).toBe(10000.0);
+    });
+
+    test("201: Debería asentar pago inmediato en la primera cuota si pago_inmediato = true", async () => {
+      const payload = {
+        id_paciente: pacienteId,
+        id_turno: turnoId,
+        monto_total: 15000.0,
+        cant_cuotas: 2,
+        primer_vencimiento: "2026-11-20",
+        pago_inmediato: true,
+        metodo_pago: "Transferencia",
+      };
+
+      const res = await request(app).post("/api/cobros/plan-pago").send(payload);
+
+      expect(res.status).toBe(201);
+      const cuotas = res.body.data.cuotas;
+      expect(cuotas[0].estado).toBe("Pagada");
+      expect(Number(cuotas[0].monto_cobrado)).toBe(7500.0);
+      expect(cuotas[0].metodo_pago).toBe("Transferencia");
+      expect(cuotas[0].fecha_cobro).toBeDefined();
+
+      expect(cuotas[1].estado).toBe("Pendiente");
+      expect(Number(cuotas[1].monto_cobrado)).toBe(0);
+    });
+
+    test("400: Falla si formato de fecha primer_vencimiento no es YYYY-MM-DD", async () => {
+      const res = await request(app).post("/api/cobros/plan-pago").send({
+        id_paciente: pacienteId,
+        id_turno: turnoId,
+        monto_total: 5000,
+        cant_cuotas: 1,
+        primer_vencimiento: "15/11/2026",
+      });
+
+      expect(res.status).toBe(400);
+    });
+
+    test("404: Falla si el Turno o Paciente no existe", async () => {
+      const res = await request(app).post("/api/cobros/plan-pago").send({
+        id_paciente: 99999,
+        id_turno: turnoId,
+        monto_total: 5000,
+        cant_cuotas: 1,
+        primer_vencimiento: "2026-11-15",
+      });
+
+      expect(res.status).toBe(404);
+    });
+  });
+
+  // ==========================================
   // 2. GET /api/cobros/:turnoId/cobros (Obtener por Turno)
   // ==========================================
   describe("GET /api/cobros/:turnoId/cobros", () => {
