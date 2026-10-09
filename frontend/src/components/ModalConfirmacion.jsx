@@ -1,23 +1,5 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import './ModalConfirmacion.css';
-
-/**
- * ModalConfirmacion - Diálogo modal de confirmación obligatorio para acciones críticas
- * (Inasistencia, Cancelar Turno, Liberar Horario).
- *
- * @param {boolean} isOpen - Controla la visibilidad del modal
- * @param {function} onClose - Callback al cancelar o cerrar el diálogo
- * @param {function} onConfirm - Callback al confirmar la acción
- * @param {string} [titulo='¿Confirmar acción?'] - Título del modal
- * @param {string|React.ReactNode} mensaje - Texto explicativo con datos del turno/paciente
- * @param {'peligro'|'petroleo'|'exito'|'advertencia'} [tipo='peligro'] - Variante de estilo y color
- * @param {string} [textoConfirmar='Sí, confirmar'] - Etiqueta del botón de confirmación
- * @param {string} [textoCancelar='Volver / No'] - Etiqueta del botón de cancelación
- * @param {function} [onSecondaryAction] - Callback para acción alternativa (ej: Inasistencia y Reprogramar)
- * @param {string} [textoSecondaryAction] - Etiqueta del botón de acción alternativa
- * @param {'peligro'|'petroleo'|'exito'|'advertencia'|'primario'} [tipoSecondaryAction='petroleo'] - Variante de color de la acción secundaria
- * @param {boolean} [isLoading=false] - Estado de carga mientras se procesa la acción
- */
 export const ModalConfirmacion = ({
   isOpen,
   onClose,
@@ -26,32 +8,38 @@ export const ModalConfirmacion = ({
   mensaje,
   tipo = 'peligro',
   icono = null,
-  textoConfirmar = 'Sí, confirmar',
-  textoCancelar = 'Volver / No',
-  onSecondaryAction,
-  textoSecondaryAction,
-  tipoSecondaryAction = 'petroleo',
+  textoConfirmar = 'Sí, cancelar turno',
+  textoCancelar = 'Volver',
   isLoading = false
 }) => {
+  // Estado local para almacenar el motivo opcional escrito por el odontologo
+  const [motivo, setMotivo] = useState('');
+
   useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && isOpen && !isLoading) {
-        onClose();
-      }
-    };
-
-    if (isOpen) {
-      window.addEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = 'hidden';
+    if (!isOpen) {
+      setMotivo('');
     }
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = '';
-    };
-  }, [isOpen, isLoading, onClose]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
+
+  const esCancelacion = titulo.toLowerCase().includes('cancelar');
+  
+  const handleConfirmarSubmit = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    if (isLoading) return;
+
+    try {
+      if (onConfirm) {
+        // Enviamos el motivo procesado al callback onConfirm
+        await onConfirm(motivo.trim());
+      }
+    } finally {
+      if (onClose) {
+        onClose();
+      }
+    }
+  };
 
   const renderIcon = () => {
     switch (tipo) {
@@ -89,21 +77,15 @@ export const ModalConfirmacion = ({
       className="modal-confirm-overlay"
       role="dialog"
       aria-modal="true"
-      aria-labelledby="modal-confirm-title"
       onClick={isLoading ? undefined : onClose}
     >
-      <div
-        className="modal-confirm-card"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="modal-confirm-card" onClick={(e) => e.stopPropagation()}>
         <div className="modal-confirm-header">
           <div className="modal-confirm-title-group">
             <div className={`modal-confirm-icon-badge ${tipo}`}>
               {icono || renderIcon()}
             </div>
-            <h2 id="modal-confirm-title" className="modal-confirm-title">
-              {titulo}
-            </h2>
+            <h2 className="modal-confirm-title">{titulo}</h2>
           </div>
 
           <button
@@ -111,62 +93,77 @@ export const ModalConfirmacion = ({
             className="modal-confirm-close-btn"
             onClick={onClose}
             disabled={isLoading}
-            aria-label="Cerrar ventana de confirmación"
           >
             ✕
           </button>
         </div>
 
-        <div className="modal-confirm-body">
-          <div className="modal-confirm-mensaje">
-            {typeof mensaje === 'string' ? <p>{mensaje}</p> : mensaje}
+        <form onSubmit={handleConfirmarSubmit}>
+          <div className="modal-confirm-body">
+            <div className="modal-confirm-mensaje">
+              {typeof mensaje === 'string' ? <p>{mensaje}</p> : mensaje}
+            </div>
+
+            {/* Renderizado del área de texto para el motivo opcional */}
+            {esCancelacion && (
+              <div style={{ marginTop: '16px', textAlign: 'left' }}>
+                <label 
+                  style={{ 
+                    display: 'block', 
+                    fontSize: '0.9rem', 
+                    fontWeight: '600', 
+                    color: '#334155', 
+                    marginBottom: '8px',
+                    fontFamily: 'inherit' 
+                  }}
+                >
+                  Motivo de la cancelación <span style={{ color: '#94a3b8', fontWeight: '400', fontSize: '0.85rem' }}>(Opcional)</span>
+                </label>
+                <textarea
+                  value={motivo}
+                  onChange={(e) => setMotivo(e.target.value)}
+                  placeholder="Motivo de la cancelación..."
+                  rows={3}
+                  autoFocus
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid #cbd5e1',
+                    fontSize: '0.95rem',
+                    color: '#1e293b',
+                    fontFamily: 'inherit', 
+                    lineHeight: '1.5',
+                    resize: 'none',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+            )}
           </div>
-        </div>
 
-        <div className="modal-confirm-actions">
-          <button
-            type="button"
-            className="btn-modal-cancelar-neutro btn-secondary bg-[#f87171] hover:bg-[#ef4444] text-white font-medium rounded-xl transition-all shadow-sm"
-            onClick={onClose}
-            disabled={isLoading}
-          >
-            {textoCancelar}
-          </button>
-
-          <button
-            type="button"
-            className={`btn-modal-confirmar-accion ${tipo} ${tipo === 'peligro' || tipo === 'alerta' ? 'btn-danger' : 'btn-primary'}`}
-            onClick={async (e) => {
-              if (e && e.preventDefault) e.preventDefault();
-              if (isLoading) return;
-              try {
-                if (onConfirm) {
-                  await onConfirm();
-                }
-              } finally {
-                if (onClose) {
-                  onClose();
-                }
-              }
-            }}
-            disabled={isLoading}
-            autoFocus={!onSecondaryAction}
-          >
-            {isLoading ? 'Procesando...' : textoConfirmar}
-          </button>
-
-          {onSecondaryAction && (
+          <div className="modal-confirm-actions" style={{ marginTop: '20px' }}>
             <button
               type="button"
-              className={`btn-modal-secundaria-accion ${tipoSecondaryAction || 'petroleo'}`}
-              onClick={onSecondaryAction}
+              className="btn-modal-cancelar-neutro btn-secondary bg-[#f87171] hover:bg-[#ef4444] text-white font-medium rounded-xl transition-all shadow-sm"
+              onClick={onClose}
               disabled={isLoading}
-              autoFocus
+              style={{ fontFamily: 'inherit' }} 
             >
-              {textoSecondaryAction}
+              {textoCancelar}
             </button>
-          )}
-        </div>
+
+            <button
+              type="submit"
+              className={`btn-modal-confirmar-accion ${tipo} ${tipo === 'peligro' ? 'btn-danger' : 'btn-primary'}`}
+              disabled={isLoading}
+              style={{ fontFamily: 'inherit' }} 
+            >
+              {isLoading ? 'Procesando...' : textoConfirmar}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
