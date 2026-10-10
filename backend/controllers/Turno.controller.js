@@ -6,6 +6,7 @@ import {
   HistorialEstadoTurno,
   PracticaTurno,
   EstadoTurno,
+  Paciente,
 } from "../models/index.model.js";
 import {
   validarEstadoProgramado,
@@ -16,7 +17,9 @@ import {
 // Obtener todos los turnos
 export const getAllTurnos = async (req, res) => {
   try {
-    const turnos = await Turno.findAll();
+    const turnos = await Turno.findAll({
+      include: [{ model: Paciente, attributes: ["nombre", "apellido"] }],
+    });
 
     res.status(200).json({
       status: "success",
@@ -49,15 +52,11 @@ export const createTurno = async (req, res) => {
     const {
       id_paciente,
       fecha_hora_inicio,
-      duracion_minutos,
+      fecha_hora_fin,
       precio_final,
       notas_consulta,
     } = req.body;
 
-    const inicio = new Date(fecha_hora_inicio);
-    const fecha_hora_fin = new Date(
-      inicio.getTime() + duracion_minutos * 60000,
-    );
     // Si no encuentra el estado lo crea
     const estado = await validarEstadoProgramado();
 
@@ -119,29 +118,22 @@ export const updateTurno = async (req, res) => {
     const {
       id_paciente,
       fecha_hora_inicio,
-      duracion_minutos,
+      fecha_hora_fin,
       precio_final,
       notas_consulta,
     } = req.body;
 
-    const inicio = new Date(fecha_hora_inicio);
-    const fecha_hora_fin = new Date(
-      inicio.getTime() + duracion_minutos * 60000,
+    const haySolapamiento = await validarSolapaminetoHorarios(
+      fecha_hora_inicio,
+      fecha_hora_fin,
+      turno.id_turno,
     );
-
-    if (fecha_hora_inicio || duracion_minutos) {
-      const haySolapamiento = await validarSolapaminetoHorarios(
-        fecha_hora_inicio,
-        fecha_hora_fin,
-        turno.id_turno,
-      );
-
-      if (haySolapamiento) {
-        return res.status(409).json({
-          error:
-            "El horario seleccionado se superpone con un turno ya programado.",
-        });
-      }
+    
+    if (haySolapamiento) {
+      return res.status(409).json({
+        error:
+          "El horario seleccionado se superpone con un turno ya programado.",
+      });
     }
 
     await turno.update({

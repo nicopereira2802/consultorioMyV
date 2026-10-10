@@ -44,7 +44,7 @@ export const Turno = sequelize.define(
     },
   },
   {
-    tableName: "turnos",
+    tableName: "turno",
     timestamps: false,
   }
 );

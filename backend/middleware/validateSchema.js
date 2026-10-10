@@ -3,7 +3,7 @@
 export const validateSchema = (schema) => (req, res, next) => {
   // safeParse realiza la validación sin lanzar excepciones inesperadas
   const result = schema.safeParse(req.body);
-
+  
   if (!result.success) {
     // Formateamos los errores para responder un JSON estructurado
     const formattedErrors = result.error.issues.reduce((acc, issue) => {

@@ -76,7 +76,7 @@ export const deleteObraSocial = async (req, res) => {
     const obraSocial = req.obraSocial;
 
     await obraSocial.update({
-      activo: false,
+      activo: !obraSocial.activo,
     });
 
     res.status(200).json({ message: "Obra social eliminada correctamente" });

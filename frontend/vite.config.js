@@ -1,21 +1,20 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
+/** @format */
+
+import { defineConfig } from "vite";
+import tailwindcss from "@tailwindcss/vite";
+import react from "@vitejs/plugin-react";
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [
-    react(),
-    tailwindcss()
-  ],
-  server: {
-    port: 5173,
-    proxy: {
-      '/api': {
-        target: 'http://localhost:3000',
-        changeOrigin: true,
-        secure: false,
-      }
-    }
-  }
-})
+  server: { port: 5174 },
+  plugins: [react(), tailwindcss()],
+  optimizeDeps: {
+    exclude: [
+      "@fullcalendar/react",
+      "@fullcalendar/core",
+      "@fullcalendar/daygrid",
+      "@fullcalendar/timegrid",
+      "@fullcalendar/interaction",
+    ],
+  },
+});

@@ -94,7 +94,7 @@ export const deletePractica = async (req, res) => {
     const practica = req.practica;
 
     await practica.update({
-      activo: false,
+      activo: !practica.activo,
     });
 
     res.json({ message: "Practica eliminada correctamente" });

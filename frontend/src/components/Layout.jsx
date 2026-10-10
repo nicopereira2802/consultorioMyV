@@ -1,10 +1,30 @@
-export default function Layout({ children }) {
+/** @format */
+
+import { Outlet } from "react-router-dom";
+import { Sidebar } from "./Sidebar";
+import { BottomNav } from "./BottomNav";
+import { useSidebar } from "../context/SidebarProvider";
+
+export default function Layout() {
+  const { isOpen } = useSidebar();
   return (
-    <div className="min-h-screen bg-[#2B2D31] flex flex-col items-center justify-start sm:justify-center p-3 sm:p-6 md:p-8">
-      {/* Centered White Card Canvas matching screenshots */}
-      <main className="w-full max-w-5xl lg:max-w-6xl bg-white rounded-2xl sm:rounded-3xl shadow-2xl border border-gray-200/90 p-5 sm:p-8 md:p-10 transition-all duration-300">
-        {children}
+    <div className="min-h-screen w-full flex flex-col">
+      {/* Sidebar PC */}
+      <div className="hidden md:block">
+        <Sidebar />
+      </div>
+
+      {/* Contenido principal */}
+      <main
+        className={`flex-1 w-full transition-all text-black duration-300 ${isOpen ? "md:pl-72.5" : "md:pl-20"}`}
+      >
+        <Outlet />
       </main>
+
+      {/* Navegación móvil */}
+          <div className="block md:hidden">
+            <BottomNav />
+          </div>
     </div>
   );
 }

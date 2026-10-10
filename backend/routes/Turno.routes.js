@@ -8,6 +8,7 @@ import { validarExistencia } from "../middleware/validarExistenciaEntidad.js";
 
 import { validateSchema } from "../middleware/validateSchema.js";
 import {
+  atenderTurnoSchema,
   createTurnoSchema,
   updateTurnoSchema,
 } from "../schemas/Turno.schema.js";
@@ -38,7 +39,7 @@ router.put(
 // Finalizar atención en consultorio y registrar prácticas
 router.patch(
   "/:id/atender",
-  validateSchema(updateTurnoSchema),
+  validateSchema(atenderTurnoSchema),
   validarExistencia(Turno, "id", "params"),
   TurnoController.turnoAtendido,
 );

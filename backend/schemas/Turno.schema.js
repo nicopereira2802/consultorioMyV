@@ -13,44 +13,32 @@ export const createTurnoSchema = z.object({
     .int("El ID debe ser un número entero")
     .positive("El ID no es válido"),
 
-  id_estado: z
-    .number({
-      required_error: "El ID del estado es obligatorio",
-      invalid_type_error: "El ID del estado debe ser un número",
-    })
-    .int("El ID debe ser un número entero")
-    .positive("El ID no es válido")
-    .optional(),
-
   fecha_hora_inicio: z.coerce
     .date({
       invalid_type_error: "Formato de fecha inválido",
     })
     .min(hoy, { message: "La fecha de inicio no es válida" }),
 
-  //fecha_hora_fin no se manda como parametro, por lo que no se valida
-
-  duracion_minutos: z
-    .number({
-      required_error: "La duración es obligatoria",
-      invalid_type_error: "La duración debe ser un número",
+  fecha_hora_fin: z.coerce
+    .date({
+      invalid_type_error: "Formato de fecha inválido",
     })
-    .int("La duración debe ser un número entero")
-    .positive("La duración debe ser mayor a 0 minutos"),
+    .min(hoy, { message: "La fecha de fin no es válida" }),
 
   precio_final: z
     .number({
       required_error: "El precio final es obligatorio",
       invalid_type_error: "El precio final debe ser un número",
     })
-    .positive("El precio final debe ser mayor a 0")
+    .nonnegative("El precio final debe ser mayor o igual a 0")
     .refine((val) => Number.isInteger(val * 100), {
       message: "El precio no puede tener más de 2 decimales",
     }),
 
   notas_consulta: z
-    .string({ invalid_type_error: "La observacion debe ser un texto" })
-    .trim(),
+    .string({ invalid_type_error: "Las notas de consulta deben ser un texto" })
+    .trim()
+    .optional(),
 });
 
 export const updateTurnoSchema = z.object({
@@ -63,10 +51,41 @@ export const updateTurnoSchema = z.object({
     .positive("El ID no es válido")
     .optional(),
 
-  id_estado: z
+  fecha_hora_inicio: z.coerce
+    .date({
+      invalid_type_error: "Formato de fecha inválido",
+    })
+    .min(hoy, { message: "La fecha de inicio no es válida" })
+    .optional(),
+
+  fecha_hora_fin: z.coerce
+    .date({
+      invalid_type_error: "Formato de fecha inválido",
+    })
+    .min(hoy, { message: "La fecha de fin no es válida" })
+    .optional(),
+
+  precio_final: z
     .number({
-      required_error: "El ID del estado es obligatorio",
-      invalid_type_error: "El ID del estado debe ser un número",
+      required_error: "El precio final es obligatorio",
+      invalid_type_error: "El precio final debe ser un número",
+    })
+    .nonnegative("El precio final debe ser mayor o igual a 0")
+    .refine((val) => Number.isInteger(val * 100), {
+      message: "El precio no puede tener más de 2 decimales",
+    }).optional(),
+
+  notas_consulta: z
+    .string({ invalid_type_error: "Las notas de consulta deben ser un texto" })
+    .trim()
+    .optional(),
+});
+
+export const atenderTurnoSchema = z.object({
+  id_paciente: z
+    .number({
+      required_error: "El ID del paciente es obligatorio",
+      invalid_type_error: "El ID del paciente debe ser un número",
     })
     .int("El ID debe ser un número entero")
     .positive("El ID no es válido")
@@ -79,15 +98,11 @@ export const updateTurnoSchema = z.object({
     .min(hoy, { message: "La fecha de inicio no es válida" })
     .optional(),
 
-  //fecha_hora_fin no se manda como parametro, por lo que no se valida
-
-  duracion_minutos: z
-    .number({
-      required_error: "La duración es obligatoria",
-      invalid_type_error: "La duración debe ser un número",
+  fecha_hora_fin: z.coerce
+    .date({
+      invalid_type_error: "Formato de fecha inválido",
     })
-    .int("La duración debe ser un número entero")
-    .positive("La duración debe ser mayor a 0 minutos")
+    .min(hoy, { message: "La fecha de fin no es válida" })
     .optional(),
 
   precio_final: z
@@ -98,11 +113,11 @@ export const updateTurnoSchema = z.object({
     .positive("El precio final debe ser mayor a 0")
     .refine((val) => Number.isInteger(val * 100), {
       message: "El precio no puede tener más de 2 decimales",
-    })
-    .optional(),
+    }).optional(),
 
   notas_consulta: z
-    .string({ invalid_type_error: "La observacion debe ser un texto" })
+    .string({ invalid_type_error: "Las notas de consulta deben ser un texto" })
     .trim()
     .optional(),
 });
+

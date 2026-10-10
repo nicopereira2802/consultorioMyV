@@ -1,7 +1,7 @@
 Toda la parte de usuario (Validacion, login, token -> bcrypt y jwtoken, etc)
 
 Dejamos como unique el telefono?
-Validaciones de zod de decimales no funcionan
+Validaciones de zod de decimales no funcionan, lo dejamos asi?
 
 TESTS:
 Usuario --- PENDIENTE PARA CUANDO ESTE TODO (Validacion, login, token, ...)

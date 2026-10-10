@@ -43,14 +43,14 @@ export const validarSolapaminetoHorarios = async (
   const inicio = new Date(fechaInicio);
   const fin = new Date(fechaFin);
 
-  const [estadoCancelado, created] = await EstadoTurno.findOrCreate({
-    where: { estado: "Cancelado" },
+  const [estadoProgramado, created] = await EstadoTurno.findOrCreate({
+    where: { estado: "Programado" },
   });
 
   // Obtenemos los turnos en conflicto
   const turnoExistente = await Turno.findOne({
     where: {
-      id_estado: { [Op.ne]: estadoCancelado.id_estado },
+      id_estado: { [Op.eq]: estadoProgramado.id_estado },
       // Condición de solapamiento
       fecha_hora_inicio: { [Op.lt]: fin },
       fecha_hora_fin: { [Op.gt]: inicio },
