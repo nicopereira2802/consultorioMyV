@@ -11,14 +11,10 @@ export class EstadoTurnoBase {
   }
 
   async aplicarTransicion(turno, nuevoNombreEstado, observacion, transaction) {
-    const estadoDestino = await EstadoTurno.findOne({
+    const [estadoDestino] = await EstadoTurno.findOrCreate({
       where: { estado: nuevoNombreEstado },
       transaction,
     });
-
-    if (!estadoDestino) {
-      throw new Error(`El estado "${nuevoNombreEstado}" no existe en la base de datos.`);
-    }
 
     // Actualizar el estado del turno
     await turno.update(

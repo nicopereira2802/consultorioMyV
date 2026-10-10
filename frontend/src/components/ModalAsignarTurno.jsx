@@ -4,7 +4,6 @@ import { getPacientes } from '../services/pacientes.service';
 import { getPracticas } from '../services/practicas.service';
 import ModalPaciente from './ModalPaciente';
 import turnoSchema from '../schemas/turno.schema';
-import { obtenerNombreCobertura } from '../utils/paciente.utils';
 import {
   getTurnosDia,
   getHorasOcupadasDia,
@@ -110,20 +109,23 @@ export const ModalAsignarTurno = ({
       try {
         setIsLoadingCatalogos(true);
         const [pacList, pracList] = await Promise.all([
-          getPacientes(),
-          getPracticas()
+          getPacientes(true),
+          getPracticas(true)
         ]);
 
         if (!isMounted) return;
+        const practicasActivas = (Array.isArray(pracList) ? pracList : []).filter(
+          (p) => p.activo !== false && p.activo !== 0 && p.estado !== 'INACTIVO'
+        );
         setPacientes(pacList);
-        setPracticas(pracList);
+        setPracticas(practicasActivas);
 
         if (pacList.length > 0) {
           setIdPacienteSeleccionado(pacList[0].id_paciente);
         }
 
-        if (pracList.length > 0) {
-          const defaultPrac = pracList[0];
+        if (practicasActivas.length > 0) {
+          const defaultPrac = practicasActivas[0];
           setIdPracticaSeleccionada(defaultPrac.id_practica);
           if (!slotData?.duracionMinutos && !slotData?.duracion && defaultPrac.duracion_minutos) {
             setDuracionMinutos(defaultPrac.duracion_minutos);
@@ -528,7 +530,7 @@ export const ModalAsignarTurno = ({
                 >
                   {pacientes.map((p) => (
                     <option key={p.id_paciente} value={p.id_paciente}>
-                      {p.apellido}, {p.nombre} (DNI: {p.dni}) — {obtenerNombreCobertura(p)}
+                      {p.apellido}, {p.nombre} (DNI: {p.dni})
                     </option>
                   ))}
                 </select>
@@ -546,11 +548,13 @@ export const ModalAsignarTurno = ({
                   disabled={isLoadingCatalogos || practicas.length === 0}
                   required
                 >
-                  {practicas.map((pr) => (
-                    <option key={pr.id_practica} value={pr.id_practica}>
-                      [{pr.codigo_nomenclador}] {pr.nombre_referencia}
-                    </option>
-                  ))}
+                  {practicas
+                    .filter((pr) => pr.activo !== false && pr.activo !== 0 && pr.estado !== 'INACTIVO')
+                    .map((pr) => (
+                      <option key={pr.id_practica} value={pr.id_practica}>
+                        [{pr.codigo_nomenclador}] {pr.nombre_referencia}
+                      </option>
+                    ))}
                 </select>
               </div>
 

@@ -2,10 +2,20 @@
 
 import { Practica } from "../models/Practica.model.js";
 
-// Obtener todas las prácticas
+// Obtener todas las prácticas (activas por defecto para no listar prácticas eliminadas)
 export const getAllPracticas = async (req, res) => {
   try {
-    const practicas = await Practica.findAll();
+    const where = {};
+    if (req.query.activas === "true") {
+      where.activo = true;
+    } else if (req.query.activas === "false") {
+      where.activo = false;
+    } else if (req.query.todas !== "true" && req.query.incluir_inactivas !== "true") {
+      // Por defecto no traer prácticas eliminadas/inactivas (borrado lógico: activo = true)
+      where.activo = true;
+    }
+
+    const practicas = await Practica.findAll({ where });
 
     res.status(200).json({
       status: "success",

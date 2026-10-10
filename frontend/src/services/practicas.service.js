@@ -19,11 +19,19 @@ const unpackObject = (res) => {
 
 /**
  * Obtener catálogo de prácticas odontológicas
+ * @param {boolean} [soloActivas=true] - Si es true, filtra únicamente prácticas activas
  * @returns {Promise<Array>}
  */
-export const getPracticas = async () => {
-  const data = await api.get('/practicas');
-  return unpackArray(data);
+export const getPracticas = async (soloActivas = true) => {
+  const url = soloActivas ? '/practicas?activas=true' : '/practicas?todas=true';
+  const data = await api.get(url);
+  const arr = unpackArray(data);
+  if (soloActivas) {
+    return arr.filter(
+      (p) => p.activo !== false && p.activo !== 0 && p.estado !== 'INACTIVO'
+    );
+  }
+  return arr;
 };
 
 /**

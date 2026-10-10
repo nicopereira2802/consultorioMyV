@@ -66,10 +66,16 @@ const defaultTurnoIncludes = [
   includeHistorialEstadoTurno,
 ];
 
-// Helper para formatear fechas a YYYY-MM-DD HH:mm:ss sin conversiones UTC
+// Helper para formatear fechas a YYYY-MM-DD HH:mm:ss sin conversiones UTC, o preservar ISO UTC si viene con Z
 export const formatearFechaHoraStr = (fechaHoraInput) => {
   if (!fechaHoraInput) return null;
   if (typeof fechaHoraInput === "string") {
+    if (fechaHoraInput.includes("Z")) {
+      const d = new Date(fechaHoraInput);
+      if (!isNaN(d.getTime())) {
+        return d.toISOString();
+      }
+    }
     const s = fechaHoraInput.trim().replace("T", " ");
     const match = s.match(/^(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}(?::\d{2})?)/);
     if (match) {
@@ -93,6 +99,10 @@ export const calcularFechaHoraFinStr = (fechaHoraInicioStr, duracionMinutos) => 
   const inicioStr = formatearFechaHoraStr(fechaHoraInicioStr);
   if (!inicioStr) return null;
   const dur = Number(duracionMinutos) || 30;
+  if (typeof inicioStr === "string" && inicioStr.includes("Z")) {
+    const d = new Date(inicioStr);
+    return new Date(d.getTime() + dur * 60000).toISOString();
+  }
   const match = inicioStr.match(/^(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2}):(\d{2})$/);
   if (match) {
     const [, y, m, d, hh, mm, ss] = match;
@@ -189,10 +199,9 @@ export const formatearTurnoResponse = (turnoInstance) => {
   const evolucionClinica = registroAtendido ? registroAtendido.descripcion : null;
   json.evolucion_clinica = evolucionClinica;
 
-  // El motivo inicial de reserva se preserva en notas_consulta y motivo_consulta
-  const motivoInicial = json.motivo_consulta || json.notas_consulta || null;
-  json.motivo_consulta = motivoInicial;
-  json.notas_consulta = motivoInicial;
+  // El motivo inicial de reserva se preserva en motivo_consulta
+  json.motivo_consulta = json.motivo_consulta || json.notas_consulta || null;
+  json.notas_consulta = json.notas_consulta !== undefined && json.notas_consulta !== null ? json.notas_consulta : json.motivo_consulta;
 
   // En turnos atendidos, exponer observaciones como la evolución clínica para máxima compatibilidad
   if (json.id_estado === 3 && evolucionClinica) {
@@ -238,8 +247,8 @@ export const getAllTurnos = async (req, res) => {
       data: turnosFormateados,
     });
   } catch (error) {
-    console.error("Error al obtener los turnos:", error);
-    res.status(500).json({ error: "Error al obtener los turnos" });
+    console.error(">>> ERROR REAL EN GET TURNOS:", error);
+    return res.status(500).json({ error: error.message, stack: error.stack });
   }
 };
 
@@ -660,32 +669,29 @@ export const turnoAtendido = async (req, res) => {
     }
 
     const idsUnicos = [...new Set(practicas_realizadas)];
-    if (idsUnicos.length === 0) {
-      return res.status(400).json({
-        status: "error",
-        error: "Debe seleccionar al menos una práctica odontológica.",
-        message: "Debe seleccionar al menos una práctica odontológica."
+    let practicasEncontradas = [];
+    let sumaPracticas = 0;
+
+    if (idsUnicos.length > 0) {
+      practicasEncontradas = await Practica.findAll({
+        where: {
+          id_practica: { [Op.in]: idsUnicos },
+        },
       });
+
+      if (practicasEncontradas.length !== idsUnicos.length) {
+        return res.status(400).json({
+          status: "error",
+          error: "Una o más prácticas especificadas no existen.",
+          message: "Una o más prácticas especificadas no existen."
+        });
+      }
+
+      sumaPracticas = practicasEncontradas.reduce(
+        (acc, p) => acc + (Number(p.precio_referencia) || 0),
+        0
+      );
     }
-
-    const practicasEncontradas = await Practica.findAll({
-      where: {
-        id_practica: { [Op.in]: idsUnicos },
-      },
-    });
-
-    if (practicasEncontradas.length !== idsUnicos.length) {
-      return res.status(400).json({
-        status: "error",
-        error: "Una o más prácticas especificadas no existen.",
-        message: "Una o más prácticas especificadas no existen."
-      });
-    }
-
-    const sumaPracticas = practicasEncontradas.reduce(
-      (acc, p) => acc + (Number(p.precio_referencia) || 0),
-      0
-    );
 
     let precioFinalAtendido;
     if (req.body.precio_final !== undefined && req.body.precio_final !== null && !isNaN(Number(req.body.precio_final))) {
@@ -926,11 +932,11 @@ export const turnoReprogramado = async (req, res) => {
     }
 
     // Estados oficiales relacionales
-    const estadoInasistente = await EstadoTurno.findOne({ where: { estado: "Inasistente" } });
-    const idEstadoInasistente = estadoInasistente ? estadoInasistente.id_estado : 4;
+    const [estadoInasistente] = await EstadoTurno.findOrCreate({ where: { estado: "Inasistente" } });
+    const idEstadoInasistente = estadoInasistente.id_estado;
 
-    const estadoProgramado = await EstadoTurno.findOne({ where: { estado: "Programado" } });
-    const idEstadoProgramado = estadoProgramado ? estadoProgramado.id_estado : 1;
+    const [estadoProgramado] = await EstadoTurno.findOrCreate({ where: { estado: "Programado" } });
+    const idEstadoProgramado = estadoProgramado.id_estado;
 
     const nuevoTurnoCompleto = await sequelize.transaction(async (t) => {
       // 1. Marcar el turno original como Inasistente (id_estado = 4) sin eliminarlo
