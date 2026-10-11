@@ -1,0 +1,19 @@
+# OS files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+
+# IDEs
+.idea/
+.vscode/
+
+# Node & Build artifacts
+node_modules/
+dist/
+dist-ssr/
+*.log
+
+# Env files
+.env
+.env.*
+!.env.example

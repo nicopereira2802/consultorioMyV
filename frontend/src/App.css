@@ -18,6 +18,7 @@ body, #root {
 
 .agenda-container,
 .pacientes-container,
+.cobros-container,
 .main-content {
   padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
 }
@@ -26,6 +27,7 @@ body, #root {
 .app-page-wrapper,
 .panel-diario-page,
 .gestion-pacientes-page,
+.gestion-cobros-page,
 .catalogo-page,
 .atencion-page,
 .registrar-paciente-page {
@@ -44,6 +46,8 @@ body, #root {
 .agenda-container,
 .gestion-pacientes-card,
 .pacientes-container,
+.gestion-cobros-card,
+.cobros-container,
 .catalogo-card,
 .atencion-card,
 .registrar-paciente-card,

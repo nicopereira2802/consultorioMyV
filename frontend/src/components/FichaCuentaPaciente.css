@@ -1,0 +1,572 @@
+/* ==========================================================================
+   FichaCuentaPaciente.css - Modal Institucional de Cuenta de Paciente
+   Paleta Clara Institucional (Fondo blanco, slate, emerald, rose, coral)
+   Coherente con GestionCobros.jsx y AgendaDiaria.jsx
+   ========================================================================== */
+
+.ficha-cuenta-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 1200;
+  animation: fichaFadeIn 0.2s ease-out;
+}
+
+@keyframes fichaFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.ficha-cuenta-card {
+  width: 100%;
+  max-width: 840px;
+  max-height: 92vh;
+  background-color: #ffffff;
+  color: #1e293b;
+  border-radius: 20px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: fichaScaleIn 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-sizing: border-box;
+}
+
+@keyframes fichaScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* ==========================================================================
+   1. Encabezado del Paciente (Fondo Blanco Limpio)
+   ========================================================================== */
+.ficha-cuenta-header {
+  padding: 22px 28px 18px 28px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  border-bottom: 1px solid #f1f5f9;
+  background-color: #ffffff;
+}
+
+.ficha-cuenta-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.ficha-cuenta-badge-sub {
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  color: #059669; /* Emerald 600 */
+}
+
+.ficha-cuenta-titulo {
+  font-size: 1.5rem; /* text-2xl */
+  font-weight: 700;
+  color: #0f172a; /* Slate 900 */
+  margin: 0;
+  letter-spacing: -0.015em;
+}
+
+.ficha-cuenta-subtitulo {
+  font-size: 13.5px;
+  color: #64748b; /* Slate 500 */
+  margin: 2px 0 0 0;
+}
+
+.ficha-cuenta-close-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8; /* Slate 400 */
+  cursor: pointer;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.ficha-cuenta-close-btn:hover {
+  background-color: #f1f5f9;
+  color: #334155; /* Slate 700 */
+}
+
+/* ==========================================================================
+   2. Cuerpo Scrollable
+   ========================================================================== */
+.ficha-cuenta-body {
+  padding: 22px 28px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  background-color: #ffffff;
+}
+
+/* ==========================================================================
+   3. Grilla 2x2 de Métricas Principales (Tarjetas Gris Tenue)
+   ========================================================================== */
+.ficha-metricas-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+
+@media (max-width: 600px) {
+  .ficha-metricas-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ficha-metrica-card {
+  background-color: #f8fafc; /* Slate 50 */
+  border: 1px solid #e2e8f0; /* Slate 200 */
+  border-radius: 12px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ficha-metrica-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.ficha-metrica-label {
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+  color: #64748b; /* Slate 500 */
+  margin-bottom: 2px;
+}
+
+.ficha-metrica-valor {
+  font-size: 1.55rem;
+  font-weight: 700;
+  color: #1e293b; /* Slate 800 */
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ficha-metrica-valor.verde {
+  color: #059669; /* Emerald 600 */
+}
+
+.ficha-metrica-valor.coral {
+  color: #e11d48; /* Rose 600 */
+}
+
+.ficha-metrica-valor.azul {
+  color: #0284c7; /* Sky 600 */
+}
+
+.ficha-metrica-subtext {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #64748b; /* Slate 500 */
+}
+
+/* ==========================================================================
+   4. Tarjetas de Tratamiento / Acuerdo
+   ========================================================================== */
+.ficha-acuerdo-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0; /* Slate 200 */
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.ficha-acuerdo-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.ficha-acuerdo-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ficha-acuerdo-titulo {
+  font-size: 1.15rem; /* text-lg */
+  font-weight: 700;
+  color: #1e293b; /* Slate 800 */
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.ficha-acuerdo-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Badges de Tratamiento */
+.ficha-tag {
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  font-weight: 500;
+  border-width: 1px;
+  border-style: solid;
+  letter-spacing: 0.01em;
+}
+
+.ficha-tag.informal {
+  background-color: #f0f9ff; /* Sky 50 */
+  color: #0369a1; /* Sky 700 */
+  border-color: #bae6fd; /* Sky 200 */
+}
+
+.ficha-tag.sin-venc {
+  background-color: #f1f5f9; /* Slate 100 */
+  color: #475569; /* Slate 600 */
+  border-color: #e2e8f0; /* Slate 200 */
+}
+
+.ficha-tag.estado-parcial {
+  background-color: #fffbeb; /* Amber 50 */
+  color: #b45309; /* Amber 700 */
+  border-color: #fde68a; /* Amber 200 */
+}
+
+.ficha-tag.estado-completado {
+  background-color: #ecfdf5; /* Emerald 50 */
+  color: #047857; /* Emerald 700 */
+  border-color: #a7f3d0; /* Emerald 200 */
+}
+
+/* Botón "+ Registrar Entrega" */
+.btn-registrar-entrega-trigger {
+  background-color: #059669; /* Emerald 600 */
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 1px 3px rgba(5, 150, 105, 0.2);
+  transition: all 0.15s ease;
+}
+
+.btn-registrar-entrega-trigger:hover {
+  background-color: #047857; /* Emerald 700 */
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(5, 150, 105, 0.3);
+}
+
+/* ==========================================================================
+   5. Barra de Progreso
+   ========================================================================== */
+.ficha-progreso-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ficha-progreso-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+
+.ficha-progreso-label {
+  color: #059669; /* Emerald 600 */
+  font-weight: 600;
+}
+
+.ficha-progreso-detalle {
+  color: #64748b; /* Slate 500 */
+  font-weight: 500;
+}
+
+.ficha-barra-fondo {
+  width: 100%;
+  height: 10px;
+  background-color: #e2e8f0; /* Slate 200 */
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.ficha-barra-relleno {
+  height: 100%;
+  background-color: #10b981; /* Emerald 500 */
+  border-radius: 9999px;
+  transition: width 0.4s ease;
+}
+
+/* ==========================================================================
+   6. Tabla "Entregas Registradas"
+   ========================================================================== */
+.ficha-entregas-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.ficha-entregas-titulo {
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  color: #94a3b8; /* Slate 400 */
+  margin: 0;
+}
+
+.ficha-entregas-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+.ficha-entregas-tabla th {
+  text-align: left;
+  padding: 8px 12px;
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  color: #64748b; /* Slate 500 */
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.ficha-entregas-tabla td {
+  padding: 12px 12px;
+  border-bottom: 1px solid #f8fafc;
+  color: #334155;
+  vertical-align: middle;
+}
+
+.ficha-entregas-tabla tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+.ficha-entrega-nro {
+  font-size: 13px;
+  font-weight: 600;
+  color: #94a3b8; /* Slate 400 */
+}
+
+.ficha-entrega-fecha {
+  font-size: 13.5px;
+  color: #475569; /* Slate 600 */
+}
+
+/* Badges Claros de Método de Pago (Consistentes con GestionCobros.css) */
+.ficha-badge-metodo {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+  border-width: 1px;
+  border-style: solid;
+  white-space: nowrap;
+}
+
+.ficha-badge-metodo.efectivo {
+  background-color: #f0fdf4;
+  border-color: #86efac;
+  color: #16a34a;
+}
+
+.ficha-badge-metodo.transferencia {
+  background-color: #f0f9ff;
+  border-color: #7dd3fc;
+  color: #0284c7;
+}
+
+.ficha-badge-metodo.tarjeta {
+  background-color: #faf5ff;
+  border-color: #d8b4fe;
+  color: #9333ea;
+}
+
+.ficha-badge-metodo.default {
+  background-color: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #475569;
+}
+
+.ficha-monto-valor {
+  font-weight: 700;
+  font-size: 14px;
+  color: #1e293b; /* Slate 800 */
+}
+
+.ficha-badge-estado-pagada {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  background-color: #ecfdf5; /* Emerald 50 */
+  border: 1px solid #a7f3d0; /* Emerald 200 */
+  color: #059669; /* Emerald 600 */
+}
+
+.ficha-entregas-vacia {
+  padding: 16px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 13.5px;
+  background-color: #f8fafc;
+  border: 1px dashed #e2e8f0;
+  border-radius: 10px;
+}
+
+/* ==========================================================================
+   6.1 Secciones Principales (Turnos Atendidos / Acuerdos de Pago)
+   ========================================================================== */
+.ficha-seccion-bloque {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 6px;
+}
+
+.ficha-seccion-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding-bottom: 8px;
+  border-bottom: 1.5px solid #f1f5f9;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ficha-seccion-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ficha-seccion-titulo {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e293b; /* Slate 800 */
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ficha-seccion-sub {
+  font-size: 12.5px;
+  color: #64748b; /* Slate 500 */
+  font-weight: 400;
+}
+
+.ficha-contador-badge {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #059669; /* Emerald 600 */
+  background-color: #ecfdf5; /* Emerald 50 */
+  border: 1px solid #a7f3d0;
+  padding: 2px 10px;
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+
+.ficha-tabla-scroll {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background-color: #ffffff;
+}
+
+.ficha-practica-nombre {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 13.5px;
+}
+
+.ficha-practica-nota {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 2px;
+  font-style: italic;
+}
+
+.ficha-vacia-box {
+  padding: 28px 20px;
+  text-align: center;
+  color: #64748b;
+  font-size: 14px;
+  background-color: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+/* ==========================================================
+   7. Pie de Modal (Fondo Claro con Botón Salmón)
+   ========================================================== */
+.ficha-cuenta-footer {
+  padding: 16px 28px;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: flex-end;
+  background-color: #f8fafc;
+}
+
+.btn-ficha-cerrar {
+  background-color: #e85b56; /* Salmón institucional */
+  border: none;
+  color: #ffffff;
+  padding: 9px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(232, 91, 86, 0.25);
+  transition: all 0.15s ease;
+}
+
+.btn-ficha-cerrar:hover {
+  background-color: #dc2626; /* Rose 600 */
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(220, 38, 38, 0.3);
+}
+
+.btn-ficha-cerrar:active {
+  transform: scale(0.98);
+}

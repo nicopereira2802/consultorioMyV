@@ -18,6 +18,12 @@ const router = express.Router();
 // Rutas para Cobro
 router.get("/", CobroController.getAllCobros);
 
+// Rutas de Cuentas de Pacientes y Entregas (definidas antes de /:id para evitar colisiones)
+router.get("/pacientes", CobroController.getSaldosPacientes);
+router.get("/pacientes/:id_paciente/cuenta", CobroController.getCuentaPaciente);
+router.post("/acuerdo", CobroController.crearAcuerdo);
+router.post("/:id_cobro/entregas", CobroController.registrarEntrega);
+
 router.get(
   "/:turnoId/cobros",
   validarExistencia(Turno, "turnoId", "params"),

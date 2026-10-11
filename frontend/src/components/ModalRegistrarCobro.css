@@ -235,6 +235,7 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  flex: 1;
 }
 
 .modal-reg-label {
@@ -244,6 +245,8 @@
   display: flex;
   align-items: center;
   gap: 4px;
+  min-height: 20px;
+  margin-bottom: 2px;
 }
 
 .campo-requerido {
@@ -259,7 +262,7 @@
 .modal-reg-input,
 .modal-reg-select {
   width: 100%;
-  height: 40px;
+  height: 42px;
   padding: 0 12px;
   border: 1px solid #cbd5e1;
   border-radius: 8px;
@@ -291,23 +294,29 @@
 }
 
 /* Input con Prefijo Moneda */
-.modal-reg-input-prefix-container {
+.modal-reg-input-prefix-container,
+.modal-reg-input-monto-container {
   position: relative;
   display: flex;
   align-items: center;
+  width: 100%;
 }
 
-.input-prefix-symbol {
+.input-prefix-symbol,
+.input-monto-prefix {
   position: absolute;
   left: 12px;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
-  color: #64748b;
+  color: #94a3b8;
   pointer-events: none;
+  user-select: none;
+  z-index: 10;
 }
 
-.input-con-prefix {
-  padding-left: 28px !important;
+.input-con-prefix,
+.input-monto-field {
+  padding-left: 32px !important;
   font-weight: 600;
   color: #0f172a;
 }
@@ -639,4 +648,186 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+/* ==========================================================================
+   Estilos de Navegación de Modalidades y Formularios Condicionales
+   ========================================================================== */
+
+.modal-reg-modalidades-nav {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 680px) {
+  .modal-reg-modalidades-nav {
+    grid-template-columns: 1fr;
+  }
+}
+
+.modal-reg-modalidad-btn {
+  background-color: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 14px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+
+.modal-reg-modalidad-btn:hover {
+  background-color: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.modalidad-header-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.modalidad-desc-text {
+  font-size: 11.5px;
+  color: #64748b;
+  line-height: 1.35;
+}
+
+/* Modos Activos */
+.modal-reg-modalidad-btn.tab-pago-total.activa {
+  border-color: #10b981;
+  background-color: #ecfdf5;
+}
+.modal-reg-modalidad-btn.tab-pago-total.activa .modalidad-header-badge {
+  color: #047857;
+}
+
+.modal-reg-modalidad-btn.tab-cuotas.activa {
+  border-color: #0284c7;
+  background-color: #f0f9ff;
+}
+.modal-reg-modalidad-btn.tab-cuotas.activa .modalidad-header-badge {
+  color: #0369a1;
+}
+
+.modal-reg-modalidad-btn.tab-acuerdo.activa {
+  border-color: #d97706;
+  background-color: #fffbeb;
+}
+.modal-reg-modalidad-btn.tab-acuerdo.activa .modalidad-header-badge {
+  color: #b45309;
+}
+
+/* Selector de Métodos de Pago en Grilla */
+.metodos-pago-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+@media (max-width: 600px) {
+  .metodos-pago-grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.btn-metodo-tarjeta {
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 10px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #334155;
+  transition: all 0.15s ease;
+}
+
+.btn-metodo-tarjeta:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+.btn-metodo-tarjeta.activo {
+  border-color: #10b981;
+  background-color: rgba(16, 185, 129, 0.08);
+  color: #065f46;
+}
+
+/* Banner de Resumen de Acuerdo Informal */
+.acuerdo-resumen-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.acuerdo-resumen-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.acuerdo-resumen-label {
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.acuerdo-resumen-valor {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.acuerdo-resumen-valor.verde {
+  color: #059669;
+}
+
+.acuerdo-resumen-valor.coral {
+  color: #dc2626;
+}
+
+.info-banner-modalidad {
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  line-height: 1.4;
+}
+
+.info-banner-modalidad.verde {
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #15803d;
+}
+
+.info-banner-modalidad.azul {
+  background-color: #f0f9ff;
+  border: 1px solid #bae6fd;
+  color: #0369a1;
+}
+
+.info-banner-modalidad.naranja {
+  background-color: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #92400e;
 }

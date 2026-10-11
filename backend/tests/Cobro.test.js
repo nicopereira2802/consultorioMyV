@@ -328,7 +328,6 @@ describe("Suite de Tests Completa para /api/cobros", () => {
       expect(res.status).toBe(200);
       expect(res.body.status).toBe("success");
 
-      // Verificamos en BD que la bandera activo se haya modificado
       const cobroEnBD = await Cobro.findByPk(cobroId);
       expect(cobroEnBD.activo).toBe(false);
     });
@@ -337,6 +336,118 @@ describe("Suite de Tests Completa para /api/cobros", () => {
       const res = await request(app).patch("/api/cobros/99999/delete");
 
       expect(res.status).toBe(404);
+    });
+  });
+
+  // ==========================================
+  // 6. Cuentas de Pacientes, Acuerdos y Pagos Parciales
+  // ==========================================
+  describe("Cuentas de Pacientes, Acuerdos y Pagos Parciales", () => {
+    let nuevoAcuerdoId;
+    let pacienteCuentaId;
+    let turnoCuentaId;
+
+    beforeAll(async () => {
+      const p = await Paciente.create({
+        nombre: "Martina",
+        apellido: "López",
+        dni: "39111222",
+        telefono: "3519998888",
+      });
+      pacienteCuentaId = p.id_paciente || p.id;
+
+      const [estado] = await EstadoTurno.findOrCreate({
+        where: { estado: "Atendido" },
+      });
+      const t = await Turno.create({
+        id_paciente: pacienteCuentaId,
+        id_estado: estado.id_estado || estado.id,
+        fecha_hora_inicio: "2026-10-25T11:00:00.000Z",
+        fecha_hora_fin: "2026-10-25T11:30:00.000Z",
+        precio_final: 300000.0,
+        notas_consulta: "Tratamiento de Ortodoncia",
+      });
+      turnoCuentaId = t.id_turno || t.id;
+    });
+
+    test("201: POST /api/cobros/acuerdo crea un acuerdo abierto informal con cant_cuotas = 0", async () => {
+      const payload = {
+        id_paciente: pacienteCuentaId,
+        id_turno: turnoCuentaId,
+        monto_a_cobrar: 300000.0,
+        tipo_acuerdo: "INFORMAL",
+      };
+
+      const res = await request(app).post("/api/cobros/acuerdo").send(payload);
+
+      expect(res.status).toBe(201);
+      expect(res.body.status).toBe("success");
+      expect(Number(res.body.data.cobro.monto_a_cobrar)).toBe(300000.0);
+      expect(res.body.data.cobro.cant_cuotas).toBe(0);
+      expect(res.body.data.cuotas.length).toBe(0);
+
+      nuevoAcuerdoId = res.body.data.cobro.id_cobro;
+    });
+
+    test("200: GET /api/cobros/pacientes lista el saldo maestro del paciente con deuda inicial", async () => {
+      const res = await request(app).get("/api/cobros/pacientes");
+
+      expect(res.status).toBe(200);
+      expect(res.body.status).toBe("success");
+      const pacienteSaldo = res.body.data.find((p) => p.id_paciente === pacienteCuentaId);
+      expect(pacienteSaldo).toBeDefined();
+      expect(pacienteSaldo.costo_acordado).toBe(300000.0);
+      expect(pacienteSaldo.saldo_pendiente).toBe(300000.0);
+      expect(pacienteSaldo.estado_cuenta).toBe("CON_DEUDA");
+    });
+
+    test("201: POST /api/cobros/:id_cobro/entregas asienta una entrega parcial de $170.000", async () => {
+      const res = await request(app)
+        .post(`/api/cobros/${nuevoAcuerdoId}/entregas`)
+        .send({
+          monto: 170000.0,
+          metodo_pago: "Efectivo",
+          fecha_cobro: "2026-10-11T12:00:00Z",
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body.status).toBe("success");
+      expect(res.body.data.total_pagado).toBe(170000.0);
+      expect(res.body.data.saldo_restante).toBe(130000.0);
+      expect(res.body.data.cuota.estado).toBe("Pagada");
+      expect(res.body.data.cuota.nro_cuota).toBe(1);
+    });
+
+    test("400: POST /api/cobros/:id_cobro/entregas rechaza monto que excede el saldo restante", async () => {
+      const res = await request(app)
+        .post(`/api/cobros/${nuevoAcuerdoId}/entregas`)
+        .send({
+          monto: 200000.0, // Saldo restante es $130.000
+          metodo_pago: "Transferencia",
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.status).toBe("error");
+      expect(res.body.message).toMatch(/supera el saldo pendiente restante/);
+    });
+
+    test("200: GET /api/cobros/pacientes/:id_paciente/cuenta devuelve métricas y desglose con 56,7% cubierto", async () => {
+      const res = await request(app).get(`/api/cobros/pacientes/${pacienteCuentaId}/cuenta`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.status).toBe("success");
+      const { metricas, acuerdos } = res.body.data;
+      expect(metricas.costo_acordado).toBe(300000.0);
+      expect(metricas.total_pagado).toBe(170000.0);
+      expect(metricas.saldo_pendiente).toBe(130000.0);
+      expect(metricas.cobros_registrados).toBe(1);
+
+      const acuerdo = acuerdos.find((a) => a.id_cobro === nuevoAcuerdoId);
+      expect(acuerdo).toBeDefined();
+      expect(acuerdo.porcentaje_cubierto).toBe(56.7);
+      expect(acuerdo.tipo_acuerdo).toBe("Cuotas informales");
+      expect(acuerdo.estado).toBe("Parcial");
+      expect(acuerdo.entregas.length).toBe(1);
     });
   });
 });

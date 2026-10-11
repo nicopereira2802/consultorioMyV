@@ -1,0 +1,283 @@
+/* ==========================================================================
+   ModalRegistrarEntrega.css - Modal de Pago Parcial / Entrega a Cuenta
+   ========================================================================== */
+
+.modal-entrega-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 1300;
+  animation: entregaFadeIn 0.2s ease-out;
+}
+
+@keyframes entregaFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-entrega-card {
+  width: 100%;
+  max-width: 540px;
+  background-color: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: entregaScaleIn 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-sizing: border-box;
+}
+
+@keyframes entregaScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modal-entrega-header {
+  padding: 20px 24px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  border-bottom: 1px solid #f1f5f9;
+  background: #f8fafc;
+}
+
+.modal-entrega-titulo {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.modal-entrega-subtitulo {
+  font-size: 13.5px;
+  color: #64748b;
+  margin: 4px 0 0 0;
+}
+
+.modal-entrega-close-btn {
+  background: #f1f5f9;
+  border: none;
+  color: #64748b;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.modal-entrega-close-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.modal-entrega-body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Banner de Resumen de Saldo */
+.modal-entrega-resumen {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-entrega-resumen-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.modal-entrega-resumen-label {
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.modal-entrega-resumen-val {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.modal-entrega-resumen-val.saldo {
+  color: #ef4444; /* Red / Coral */
+}
+
+/* Grupos de formulario */
+.modal-entrega-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.modal-entrega-label {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.modal-entrega-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.modal-entrega-input-prefix {
+  position: absolute;
+  left: 14px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.modal-entrega-input {
+  width: 100%;
+  padding: 12px 14px 12px 34px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0f172a;
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 10px;
+  outline: none;
+  transition: all 0.15s ease;
+  box-sizing: border-box;
+}
+
+.modal-entrega-input:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+}
+
+.modal-entrega-quick-btn {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  color: #059669;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.modal-entrega-quick-btn:hover {
+  color: #047857;
+}
+
+.modal-entrega-metodos-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.modal-entrega-metodo-btn {
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  transition: all 0.15s ease;
+}
+
+.modal-entrega-metodo-btn:hover {
+  border-color: #cbd5e1;
+  background: #f1f5f9;
+}
+
+.modal-entrega-metodo-btn.activo {
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.08);
+  color: #065f46;
+}
+
+.modal-entrega-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* Footer */
+.modal-entrega-footer {
+  padding: 18px 24px;
+  border-top: 1px solid #f1f5f9;
+  background: #f8fafc;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.btn-entrega-cancelar {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-entrega-cancelar:hover {
+  background: #f1f5f9;
+}
+
+.btn-entrega-confirmar {
+  background: #10b981;
+  border: none;
+  color: #ffffff;
+  padding: 10px 22px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.25);
+}
+
+.btn-entrega-confirmar:hover:not(:disabled) {
+  background: #059669;
+}
+
+.btn-entrega-confirmar:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
