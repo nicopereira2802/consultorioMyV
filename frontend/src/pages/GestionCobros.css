@@ -1,0 +1,526 @@
+/* ==========================================================================
+   GestionCobros.css - Pantalla Oficial de Registro de Cobros (M&V Turnos)
+   Esquema visual fiel a la maqueta de referencia: Tarjeta blanca centrada,
+   cabecera gris pizarra (#71879c), badges de métodos de pago y acentos esmeralda.
+   ========================================================================== */
+
+.gestion-cobros-page {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.gestion-cobros-card {
+  width: 100%;
+  max-width: 1100px;
+  background-color: #ffffff;
+  border-radius: 24px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.35), 0 8px 10px -6px rgba(0, 0, 0, 0.25);
+  border: 1px solid #e5e9f0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  padding: 24px 28px 32px 28px;
+  margin-bottom: 2rem;
+}
+
+@media (max-width: 768px) {
+  .gestion-cobros-card {
+    border-radius: 18px;
+    padding: 16px 14px 24px 14px;
+  }
+}
+
+/* ==========================================================================
+   1. Cabecera Superior
+   ========================================================================== */
+.cobros-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.cobros-header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.cobros-hamburger-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  color: #334155;
+  border-radius: 8px;
+  transition: background-color 0.15s ease;
+}
+
+.cobros-hamburger-btn:hover {
+  background-color: #f1f5f9;
+}
+
+.cobros-logo-circle {
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  border-radius: 50%;
+  background-color: #ffffff;
+  border: 2px solid #10b981;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.18);
+  overflow: hidden;
+  padding: 2px;
+}
+
+.cobros-logo-circle img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 50%;
+}
+
+.cobros-titulo {
+  font-size: 1.5rem; /* 24px */
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+@media (max-width: 640px) {
+  .cobros-titulo {
+    font-size: 1.25rem;
+  }
+}
+
+.cobros-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Botón "← Volver" (Rojo salmón / coral suave) */
+.btn-volver-cobros {
+  background-color: #e85b56;
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  height: 42px;
+  padding: 0 18px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: 0 2px 6px rgba(232, 91, 86, 0.28);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-volver-cobros:hover {
+  background-color: #d94d48;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(232, 91, 86, 0.35);
+}
+
+.btn-volver-cobros:active {
+  transform: scale(0.98);
+}
+
+/* Botón "+ + Registrar Cobro" (Verde esmeralda) */
+.btn-registrar-cobro {
+  background-color: #10b981;
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  height: 42px;
+  padding: 0 20px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.28);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-registrar-cobro:hover {
+  background-color: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.38);
+}
+
+.btn-registrar-cobro:active {
+  transform: scale(0.98);
+}
+
+/* ==========================================================================
+   2. Barra de Búsqueda y Filtros Rápidos
+   ========================================================================== */
+.cobros-filters-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.cobros-search-container {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.cobros-search-icon {
+  position: absolute;
+  left: 14px;
+  color: #94a3b8;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+}
+
+.cobros-search-input {
+  width: 100%;
+  height: 44px;
+  padding: 10px 120px 10px 42px !important;
+  font-size: 14px !important;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  outline: none;
+  color: #1e293b;
+  background-color: #ffffff;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  box-sizing: border-box;
+}
+
+.cobros-search-input:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+}
+
+.cobros-search-input::placeholder {
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+.cobros-counter-badge {
+  position: absolute;
+  right: 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #64748b;
+  pointer-events: none;
+}
+
+/* Filtros Tipo Pastilla */
+.cobros-pills-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.cobros-pills-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  margin-right: 4px;
+}
+
+.cobros-pill-btn {
+  border: 1px solid #e2e8f0;
+  background-color: #f8fafc;
+  color: #334155;
+  border-radius: 9999px;
+  padding: 5px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.cobros-pill-btn:hover {
+  background-color: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+.cobros-pill-btn.active {
+  background-color: #1e293b;
+  border-color: #1e293b;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.cobros-pill-count {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  margin-left: 2px;
+}
+
+.cobros-pill-btn.active .cobros-pill-count {
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.2);
+  padding: 1px 6px;
+  border-radius: 9999px;
+}
+
+/* ==========================================================================
+   3. Tabla Principal de Cobros
+   ========================================================================== */
+.cobros-table-wrapper {
+  width: 100%;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  background-color: #ffffff;
+  margin-bottom: 24px;
+}
+
+.cobros-table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.cobros-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  min-width: 680px;
+}
+
+.cobros-table thead {
+  background-color: #71879c;
+}
+
+.cobros-table th {
+  padding: 14px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  letter-spacing: 0.01em;
+  border: none;
+}
+
+.cobros-table tbody tr {
+  border-bottom: 1px solid #f1f5f9;
+  transition: background-color 0.12s ease;
+}
+
+.cobros-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.cobros-table tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+.cobros-table td {
+  padding: 16px 20px;
+  vertical-align: middle;
+  font-size: 14px;
+}
+
+/* Columna Nombre y Tratamiento */
+.td-nombre-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.paciente-nombre-principal {
+  font-weight: 700;
+  color: #1e293b;
+  font-size: 14.5px;
+}
+
+.paciente-tratamiento-sub {
+  font-size: 12px;
+  color: #94a3b8;
+  font-weight: 400;
+  margin-top: 3px;
+}
+
+/* Columna DNI */
+.td-dni {
+  color: #334155;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+/* Badges Forma de Pago */
+.badge-forma-pago {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 14px;
+  border-radius: 9999px;
+  font-size: 12.5px;
+  font-weight: 600;
+  border-width: 1px;
+  border-style: solid;
+  white-space: nowrap;
+}
+
+.badge-transferencia {
+  background-color: #f0f9ff;
+  border-color: #7dd3fc;
+  color: #0284c7;
+}
+
+.badge-efectivo {
+  background-color: #f0fdf4;
+  border-color: #86efac;
+  color: #16a34a;
+}
+
+.badge-debito {
+  background-color: #faf5ff;
+  border-color: #d8b4fe;
+  color: #9333ea;
+}
+
+.badge-credito {
+  background-color: #fffbeb;
+  border-color: #fcd34d;
+  color: #b45309;
+}
+
+.badge-default {
+  background-color: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #475569;
+}
+
+/* Columna Monto */
+.td-monto {
+  color: #059669;
+  font-weight: 700;
+  font-size: 16px;
+  white-space: nowrap;
+}
+
+/* Columna Fecha */
+.td-fecha {
+  color: #64748b;
+  font-size: 13.5px;
+  white-space: nowrap;
+}
+
+/* Columna y Botón Acciones */
+.th-acciones {
+  text-align: center !important;
+}
+
+.td-acciones {
+  text-align: center !important;
+  white-space: nowrap;
+}
+
+.btn-ver-cobro {
+  background-color: #ffffff;
+  color: #059669;
+  border: 1.5px solid #a7f3d0;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 14px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  box-shadow: 0 1px 2px rgba(5, 150, 105, 0.08);
+  transition: all 0.15s ease;
+}
+
+.btn-ver-cobro:hover {
+  background-color: #ecfdf5;
+  border-color: #059669;
+  color: #047857;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(5, 150, 105, 0.16);
+}
+
+.btn-ver-cobro:active {
+  transform: scale(0.97);
+}
+
+/* Estado Vacío */
+.cobros-empty-state {
+  padding: 48px 24px;
+  text-align: center;
+  color: #64748b;
+}
+
+.cobros-empty-state p {
+  margin: 6px 0 0 0;
+  font-size: 14px;
+}
+
+/* ==========================================================================
+   4. Paginador Inferior
+   ========================================================================== */
+.cobros-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.btn-paginador {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-paginador:hover:not(:disabled) {
+  background-color: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #1e293b;
+}
+
+.btn-paginador:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.texto-paginador {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #475569;
+  padding: 0 4px;
+}

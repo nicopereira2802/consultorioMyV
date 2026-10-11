@@ -51,58 +51,47 @@ export const registrarCobro = async (datosCobro) => {
     throw new Error('No se proporcionaron datos para registrar el cobro.');
   }
 
-  const montoNum = parseFloat(datosCobro.monto);
+  const rawMonto = datosCobro.monto ?? datosCobro.monto_total ?? datosCobro.monto_a_cobrar;
+  const montoNum = parseFloat(rawMonto);
   if (isNaN(montoNum) || montoNum <= 0) {
     throw new Error('El monto a cobrar debe ser un valor numérico mayor a $0.');
   }
 
-  const metodoNormalizado = normalizarMetodoPago(datosCobro.metodo_pago);
-  const fechaStr = datosCobro.fecha
-    ? String(datosCobro.fecha).slice(0, 10)
-    : new Date().toISOString().slice(0, 10);
-
-  // Si se dispone de id_turno e id_paciente, se utiliza el endpoint atómico /api/cobros/plan-pago
-  if (datosCobro.id_turno && datosCobro.id_paciente) {
-    try {
-      const payloadPlan = {
-        id_turno: Number(datosCobro.id_turno),
-        id_paciente: Number(datosCobro.id_paciente),
-        monto_total: Math.round(montoNum * 100) / 100,
-        cant_cuotas: Number(datosCobro.cant_cuotas || 1),
-        primer_vencimiento: fechaStr,
-        intervalo_dias: 30,
-        pago_inmediato: true,
-        metodo_pago: metodoNormalizado,
-      };
-
-      const res = await api.post('/cobros/plan-pago', payloadPlan);
-      return res?.data || res;
-    } catch (err) {
-      const msg = extractErrorMessage(
-        err,
-        'Error al registrar el cobro en el servidor.'
-      );
-      throw new Error(msg);
-    }
+  if (!datosCobro.id_paciente) {
+    throw new Error('Debe seleccionar un paciente para registrar el cobro.');
   }
 
-  // Si solo se tiene id_paciente (o registro directo de cobro)
-  try {
-    const payloadCobro = {
-      id_paciente: Number(datosCobro.id_paciente || 1),
-      id_turno: Number(datosCobro.id_turno || 1),
-      monto_a_cobrar: Math.round(montoNum * 100) / 100,
-      cant_cuotas: Number(datosCobro.cant_cuotas || 1),
-    };
+  const metodoNormalizado = normalizarMetodoPago(datosCobro.metodo_pago);
+  const fechaStr = datosCobro.primer_vencimiento
+    ? String(datosCobro.primer_vencimiento).slice(0, 10)
+    : datosCobro.fecha
+      ? String(datosCobro.fecha).slice(0, 10)
+      : new Date().toISOString().slice(0, 10);
 
-    const res = await api.post('/cobros', payloadCobro);
+  const pagoInmediato = Boolean(
+    datosCobro.pago_inmediato !== undefined
+      ? datosCobro.pago_inmediato
+      : (datosCobro.estado === 'Pagada' || datosCobro.estado === 'PAGADA')
+  );
+
+  const payloadPlan = {
+    id_paciente: Number(datosCobro.id_paciente),
+    id_turno: datosCobro.id_turno ? Number(datosCobro.id_turno) : null,
+    monto_total: Math.round(montoNum * 100) / 100,
+    cant_cuotas: Math.max(1, parseInt(datosCobro.cant_cuotas, 10) || 1),
+    primer_vencimiento: fechaStr,
+    intervalo_dias: Number(datosCobro.intervalo_dias || 30),
+    pago_inmediato: pagoInmediato,
+    metodo_pago: pagoInmediato ? metodoNormalizado : null,
+  };
+
+  try {
+    const res = await api.post('/cobros/plan-pago', payloadPlan);
     return res?.data || res;
   } catch (err) {
-    // Si la API falla por validación de existencia en base de datos o conectividad,
-    // extraemos el mensaje limpio para el usuario
     const msg = extractErrorMessage(
       err,
-      'No se pudo conectar con el servidor para registrar el cobro.'
+      'Error al registrar el cobro en el servidor.'
     );
     throw new Error(msg);
   }
@@ -138,7 +127,28 @@ export const getCuotasByCobroId = async (cobroId) => {
   }
 };
 
+/**
+ * Obtiene todos los cobros registrados en el sistema
+ * @returns {Promise<Object>}
+ */
+export const getCobros = async () => {
+  const response = await api.get('/cobros');
+  return response.data;
+};
+
+/**
+ * Obtiene un cobro por su ID
+ * @param {number|string} idCobro
+ * @returns {Promise<Object>}
+ */
+export const getCobroById = async (idCobro) => {
+  const res = await api.get(`/cobros/${idCobro}`);
+  return res.data;
+};
+
 export default {
+  getCobros,
+  getCobroById,
   registrarCobro,
   normalizarMetodoPago,
   normalizarTipoCobro,

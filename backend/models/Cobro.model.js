@@ -14,7 +14,7 @@ export const Cobro = sequelize.define(
     },
     id_turno: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
       references: {
         model: Turno,
         key: "id_turno",

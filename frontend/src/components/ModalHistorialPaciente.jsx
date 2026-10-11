@@ -19,13 +19,13 @@ export const ModalHistorialPaciente = ({
 }) => {
   const [atenciones, setAtenciones] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [expandedIds, setExpandedIds] = useState(new Set());
+  const [detalleAbiertoId, setDetalleAbiertoId] = useState(null);
 
   useEffect(() => {
     if (!isOpen || !paciente) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setAtenciones([]);
-      setExpandedIds(new Set());
+      setDetalleAbiertoId(null);
       return;
     }
 
@@ -111,8 +111,29 @@ export const ModalHistorialPaciente = ({
 
         turnosAtendidos.forEach((t) => {
           const practicas = parsearPracticas(t);
-          const notas = (t.notas_consulta || t.observaciones || t.notas || '').trim();
-          const motivo = (t.motivo_consulta || '').trim();
+          const notaPrevia = (t.notas_consulta || '').trim();
+
+          const histArr = Array.isArray(t.historial)
+            ? t.historial
+            : Array.isArray(t.HistorialEstadoTurnos)
+            ? t.HistorialEstadoTurnos
+            : [];
+
+          const registroAtendido = [...histArr].reverse().find(
+            (h) =>
+              h.id_estado === 4 ||
+              h.id_estado === 3 ||
+              h.EstadoTurno?.estado === 'Atendido' ||
+              h.estado === 'Atendido'
+          );
+
+          const notaAtencion = (
+            registroAtendido?.descripcion ||
+            t.descripcion_atencion ||
+            t.descripcion ||
+            (t.id_estado === 3 || t.id_estado === 4 ? t.observaciones : '') ||
+            ''
+          ).trim();
 
           const consultaObj = {
             id: `turno-${t.id_turno || Math.random()}`,
@@ -121,10 +142,11 @@ export const ModalHistorialPaciente = ({
             hora: t.hora || '',
             estado: mapEstadoNombre(t.id_estado, t.estado || t.estado_nombre),
             practicas,
-            motivo_consulta: motivo,
-            notas_consulta: notas,
+            nota_previa: notaPrevia,
+            nota_atencion: notaAtencion,
             profesional: t.profesional || 'Dra. Valenzuela',
-            origen: 'agenda'
+            origen: 'agenda',
+            historial: histArr
           };
 
           listaConsolidada.push(consultaObj);
@@ -138,8 +160,11 @@ export const ModalHistorialPaciente = ({
           const turnoExistente = turnosPorFecha.get(fechaItem);
 
           if (turnoExistente) {
-            if (!turnoExistente.notas_consulta && (item.notas || item.notas_consulta)) {
-              turnoExistente.notas_consulta = (item.notas || item.notas_consulta).trim();
+            if (!turnoExistente.nota_previa && (item.notas || item.notas_consulta)) {
+              turnoExistente.nota_previa = (item.notas || item.notas_consulta).trim();
+            }
+            if (!turnoExistente.nota_atencion && (item.descripcion_atencion || item.descripcion || item.observaciones || item.notas)) {
+              turnoExistente.nota_atencion = (item.descripcion_atencion || item.descripcion || item.observaciones || item.notas).trim();
             }
             if (turnoExistente.practicas.length === 1 && turnoExistente.practicas[0].nombre === 'Consulta Odontológica') {
               const practicasHist = parsearPracticas(item);
@@ -151,8 +176,28 @@ export const ModalHistorialPaciente = ({
           }
 
           const practicas = parsearPracticas(item);
-          const notas = (item.notas || item.notas_consulta || '').trim();
-          const motivo = (item.motivo_consulta || '').trim();
+          const notaPrevia = (item.notas_consulta || '').trim();
+          const histArr = Array.isArray(item.historial)
+            ? item.historial
+            : Array.isArray(item.HistorialEstadoTurnos)
+            ? item.HistorialEstadoTurnos
+            : [];
+          const registroAtendido = [...histArr].reverse().find(
+            (h) =>
+              h.id_estado === 4 ||
+              h.id_estado === 3 ||
+              h.EstadoTurno?.estado === 'Atendido' ||
+              h.estado === 'Atendido'
+          );
+
+          const notaAtencion = (
+            registroAtendido?.descripcion ||
+            item.descripcion_atencion ||
+            item.descripcion ||
+            item.observaciones ||
+            item.notas ||
+            ''
+          ).trim();
 
           const consultaObj = {
             id: `historial-${idx}`,
@@ -160,10 +205,11 @@ export const ModalHistorialPaciente = ({
             hora: item.hora || '',
             estado: mapEstadoNombre(item.id_estado, item.estado || 'ATENDIDO'),
             practicas,
-            motivo_consulta: motivo,
-            notas_consulta: notas,
+            nota_previa: notaPrevia,
+            nota_atencion: notaAtencion,
             profesional: item.profesional || 'Dra. Valenzuela',
-            origen: 'registro'
+            origen: 'registro',
+            historial: histArr
           };
 
           listaConsolidada.push(consultaObj);
@@ -176,9 +222,7 @@ export const ModalHistorialPaciente = ({
 
         if (isMounted) {
           setAtenciones(listaConsolidada);
-          if (listaConsolidada.length > 0) {
-            setExpandedIds(new Set([listaConsolidada[0].id]));
-          }
+          setDetalleAbiertoId(null);
         }
       } catch (err) {
         console.error('Error al cargar historial del paciente:', err);
@@ -215,15 +259,7 @@ export const ModalHistorialPaciente = ({
   if (!isOpen || !paciente) return null;
 
   const toggleDetalle = (id) => {
-    setExpandedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
+    setDetalleAbiertoId((prevId) => (prevId === id ? null : id));
   };
 
   const nombreCompleto = paciente.apellido
@@ -297,7 +333,7 @@ export const ModalHistorialPaciente = ({
           {!isLoading && atenciones.length > 0 && (
             <div className="historial-atenciones-list">
               {atenciones.map((item) => {
-                const isExpanded = expandedIds.has(item.id);
+                const isExpanded = detalleAbiertoId === item.id;
 
                 return (
                   <article key={item.id} className="atencion-card-item">
@@ -339,7 +375,7 @@ export const ModalHistorialPaciente = ({
                         onClick={() => toggleDetalle(item.id)}
                         aria-expanded={isExpanded}
                       >
-                        <span>{isExpanded ? 'Cerrar detalle' : 'Detalle'}</span>
+                        <span>{isExpanded ? 'Cerrar detalle' : 'Ver detalle'}</span>
                         <span className={`accordion-arrow ${isExpanded ? 'is-open' : ''}`} aria-hidden="true">
                           ▼
                         </span>
@@ -348,32 +384,44 @@ export const ModalHistorialPaciente = ({
 
                     {isExpanded && (
                       <div className="atencion-detalle-box">
-                        {item.motivo_consulta && (
+                        {item.nota_previa && (
                           <div className="atencion-motivo-seccion" style={{ marginBottom: '10px' }}>
                             <div className="atencion-detalle-header">
                               <span className="atencion-detalle-title">
-                                Motivo de Consulta (Reserva):
+                                Nota previa / Reserva:
                               </span>
                             </div>
                             <div className="atencion-detalle-text">
-                              <p>{item.motivo_consulta}</p>
+                              <p>{item.nota_previa}</p>
                             </div>
                           </div>
                         )}
                         <div className="atencion-notas-seccion">
                           <div className="atencion-detalle-header">
                             <span className="atencion-detalle-title">
-                              Notas Clínicas / Observaciones:
+                              Notas Clínicas / Evolución:
                             </span>
                           </div>
                           <div className="atencion-detalle-text">
-                            {item.evolucion_clinica || item.observaciones || item.notas_consulta ? (
-                              <p>{item.evolucion_clinica || item.observaciones || item.notas_consulta}</p>
-                            ) : (
-                              <p className="notas-default-text">
-                                Se completó la sesión según lo previsto. Evolución clínica favorable sin complicaciones inmediatas.
-                              </p>
-                            )}
+                            {(() => {
+                              const notaEvolucion = (
+                                item.nota_atencion ||
+                                item.historial?.find((h) => h.id_estado === 4 || h.id_estado === 3)?.descripcion ||
+                                item.descripcion_atencion ||
+                                item.descripcion ||
+                                ''
+                              ).trim();
+
+                              return notaEvolucion ? (
+                                <p>{notaEvolucion}</p>
+                              ) : (
+                                <p className="notas-default-text">
+                                  <span className="text-slate-400 italic">
+                                    Sin observaciones o notas registradas para esta atención.
+                                  </span>
+                                </p>
+                              );
+                            })()}
                           </div>
                         </div>
                       </div>

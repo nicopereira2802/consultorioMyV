@@ -14,6 +14,7 @@ import { HistorialEstadoTurno } from "./HistorialEstadoTurno.model.js";
 import { Cobro } from "./Cobro.model.js";
 import { Cuota } from "./Cuota.model.js";
 import { Usuario } from "./Usuario.model.js";
+import { ObraSocialTurno } from "./ObraSocialTurno.model.js";
 
 // Definir relaciones entre modelos
 Paciente.hasMany(Turno, { foreignKey: "id_paciente" });
@@ -107,6 +108,16 @@ Cobro.belongsTo(Paciente, { foreignKey: "id_paciente" });
 Cobro.hasMany(Cuota, { foreignKey: "id_cobro" });
 Cuota.belongsTo(Cobro, { foreignKey: "id_cobro" });
 
+// Relaciones ObraSocialTurno (DER Oficial)
+ObraSocial.hasMany(ObraSocialTurno, { foreignKey: "id_obra_social" });
+ObraSocialTurno.belongsTo(ObraSocial, { foreignKey: "id_obra_social" });
+
+Turno.hasMany(ObraSocialTurno, { foreignKey: "id_turno" });
+ObraSocialTurno.belongsTo(Turno, { foreignKey: "id_turno" });
+
+Practica.hasMany(ObraSocialTurno, { foreignKey: "id_practica" });
+ObraSocialTurno.belongsTo(Practica, { foreignKey: "id_practica" });
+
 const sincronizarModelos = async () => {
   try {
     await sequelize.authenticate();
@@ -126,6 +137,7 @@ export {
   Turno,
   Practica,
   PracticaTurno,
+  ObraSocialTurno,
   PacienteObraSocial,
   HistorialEstadoTurno,
   Cobro,

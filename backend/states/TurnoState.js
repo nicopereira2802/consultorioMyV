@@ -89,6 +89,13 @@ export class ProgramadoState extends EstadoTurnoBase {
   }
 }
 
+export class ReprogramadoState extends ProgramadoState {
+  constructor() {
+    super();
+    this.nombre = "Reprogramado";
+  }
+}
+
 // ==========================================
 // ESTADOS TERMINALES 
 // ==========================================
@@ -97,17 +104,29 @@ export class AtendidoState extends EstadoTurnoBase {
   constructor() {
     super("Atendido");
   }
+
+  async cancelar(turno, motivo, transaction) {
+    throw new Error('Operación inválida: No se puede cancelar un turno en estado "Atendido".');
+  }
 }
 
 export class CanceladoState extends EstadoTurnoBase {
   constructor() {
     super("Cancelado");
   }
+
+  async cancelar(turno, motivo, transaction) {
+    throw new Error('Operación inválida: No se puede cancelar un turno en estado "Cancelado".');
+  }
 }
 
 export class InasistenteState extends EstadoTurnoBase {
   constructor() {
     super("Inasistente");
+  }
+
+  async cancelar(turno, motivo, transaction) {
+    throw new Error("No se puede cancelar un turno en estado Inasistente");
   }
 }
 
@@ -123,6 +142,8 @@ export const obtenerEstadoTurno = async (id_estado, transaction = null) => {
   switch (estadoRecord.estado) {
     case "Programado":
       return new ProgramadoState();
+    case "Reprogramado":
+      return new ReprogramadoState();
     case "Atendido":
       return new AtendidoState();
     case "Cancelado":

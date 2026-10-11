@@ -11,6 +11,7 @@ import { validateSchema } from "../middleware/validateSchema.js";
 import {
   createTurnoSchema,
   updateTurnoSchema,
+  atencionTurnoSchema,
 } from "../schemas/Turno.schema.js";
 const router = express.Router();
 
@@ -40,11 +41,13 @@ router.put(
 router.patch(
   "/:id/atender",
   validarExistencia(Turno, "id", "params"),
+  validateSchema(atencionTurnoSchema),
   TurnoController.turnoAtendido,
 );
 router.post(
   "/:id/atencion",
   validarExistencia(Turno, "id", "params"),
+  validateSchema(atencionTurnoSchema),
   TurnoController.turnoAtendido,
 );
 

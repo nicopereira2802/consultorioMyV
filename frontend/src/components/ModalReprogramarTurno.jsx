@@ -258,10 +258,10 @@ export const ModalReprogramarTurno = ({
                 <span className="reprogramar-paciente-label">Práctica:</span>
                 <span className="reprogramar-paciente-val">{nombrePractica}</span>
               </div>
-              {turno.motivo_consulta && (
+              {turno.notas_consulta && (
                 <div className="reprogramar-paciente-row">
                   <span className="reprogramar-paciente-label">Motivo:</span>
-                  <span className="reprogramar-paciente-val">{turno.motivo_consulta}</span>
+                  <span className="reprogramar-paciente-val">{turno.notas_consulta}</span>
                 </div>
               )}
             </div>

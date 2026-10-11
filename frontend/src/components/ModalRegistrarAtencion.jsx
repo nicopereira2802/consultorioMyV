@@ -56,7 +56,7 @@ export const ModalRegistrarAtencion = ({
   );
   const [practicaSeleccionadaId, setPracticaSeleccionadaId] = useState('');
   const [observaciones, setObservaciones] = useState(
-    turno?.observaciones || turno?.notas_consulta || ''
+    turno?.descripcion_atencion || (turno?.id_estado === 3 ? turno?.observaciones : '') || ''
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -159,7 +159,7 @@ export const ModalRegistrarAtencion = ({
     };
 
     cargarCatalogo();
-    setObservaciones(turno?.observaciones || turno?.notas_consulta || '');
+    setObservaciones(turno?.descripcion_atencion || (turno?.id_estado === 3 ? turno?.observaciones : '') || '');
     setPracticaSeleccionadaId('');
     setErrorMsg('');
     setIsSubmitting(false);
@@ -282,6 +282,8 @@ export const ModalRegistrarAtencion = ({
         : null;
 
       const idsPracticas = practicasSeleccionadas.map((p) => p.id_practica);
+      const evolucionTexto = typeof observaciones === 'string' ? observaciones.trim() : '';
+
       const turnoActualizado = await registrarAtencionTurno(
         turno.id_turno,
         {
@@ -291,7 +293,8 @@ export const ModalRegistrarAtencion = ({
           precio_final: precioCobro,
           id_obra_social: obraSocialSeleccionada || null,
           obras_sociales_utilizadas: obraSocialSeleccionada ? [obraSocialSeleccionada] : [],
-          observaciones
+          descripcion: evolucionTexto,
+          observaciones: evolucionTexto
         },
         turno.fecha
       );
@@ -308,8 +311,9 @@ export const ModalRegistrarAtencion = ({
         id_obra_social: obraSocialSeleccionada || null,
         obra_social: obraSocialObj,
         obras_sociales_utilizadas: obraSocialObj ? [obraSocialObj] : [],
-        observaciones,
-        notas_consulta: observaciones
+        descripcion_atencion: evolucionTexto,
+        observaciones: evolucionTexto,
+        notas_consulta: turno.notas_consulta || null
       };
 
       // 2. Cerrar diálogo de confirmación
@@ -325,7 +329,8 @@ export const ModalRegistrarAtencion = ({
           id_obra_social: obraSocialSeleccionada || null,
           obra_social: obraSocialObj,
           obras_sociales_utilizadas: obraSocialObj ? [obraSocialObj] : [],
-          observaciones
+          descripcion_atencion: evolucionTexto,
+          observaciones: evolucionTexto
         });
       }
 
@@ -427,6 +432,15 @@ export const ModalRegistrarAtencion = ({
                   <strong className="resumen-value">{horarioStr}</strong>
                   <span className="resumen-sub">Duración: {bloquesInfo.duracionMinutos} min</span>
                 </div>
+              </div>
+
+              <div className="modal-registrar-motivo-box">
+                <span className="modal-registrar-motivo-label">
+                  Motivo inicial:
+                </span>
+                <span className="modal-registrar-motivo-texto">
+                  {turno.notas_consulta || 'Sin nota previa'}
+                </span>
               </div>
             </div>
 
@@ -611,7 +625,7 @@ export const ModalRegistrarAtencion = ({
 
             <div className="modal-registrar-section">
               <label htmlFor="observaciones-clinicas-textarea" className="modal-registrar-label">
-                Observaciones y notas clínicas
+                Evolución Clínica / Detalle del Tratamiento Realizado
               </label>
               <textarea
                 id="observaciones-clinicas-textarea"
@@ -619,11 +633,11 @@ export const ModalRegistrarAtencion = ({
                 rows={4}
                 value={observaciones}
                 onChange={(e) => setObservaciones(e.target.value)}
-                placeholder="Detalle del procedimiento, piezas dentarias tratadas, medicación o indicaciones..."
+                placeholder="Describa el procedimiento realizado, observaciones odontológicas, anestesia aplicada, etc."
                 disabled={isSubmitting}
               />
               <span className="helper-text-observaciones">
-                Quedarán registradas en la evolución clínica del paciente y en la ficha del turno atendido.
+                Quedará registrada en la evolución clínica del paciente y en la ficha del turno atendido.
               </span>
             </div>
           </div>

@@ -175,8 +175,7 @@ export default function TurnoRegistration({
         fecha_hora_inicio: startDateTime,
         duracion_minutos: Number(duracionMinutos),
         precio_final: Number(parsedPrecio.toFixed(2)),
-        motivo_consulta: notasConsulta.trim() || 'Consulta odontológica',
-        notas_consulta: null
+        notas_consulta: (notasConsulta.trim() || 'Consulta odontológica').slice(0, 255)
       };
 
       await api.post('/turnos', turnoData);
@@ -531,17 +530,17 @@ export default function TurnoRegistration({
                 </span>
               </div>
 
-              {selectedEventForDetail.motivo_consulta && (
-                <div className="flex items-start gap-2 text-sm text-gray-600 pt-1">
-                  <FileText className="w-4 h-4 text-teal-600 mt-0.5" />
-                  <span><strong>Motivo de consulta:</strong> {selectedEventForDetail.motivo_consulta}</span>
-                </div>
-              )}
-
               {selectedEventForDetail.notas_consulta && (
                 <div className="flex items-start gap-2 text-sm text-gray-600 pt-1">
                   <FileText className="w-4 h-4 text-teal-600 mt-0.5" />
-                  <span><strong>Evolución clínica:</strong> {selectedEventForDetail.notas_consulta}</span>
+                  <span><strong>Nota previa / Motivo:</strong> {selectedEventForDetail.notas_consulta}</span>
+                </div>
+              )}
+
+              {selectedEventForDetail.descripcion_atencion && (
+                <div className="flex items-start gap-2 text-sm text-gray-600 pt-1">
+                  <FileText className="w-4 h-4 text-teal-600 mt-0.5" />
+                  <span><strong>Evolución clínica:</strong> {selectedEventForDetail.descripcion_atencion}</span>
                 </div>
               )}
 

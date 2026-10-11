@@ -13,6 +13,7 @@ export const BottomNav = () => {
   const isAgendaActive = currentPath.startsWith('/agenda') || currentPath.startsWith('/atencion');
   const isPacientesActive = currentPath.startsWith('/pacientes') || currentPath === '/registrar-paciente';
   const isPracticasActive = currentPath.startsWith('/practicas');
+  const isCobrosActive = currentPath.startsWith('/cobros');
 
   const mostrarToast = (mensaje = 'No disponible') => {
     setToastMsg(mensaje);
@@ -36,8 +37,8 @@ export const BottomNav = () => {
       <nav className="bottom-nav" aria-label="Navegación inferior móvil M&V">
         <button
           type="button"
-          className="bottom-nav-item"
-          onClick={() => mostrarToast('No disponible')}
+          className={`bottom-nav-item ${isCobrosActive ? 'active' : ''}`}
+          onClick={() => navigate('/cobros')}
           aria-label="Pagos y Cobros"
           title="Pagos y Cobros"
         >

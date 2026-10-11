@@ -1,0 +1,642 @@
+/* ==========================================================================
+   ModalRegistrarCobro.css - Estilos Oficiales del Modal de Registro de Cobro
+   Estética verde esmeralda institucional M&V Turnos
+   ========================================================================== */
+
+.modal-reg-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 1200;
+  animation: modalRegFadeIn 0.2s ease-out;
+}
+
+@keyframes modalRegFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-reg-card {
+  width: 100%;
+  max-width: 820px;
+  max-height: 92vh;
+  background-color: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: modalRegScaleIn 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-sizing: border-box;
+}
+
+@keyframes modalRegScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* --- Cabecera del Modal --- */
+.modal-reg-header {
+  padding: 18px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #e2e8f0;
+  background: linear-gradient(to right, #f8fafc, #ffffff);
+}
+
+.modal-reg-header-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.modal-reg-logo-circle {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: #ecfdf5;
+  border: 2px solid #10b981;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.modal-reg-titulo {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.modal-reg-subtitulo {
+  font-size: 13px;
+  color: #64748b;
+  margin: 2px 0 0 0;
+}
+
+.modal-reg-close-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.modal-reg-close-btn:hover:not(:disabled) {
+  color: #0f172a;
+  background-color: #f1f5f9;
+}
+
+.modal-reg-close-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* --- Formulario y Cuerpo --- */
+.modal-reg-form {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex: 1;
+}
+
+.modal-reg-body {
+  padding: 20px 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  flex: 1;
+}
+
+/* Alertas */
+.modal-reg-alert {
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modal-reg-alert-error {
+  background-color: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+.modal-reg-alert-success {
+  background-color: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.alert-icon-svg {
+  flex-shrink: 0;
+}
+
+/* Secciones */
+.modal-reg-seccion {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.modal-reg-seccion-titulo {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e293b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.modal-reg-seccion-titulo svg {
+  color: #10b981;
+}
+
+.modal-reg-seccion-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.resumen-total-badge {
+  background-color: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #065f46;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 13.5px;
+}
+
+.resumen-total-badge strong {
+  font-size: 15px;
+  color: #047857;
+}
+
+/* Grillas */
+.modal-reg-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.modal-reg-grid-3 {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr;
+  gap: 14px;
+}
+
+@media (max-width: 680px) {
+  .modal-reg-grid-2,
+  .modal-reg-grid-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Campos de Entrada */
+.modal-reg-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.modal-reg-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.campo-requerido {
+  color: #ef4444;
+}
+
+.campo-opcional {
+  font-size: 11.5px;
+  font-weight: 400;
+  color: #94a3b8;
+}
+
+.modal-reg-input,
+.modal-reg-select {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #0f172a;
+  background-color: #ffffff;
+  outline: none;
+  box-sizing: border-box;
+  transition: all 0.15s ease;
+}
+
+.modal-reg-input:focus,
+.modal-reg-select:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+}
+
+.modal-reg-input:disabled,
+.modal-reg-select:disabled {
+  background-color: #f8fafc;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.modal-reg-hint {
+  font-size: 11.5px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+/* Input con Prefijo Moneda */
+.modal-reg-input-prefix-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-prefix-symbol {
+  position: absolute;
+  left: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #64748b;
+  pointer-events: none;
+}
+
+.input-con-prefix {
+  padding-left: 28px !important;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+/* Buscador rápido de paciente */
+.modal-reg-search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-bottom: 2px;
+}
+
+.modal-reg-search-icon {
+  position: absolute;
+  left: 10px;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.modal-reg-search-input {
+  width: 100%;
+  height: 32px;
+  padding: 0 10px 0 30px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 12.5px;
+  background-color: #f8fafc;
+  outline: none;
+  box-sizing: border-box;
+  transition: all 0.15s ease;
+}
+
+.modal-reg-search-input:focus {
+  background-color: #ffffff;
+  border-color: #10b981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.12);
+}
+
+.paciente-seleccionado-info {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+  color: #64748b;
+  background-color: #f8fafc;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px dashed #cbd5e1;
+}
+
+.paciente-seleccionado-info strong {
+  color: #334155;
+}
+
+/* Tarjeta de Pago Inmediato / Anticipo */
+.pago-inmediato-card {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pago-inmediato-toggle-row {
+  display: flex;
+  align-items: center;
+}
+
+/* Toggle Switch Custom */
+.toggle-switch-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.toggle-checkbox {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  width: 38px;
+  height: 22px;
+  background-color: #cbd5e1;
+  border-radius: 20px;
+  position: relative;
+  transition: background-color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.toggle-slider::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  background-color: #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.toggle-checkbox:checked + .toggle-slider {
+  background-color: #10b981;
+}
+
+.toggle-checkbox:checked + .toggle-slider::after {
+  transform: translateX(16px);
+}
+
+.toggle-text {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.metodo-pago-selector-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 8px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.metodo-pago-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.select-metodo-inline {
+  max-width: 260px;
+  height: 36px;
+  font-size: 13.5px;
+}
+
+/* Tabla de Previsualización de Cuotas */
+.tabla-cuotas-wrapper {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+  background-color: #ffffff;
+}
+
+.tabla-cuotas-preview {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  text-align: left;
+}
+
+.tabla-cuotas-preview thead {
+  background-color: #f1f5f9;
+}
+
+.tabla-cuotas-preview th {
+  padding: 10px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.tabla-cuotas-preview tbody tr {
+  border-bottom: 1px solid #f1f5f9;
+  transition: background-color 0.15s ease;
+}
+
+.tabla-cuotas-preview tbody tr:last-child {
+  border-bottom: none;
+}
+
+.tabla-cuotas-preview tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+.fila-cuota-pagada {
+  background-color: #f0fdf4 !important;
+}
+
+.tabla-cuotas-preview td {
+  padding: 10px 14px;
+  vertical-align: middle;
+  color: #1e293b;
+}
+
+.badge-nro-cuota {
+  background-color: #f1f5f9;
+  color: #475569;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.td-monto-cuota strong {
+  font-size: 14px;
+  color: #0f172a;
+}
+
+.input-fecha-cuota-inline {
+  height: 30px;
+  padding: 0 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 12.5px;
+  color: #334155;
+  background-color: #ffffff;
+  outline: none;
+}
+
+.input-fecha-cuota-inline:focus {
+  border-color: #10b981;
+}
+
+.badge-metodo-preview {
+  background-color: #e0f2fe;
+  color: #0369a1;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge-metodo-pendiente {
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.badge-estado-preview {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.badge-preview-pagada {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.badge-preview-pendiente {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+/* Pie del Modal */
+.modal-reg-footer {
+  padding: 16px 24px;
+  border-top: 1px solid #e2e8f0;
+  background-color: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.btn-modal-cancelar {
+  height: 42px;
+  padding: 0 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #64748b;
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-modal-cancelar:hover:not(:disabled) {
+  background-color: #f1f5f9;
+  color: #1e293b;
+}
+
+.btn-modal-confirmar {
+  height: 42px;
+  padding: 0 22px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  background-color: #10b981;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+  transition: all 0.15s ease;
+}
+
+.btn-modal-confirmar:hover:not(:disabled) {
+  background-color: #059669;
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35);
+  transform: translateY(-1px);
+}
+
+.btn-modal-confirmar:disabled {
+  background-color: #94a3b8;
+  box-shadow: none;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.icono-spinner {
+  animation: spinReg 1s linear infinite;
+}
+
+@keyframes spinReg {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

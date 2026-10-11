@@ -38,11 +38,7 @@ export const Turno = sequelize.define(
       allowNull: false,
     },
     notas_consulta: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
-    motivo_consulta: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(255),
       allowNull: true,
     },
   },

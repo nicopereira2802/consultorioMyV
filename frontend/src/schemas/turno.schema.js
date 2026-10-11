@@ -5,7 +5,7 @@ import { z } from 'zod';
  * Cumple con los requisitos del sistema:
  * - Selección válida de paciente y práctica.
  * - Soporte para fecha_hora_inicio, fecha, hora, duracion_minutos.
- * - Soporte explícito para motivo_consulta y notas_consulta.
+ * - Soporte explícito para notas_consulta y descripcion.
  * - Campos opcionales toleran strings vacíos sin fallar (.optional().or(z.literal(''))).
  * - Usa .passthrough() para compatibilidad con flujos de agenda.
  */
@@ -66,16 +66,18 @@ export const turnoSchema = z
       .optional()
       .default(30),
 
-    motivo_consulta: z
+    notas_consulta: z
       .string()
       .trim()
+      .max(255, 'Las notas de consulta no pueden superar 255 caracteres')
       .optional()
       .nullable()
       .or(z.literal('')),
 
-    notas_consulta: z
+    descripcion: z
       .string()
       .trim()
+      .max(255, 'La descripción no puede superar 255 caracteres')
       .optional()
       .nullable()
       .or(z.literal('')),

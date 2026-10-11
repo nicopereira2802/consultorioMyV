@@ -77,7 +77,7 @@ export const updateCobroSchema = z.object({
 });
 
 export const createPlanPagoSchema = z.object({
-  id_turno: z.number().int().positive(),
+  id_turno: z.number().int().positive().nullable().optional(),
   id_paciente: z.number().int().positive(),
   monto_total: z.number().positive(),
   cant_cuotas: z.number().int().min(1).default(1),

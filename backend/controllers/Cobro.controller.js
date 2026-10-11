@@ -1,7 +1,66 @@
 /** @format */
 
 import sequelize from "../config/database.js";
-import { Cobro, Cuota, Paciente, Turno } from "../models/index.model.js";
+import { Cobro, Cuota, Paciente, Turno, Practica } from "../models/index.model.js";
+
+// Obtener todos los cobros con paciente, turno, prácticas y cuotas
+export const getAllCobros = async (req, res) => {
+  try {
+    const cobros = await Cobro.findAll({
+      where: { activo: true },
+      include: [
+        {
+          model: Paciente,
+          attributes: ["id_paciente", "nombre", "apellido", "dni"],
+        },
+        {
+          model: Turno,
+          attributes: [
+            "id_turno",
+            "notas_consulta",
+            "fecha_hora_inicio",
+          ],
+          include: [
+            {
+              model: Practica,
+              attributes: [
+                "id_practica",
+                "nombre_referencia",
+                "nombre_nomenclador",
+              ],
+              through: { attributes: [] },
+              required: false,
+            },
+          ],
+          required: false,
+        },
+        {
+          model: Cuota,
+          attributes: [
+            "id_cuota",
+            "nro_cuota",
+            "monto_cuota",
+            "monto_cobrado",
+            "metodo_pago",
+            "estado",
+            "fecha_cobro",
+            "fecha_vencimiento",
+          ],
+          required: false,
+        },
+      ],
+      order: [["fecha_emision", "DESC"]],
+    });
+
+    res.status(200).json({
+      status: "success",
+      data: cobros,
+    });
+  } catch (error) {
+    console.error("Error al obtener los cobros:", error);
+    res.status(500).json({ error: "Error al obtener los cobros" });
+  }
+};
 
 // Obtener una cobro por turno ID
 export const getCobroByTurnoId = async (req, res) => {
@@ -20,14 +79,58 @@ export const getCobroByTurnoId = async (req, res) => {
   }
 };
 
-// Obtener una cobro por su ID
+// Obtener un cobro por su ID con paciente, turno y cuotas
 export const getCobroById = async (req, res) => {
   try {
-    const cobro = req.cobro;
+    const id = req.params.id || req.cobro?.id_cobro;
+
+    const cobroCompleto = await Cobro.findByPk(id, {
+      include: [
+        {
+          model: Paciente,
+          attributes: ["id_paciente", "nombre", "apellido", "dni"],
+        },
+        {
+          model: Turno,
+          attributes: [
+            "id_turno",
+            "notas_consulta",
+            "fecha_hora_inicio",
+          ],
+          include: [
+            {
+              model: Practica,
+              attributes: [
+                "id_practica",
+                "nombre_referencia",
+                "nombre_nomenclador",
+              ],
+              through: { attributes: [] },
+              required: false,
+            },
+          ],
+          required: false,
+        },
+        {
+          model: Cuota,
+          attributes: [
+            "id_cuota",
+            "nro_cuota",
+            "monto_cuota",
+            "monto_cobrado",
+            "metodo_pago",
+            "estado",
+            "fecha_cobro",
+            "fecha_vencimiento",
+          ],
+          required: false,
+        },
+      ],
+    });
 
     res.status(200).json({
       status: "success",
-      data: cobro,
+      data: cobroCompleto || req.cobro,
     });
   } catch (error) {
     console.error("Error al obtener el cobro:", error);
@@ -128,8 +231,8 @@ export const crearPlanPago = async (req, res) => {
       metodo_pago = null,
     } = req.body;
 
-    const turnoId = req.turno?.id_turno || id_turno;
-    const pacienteId = req.paciente?.id_paciente || id_paciente;
+    const turnoId = req.turno?.id_turno || (id_turno ? Number(id_turno) : null);
+    const pacienteId = req.paciente?.id_paciente || Number(id_paciente);
 
     const result = await sequelize.transaction(async (t) => {
       // 1. Crear el registro cabecera en Cobro

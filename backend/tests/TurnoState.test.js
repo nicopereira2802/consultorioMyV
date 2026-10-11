@@ -105,6 +105,8 @@ describe("Suite de Tests para el Patrón State (GoF) en Turnos", () => {
   test("InasistenteState rechaza operaciones por ser estado terminal", async () => {
     const inasistente = new InasistenteState();
     await expect(inasistente.atender(null, {})).rejects.toThrow(/No se puede atender un turno en estado "Inasistente"/);
+    await expect(inasistente.cancelar(null, "motivo")).rejects.toThrow(/No se puede cancelar un turno en estado Inasistente/);
     await expect(inasistente.marcarInasistente(null, "motivo")).rejects.toThrow(/No se puede marcar inasistente un turno en estado "Inasistente"/);
   });
 });
+

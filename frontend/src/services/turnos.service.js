@@ -127,9 +127,11 @@ export const normalizarTurno = (t) => {
       (Array.isArray(t.obras_sociales_utilizadas) && t.obras_sociales_utilizadas.length > 0
         ? t.obras_sociales_utilizadas
         : (t.ObraSocial ? [t.ObraSocial] : (t.obra_social ? [t.obra_social] : (Array.isArray(t.ObraSocials) && t.ObraSocials.length > 0 ? t.ObraSocials : [])))),
-    motivo_consulta: t.motivo_consulta ? String(t.motivo_consulta).trim() : '',
     notas_consulta: t.notas_consulta ? String(t.notas_consulta).trim() : '',
-    observaciones: t.notas_consulta ? String(t.notas_consulta).trim() : (t.observaciones || '')
+    descripcion_atencion: t.descripcion_atencion ? String(t.descripcion_atencion).trim() : '',
+    observaciones: t.descripcion_atencion
+      ? String(t.descripcion_atencion).trim()
+      : (t.observaciones ? String(t.observaciones).trim() : (t.notas_consulta ? String(t.notas_consulta).trim() : ''))
   };
 };
 
@@ -571,10 +573,10 @@ export const crearTurno = async (turno) => {
     turno.practicas_realizadas ||
     (turno.id_practica ? [Number(turno.id_practica)] : []);
 
-  const motivoTexto = String(
-    turno.motivo_consulta !== undefined && turno.motivo_consulta !== null
-      ? turno.motivo_consulta
-      : turno.notas_consulta || turno.observaciones || turno.notas || ''
+  const notasConsultaTexto = String(
+    turno.notas_consulta !== undefined && turno.notas_consulta !== null
+      ? turno.notas_consulta
+      : turno.observaciones || turno.notas || ''
   ).trim();
 
   const payload = {
@@ -586,8 +588,7 @@ export const crearTurno = async (turno) => {
     fecha_hora_fin: fechaFin,
     duracion_minutos: duracion,
     precio_final: Number(turno.precio_final ?? 0),
-    motivo_consulta: motivoTexto || null,
-    notas_consulta: null
+    notas_consulta: notasConsultaTexto.slice(0, 255) || null
   };
 
   const data = await api.post('/turnos', payload);
@@ -695,12 +696,18 @@ export const registrarAtencion = async (idTurno, datosAtencion = {}) => {
       ? (datosAtencion.id_obra_social ? Number(datosAtencion.id_obra_social) : null)
       : (obrasSocialesUtilizadas.length > 0 ? Number(obrasSocialesUtilizadas[0]) : null);
 
+  const evolucionTexto = String(
+    datosAtencion.descripcion !== undefined && datosAtencion.descripcion !== null
+      ? datosAtencion.descripcion
+      : (datosAtencion.observaciones || datosAtencion.notas_atencion || '')
+  ).trim();
+
   const body = {
     practicas: practicasArr,
     id_practicas: practicasArr,
     practicas_realizadas: practicasArr,
-    observaciones: datosAtencion.observaciones || datosAtencion.notas_consulta || '',
-    notas_consulta: datosAtencion.notas_consulta || datosAtencion.observaciones || '',
+    descripcion: evolucionTexto.slice(0, 255),
+    observaciones: evolucionTexto.slice(0, 255),
     total: precioFinalCalculado,
     precio_final: precioFinalCalculado,
     id_obra_social: idObraSocial,
@@ -710,14 +717,7 @@ export const registrarAtencion = async (idTurno, datosAtencion = {}) => {
     const res = await api.post(`/turnos/${idTurno}/atencion`, body);
     return normalizarTurno(unpackObject(res));
   } catch {
-    const res = await api.patch(`/turnos/${idTurno}/atender`, {
-      notas_consulta: body.observaciones,
-      practicas_realizadas: body.practicas,
-      total: body.total,
-      precio_final: body.precio_final,
-      id_obra_social: body.id_obra_social,
-      obras_sociales_utilizadas: body.obras_sociales_utilizadas
-    });
+    const res = await api.patch(`/turnos/${idTurno}/atender`, body);
     return normalizarTurno(unpackObject(res));
   }
 };
@@ -774,11 +774,11 @@ export const actualizarTurno = async (idTurno, camposActualizados = {}) => {
   if (payload.id_practica !== undefined) payload.id_practica = Number(payload.id_practica);
   if (payload.duracion_minutos !== undefined) payload.duracion_minutos = Number(payload.duracion_minutos);
   if (payload.precio_final !== undefined) payload.precio_final = Number(payload.precio_final);
-  if (payload.motivo_consulta !== undefined) {
-    payload.motivo_consulta = payload.motivo_consulta ? String(payload.motivo_consulta).trim() : null;
-  }
   if (payload.notas_consulta !== undefined || payload.observaciones !== undefined) {
-    payload.notas_consulta = String(payload.notas_consulta || payload.observaciones || '').trim();
+    payload.notas_consulta = String(payload.notas_consulta || payload.observaciones || '').trim().slice(0, 255);
+  }
+  if (payload.descripcion !== undefined) {
+    payload.descripcion = String(payload.descripcion).trim().slice(0, 255);
   }
   const data = await api.put(`/turnos/${idTurno}`, payload);
   return normalizarTurno(unpackObject(data));
@@ -796,14 +796,16 @@ export const cambiarEstadoTurno = async (id_turno, nuevoEstado) => {
 
   try {
     if (nombreLower === 'cancelado') {
-      const res = await api.patch(`/turnos/${id_turno}/cancelar`, { notas_consulta: '' });
+      const res = await api.patch(`/turnos/${id_turno}/cancelar`, { descripcion: '' });
       return normalizarTurno(unpackObject(res));
     } else if (nombreLower === 'inasistente') {
       const res = await api.patch(`/turnos/${id_turno}/inasistente`, {});
       return normalizarTurno(unpackObject(res));
     }
-  } catch {
-    // Fallback a PUT
+  } catch (err) {
+    if (err.response && err.response.status !== 404) {
+      throw err;
+    }
   }
 
   return await actualizarTurno(id_turno, {
@@ -813,14 +815,15 @@ export const cambiarEstadoTurno = async (id_turno, nuevoEstado) => {
 };
 
 /**
- * Actualizar las notas de consulta clínica de un turno
+ * Actualizar las notas de consulta de un turno
  * @param {number|string} idTurno
  * @param {string} notasConsulta
  * @returns {Promise<Object>}
  */
 export const actualizarNotasConsulta = async (idTurno, notasConsulta) => {
+  const texto = typeof notasConsulta === 'string' ? notasConsulta.trim().slice(0, 255) : '';
   return await actualizarTurno(idTurno, {
-    notas_consulta: typeof notasConsulta === 'string' ? notasConsulta : ''
+    notas_consulta: texto
   });
 };
 

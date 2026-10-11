@@ -234,6 +234,21 @@ describe("Suite de Tests Completa para /api/cobros", () => {
   });
 
   // ==========================================
+  // GET /api/cobros (Listar todos los cobros)
+  // ==========================================
+  describe("GET /api/cobros", () => {
+    test("200: Debería obtener el listado de todos los cobros activos con paciente", async () => {
+      const res = await request(app).get("/api/cobros");
+
+      expect(res.status).toBe(200);
+      expect(res.body.status).toBe("success");
+      expect(Array.isArray(res.body.data)).toBe(true);
+      expect(res.body.data.length).toBeGreaterThan(0);
+      expect(res.body.data[0]).toHaveProperty("Paciente");
+    });
+  });
+
+  // ==========================================
   // 2. GET /api/cobros/:turnoId/cobros (Obtener por Turno)
   // ==========================================
   describe("GET /api/cobros/:turnoId/cobros", () => {

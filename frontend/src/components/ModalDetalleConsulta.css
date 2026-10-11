@@ -255,6 +255,33 @@
   letter-spacing: -0.01em;
 }
 
+/* Sección de Motivo de la Cita (Lectura) */
+.modal-detalle-seccion-bloque {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.modal-detalle-caja-lectura {
+  background-color: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: #1e293b;
+  min-height: 44px;
+  box-sizing: border-box;
+}
+
+.modal-detalle-caja-lectura.pendiente {
+  background-color: #fefce8;
+  border-color: #fef08a;
+  color: #854d0e;
+  font-style: italic;
+  font-weight: 500;
+}
+
 /* Campo Editable: Textarea de Evolución Clínica */
 .modal-detalle-field-group {
   display: flex;

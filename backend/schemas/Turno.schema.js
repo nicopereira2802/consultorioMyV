@@ -72,15 +72,10 @@ export const createTurnoSchema = z
       .min(0, "El precio final no puede ser negativo")
       .optional(),
 
-    motivo_consulta: z
-      .string({ invalid_type_error: "El motivo de consulta debe ser un texto" })
-      .trim()
-      .optional()
-      .nullable(),
-
     notas_consulta: z
       .string({ invalid_type_error: "La observación debe ser un texto" })
       .trim()
+      .max(255, "Las notas de consulta no pueden superar 255 caracteres")
       .optional()
       .nullable(),
 
@@ -156,18 +151,29 @@ export const updateTurnoSchema = z
       .min(0, "El precio final no puede ser negativo")
       .optional(),
 
-    motivo_consulta: z
-      .string({ invalid_type_error: "El motivo de consulta debe ser un texto" })
-      .trim()
-      .optional()
-      .nullable(),
-
     notas_consulta: z
       .string({ invalid_type_error: "La observación debe ser un texto" })
       .trim()
+      .max(255, "Las notas de consulta no pueden superar 255 caracteres")
       .optional()
       .nullable(),
 
     id_obra_social: z.union([z.number(), z.string()]).nullish(),
+  })
+  .passthrough();
+
+export const atencionTurnoSchema = z
+  .object({
+    descripcion: z.string().trim().max(255).optional().nullable(),
+    observaciones: z.string().trim().max(255).optional().nullable(),
+    notas_consulta: z.string().trim().max(255).optional().nullable(),
+    notas_atencion: z.string().trim().max(255).optional().nullable(),
+    practicas: z.array(z.any()).optional(),
+    id_practicas: z.array(z.any()).optional(),
+    practicas_realizadas: z.array(z.any()).optional(),
+    total: z.coerce.number().min(0).optional(),
+    precio_final: z.coerce.number().min(0).optional(),
+    id_obra_social: z.union([z.number(), z.string()]).nullish(),
+    obras_sociales_utilizadas: z.array(z.any()).optional(),
   })
   .passthrough();

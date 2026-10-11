@@ -178,20 +178,20 @@ export const AgendaDiaria = () => {
       total: totalCalculado,
       precio_final: totalCalculado,
       observaciones:
+        turnoActualizadoRecibido?.descripcion_atencion ||
         turnoActualizadoRecibido?.observaciones ||
-        turnoActualizadoRecibido?.evolucion_clinica ||
+        datosExtras.descripcion_atencion ||
+        datosExtras.observaciones ||
+        '',
+      descripcion_atencion:
+        turnoActualizadoRecibido?.descripcion_atencion ||
+        turnoActualizadoRecibido?.observaciones ||
+        datosExtras.descripcion_atencion ||
         datosExtras.observaciones ||
         '',
       notas_consulta:
-        turnoActualizadoRecibido?.motivo_consulta ||
-        turnoBase?.motivo_consulta ||
+        turnoBase?.notas_consulta ||
         turnoActualizadoRecibido?.notas_consulta ||
-        turnoBase?.notas_consulta ||
-        '',
-      motivo_consulta:
-        turnoActualizadoRecibido?.motivo_consulta ||
-        turnoBase?.motivo_consulta ||
-        turnoBase?.notas_consulta ||
         '',
     };
 
@@ -272,6 +272,18 @@ export const AgendaDiaria = () => {
     }
 
     if (accionEstado === 'Cancelado') {
+      const estadoStr = (turno.estado_nombre || turno.estado || turno.EstadoTurno?.estado || '').toLowerCase().trim();
+      const puedeCancelar =
+        (turno.id_estado === 1 || turno.id_estado === 2 || estadoStr === 'programado' || estadoStr === 'reprogramado') &&
+        estadoStr !== 'cancelado' &&
+        estadoStr !== 'atendido' &&
+        estadoStr !== 'inasistente';
+
+      if (!puedeCancelar) {
+        mostrarToast('Un turno en estado inasistente, atendido o cancelado no puede cancelarse.');
+        return;
+      }
+
       setModalConfirm({
         isOpen: true,
         titulo: 'Cancelar Turno',
@@ -292,7 +304,12 @@ export const AgendaDiaria = () => {
             mostrarToast(`Turno de las ${turno.hora} hs cancelado correctamente.`);
           } catch (err) {
             console.error('Error al cancelar turno:', err);
-            mostrarToast('Error al cancelar el turno.');
+            const msg =
+              err.response?.data?.error ||
+              err.response?.data?.message ||
+              err.message ||
+              'Error al cancelar el turno.';
+            mostrarToast(msg);
           } finally {
             handleCerrarModalConfirm();
           }
@@ -447,16 +464,30 @@ export const AgendaDiaria = () => {
   }, [turnosFiltrados]);
 
   return (
-    <div className="panel-diario-page app-page-wrapper min-h-screen w-full flex items-center justify-center p-4 sm:p-6 bg-[#2c3440]">
-      <div className="panel-diario-card agenda-container app-view-container bg-white rounded-2xl sm:rounded-3xl shadow-2xl max-w-5xl w-full">
+    <div
+      className="panel-diario-page app-page-wrapper min-h-screen w-full flex flex-col items-center justify-start pt-8 pb-12 px-4 bg-[#262d37]"
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+        paddingTop: '2rem',
+        paddingBottom: '3rem'
+      }}
+    >
+      <div
+        className="panel-diario-card agenda-container app-view-container bg-white rounded-2xl sm:rounded-3xl shadow-2xl max-w-5xl w-full min-h-[620px]"
+        style={{ minHeight: '620px' }}
+      >
         <HeaderVolver
           title="Agenda Diaria"
           backPath="/pacientes"
         />
 
-        <main className="panel-diario-content main-content">
+        <main className="panel-diario-content main-content flex flex-col flex-1 min-h-[500px]">
           <section className="fecha-selector-container" aria-label="Navegación de fecha">
-            <div className="fecha-navigation">
+            <div className="fecha-navigation flex items-center justify-center gap-2">
               <button
                 type="button"
                 className="btn-fecha-nav"
@@ -467,8 +498,15 @@ export const AgendaDiaria = () => {
                 &lt;
               </button>
 
-              <div className="fecha-heading-wrapper">
-                <h2 className="fecha-texto-display" aria-live="polite">
+              <div
+                className="fecha-heading-wrapper w-64 min-w-[260px] flex items-center justify-center text-center select-none"
+                style={{ width: '260px', minWidth: '260px', textAlign: 'center' }}
+              >
+                <h2
+                  className="fecha-texto-display w-64 min-w-[260px] text-center font-bold text-slate-800 select-none m-0"
+                  style={{ width: '260px', minWidth: '260px', textAlign: 'center' }}
+                  aria-live="polite"
+                >
                   {fechaFormateada}
                 </h2>
               </div>
@@ -561,14 +599,20 @@ export const AgendaDiaria = () => {
           )}
 
           {cargando && (
-            <div className="agenda-empty-state-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3rem 1rem' }}>
+            <div
+              className="agenda-empty-state-card flex-1 flex flex-col items-center justify-center py-16 text-center min-h-[460px]"
+              style={{ minHeight: '460px' }}
+            >
               <div className="gestion-spinner" style={{ width: '28px', height: '28px', marginBottom: '12px' }}></div>
               <p style={{ color: '#64748b', fontWeight: 500, margin: 0 }}>Cargando agenda del día...</p>
             </div>
           )}
 
           {error && !cargando && (
-            <div className="agenda-empty-state-card">
+            <div
+              className="agenda-empty-state-card flex-1 flex flex-col items-center justify-center py-16 text-center min-h-[460px]"
+              style={{ minHeight: '460px' }}
+            >
               <div className="agenda-empty-state-icon" aria-hidden="true">⚠️</div>
               <h3 className="agenda-empty-state-title" style={{ color: '#ef4444' }}>Error al cargar la agenda</h3>
               <p className="agenda-empty-state-desc">{error}</p>
@@ -583,7 +627,10 @@ export const AgendaDiaria = () => {
           )}
 
           {!cargando && !error && turnosFiltrados.length === 0 && (
-            <div className="agenda-empty-state-card">
+            <div
+              className="agenda-empty-state-card flex-1 flex flex-col items-center justify-center py-16 text-center min-h-[460px]"
+              style={{ minHeight: '460px' }}
+            >
               <div className="agenda-empty-state-icon" aria-hidden="true">📅</div>
               <h3 className="agenda-empty-state-title">
                 {turnos.length === 0
@@ -611,7 +658,7 @@ export const AgendaDiaria = () => {
           )}
 
           {!cargando && !error && turnosFiltrados.length > 0 && (
-            <div className="turnos-table-container">
+            <div className="turnos-table-container min-h-[460px]" style={{ minHeight: '460px' }}>
               <table className="turnos-table">
                 <thead>
                   <tr>
@@ -681,7 +728,7 @@ export const AgendaDiaria = () => {
           )}
 
           {!cargando && !error && turnosFiltrados.length > 0 && (
-            <div className="turnos-cards-mobile">
+            <div className="turnos-cards-mobile min-h-[460px]" style={{ minHeight: '460px' }}>
               {(() => {
                 let turnoIndex = 0;
                 return filasAgenda.map((fila) => {

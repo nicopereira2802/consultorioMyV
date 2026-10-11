@@ -337,8 +337,7 @@ export const ModalAsignarTurno = ({
         fecha_hora_inicio: fechaHoraInicio,
         fecha_hora_fin: fechaHoraFin,
         duracion_minutos: duracionMinutos,
-        motivo_consulta: notasConsulta.trim(),
-        notas_consulta: notasConsulta.trim(),
+        notas_consulta: notasConsulta.trim().slice(0, 255),
         hora: horaInicio,
         fecha: fechaTurno
       };
@@ -560,15 +559,16 @@ export const ModalAsignarTurno = ({
 
               <div className="modal-asignar-field">
                 <label htmlFor="notas-consulta">
-                  Notas / Observaciones de la Consulta
+                  Motivo de consulta / Nota previa
                 </label>
-                <input
-                  type="text"
+                <textarea
                   id="notas-consulta"
                   className="modal-asignar-input"
-                  placeholder="Ej: Paciente asiste por dolor en molar superior..."
+                  rows={3}
+                  placeholder="Ej: Dolor en molar superior, control general, urgencia..."
                   value={notasConsulta}
                   onChange={(e) => setNotasConsulta(e.target.value)}
+                  disabled={isSubmitting}
                 />
               </div>
             </div>

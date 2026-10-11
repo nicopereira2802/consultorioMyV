@@ -3,21 +3,23 @@
   min-height: 100vh;
   width: 100%;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  justify-content: flex-start;
   align-items: center;
-  padding: 16px;
-  background-color: #2c3440;
+  padding: 32px 16px 48px 16px;
+  background-color: #262d37;
 }
 
 @media (min-width: 640px) {
   .panel-diario-page {
-    padding: 24px;
+    padding: 32px 24px 48px 24px;
   }
 }
 
 .panel-diario-card {
   width: 100%;
   max-width: 1024px;
+  min-height: 620px;
   background-color: var(--color-bg-card, #ffffff);
   border-radius: 24px;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
@@ -64,7 +66,8 @@
 .fecha-navigation {
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+  gap: 8px;
 }
 
 .btn-fecha-nav {
@@ -84,6 +87,7 @@
   justify-content: center;
   transition: background-color 0.18s ease, transform 0.1s ease;
   touch-action: manipulation;
+  flex-shrink: 0;
 }
 
 .btn-fecha-nav:hover {
@@ -94,17 +98,35 @@
   transform: scale(0.92);
 }
 
+.fecha-heading-wrapper {
+  width: 260px;
+  min-width: 260px;
+  max-width: 260px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  user-select: none;
+  flex-shrink: 0;
+}
+
 .fecha-texto-display {
+  width: 260px;
+  min-width: 260px;
+  max-width: 260px;
+  text-align: center;
   font-size: 1.15rem;
   font-weight: var(--font-weight-bold, 700);
   color: var(--color-text-main, #1f2937);
   letter-spacing: -0.01em;
   text-transform: capitalize;
+  user-select: none;
+  margin: 0;
 }
 
 @media (min-width: 768px) {
   .fecha-texto-display {
-    font-size: 1.3rem;
+    font-size: 1.25rem;
   }
 }
 
@@ -598,6 +620,7 @@
 .turnos-table-container {
   display: none;
   width: 100%;
+  min-height: 460px;
   overflow-x: auto;
   border: 1px solid var(--color-border-card, #e5e9f0);
   border-radius: var(--radius-subcard, 16px);
@@ -606,6 +629,7 @@
 @media (min-width: 900px) {
   .turnos-table-container {
     display: block;
+    min-height: 460px;
   }
 }
 
@@ -687,6 +711,7 @@
   flex-direction: column;
   gap: 14px;
   width: 100%;
+  min-height: 460px;
 }
 
 @media (min-width: 900px) {
@@ -820,14 +845,63 @@
 }
 
 /* Estado de carga y vacío */
-.agenda-empty-state {
+.agenda-empty-state,
+.agenda-empty-state-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
-  padding: 40px 16px;
-  color: var(--color-text-muted, #6b7280);
-  font-size: 1rem;
+  padding: 64px 24px;
+  min-height: 460px;
   background-color: var(--color-bg-subtle, #f8fafc);
   border-radius: var(--radius-subcard, 16px);
   border: 1px dashed var(--color-border-card, #e5e9f0);
+  color: var(--color-text-muted, #6b7280);
+  flex: 1;
+}
+
+.agenda-empty-state-icon {
+  font-size: 2.75rem;
+  margin-bottom: 12px;
+  line-height: 1;
+}
+
+.agenda-empty-state-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 8px 0;
+}
+
+.agenda-empty-state-desc {
+  font-size: 0.92rem;
+  color: #64748b;
+  max-width: 440px;
+  margin: 0 0 20px 0;
+  line-height: 1.5;
+}
+
+.btn-empty-state-agendar {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #2eb086;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 22px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  box-shadow: 0 2px 8px rgba(46, 176, 134, 0.28);
+}
+
+.btn-empty-state-agendar:hover {
+  background-color: #259571;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(46, 176, 134, 0.35);
 }
 
 

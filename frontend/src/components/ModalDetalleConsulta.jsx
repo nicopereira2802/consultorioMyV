@@ -21,7 +21,10 @@ export const ModalDetalleConsulta = ({
 }) => {
   const extraerEvolucionClinica = (t) => {
     if (!t) return '';
-    // 1. Buscar en el historial de estados la entrada de atención médica (la más reciente con id_estado = 3: Atendido)
+    // 1. Si viene explicitamente descripcion_atencion
+    if (t.descripcion_atencion) return t.descripcion_atencion;
+
+    // 2. Buscar en el historial de estados la entrada de atención médica (la más reciente con id_estado = 3: Atendido)
     if (Array.isArray(t.historial)) {
       const regAtendido = [...t.historial].reverse().find(
         (h) => h.id_estado === 3 || h.EstadoTurno?.estado === 'Atendido' || h.estado === 'Atendido'
@@ -38,12 +41,19 @@ export const ModalDetalleConsulta = ({
         }
       }
     }
-    // 2. Si viene explicitamente evolucion_clinica u observaciones
-    if (t.evolucion_clinica) return t.evolucion_clinica;
-    if (t.observaciones && t.id_estado === 3) return t.observaciones;
-    // 3. Si el turno está atendido no pisar con el motivo de reserva
-    if (t.id_estado === 3) return t.notas_atencion || '';
-    return t.notas_consulta || t.observaciones || '';
+    // 3. Si el turno está atendido y contiene observaciones o notas de atención
+    if (t.id_estado === 3) {
+      if (t.observaciones) return t.observaciones;
+      if (t.notas_atencion) return t.notas_atencion;
+      return '';
+    }
+
+    // 4. Si es inasistente o cancelado
+    if (t.id_estado === 5 || t.id_estado === 2) {
+      return t.motivo_cancelacion || t.observacion_inasistencia || '';
+    }
+
+    return '';
   };
 
   const [notas, setNotas] = useState(extraerEvolucionClinica(turno));
@@ -234,13 +244,6 @@ export const ModalDetalleConsulta = ({
                 </div>
 
                 <div className="modal-detalle-grid-item modal-detalle-grid-full">
-                  <span className="detalle-item-label">Motivo de Consulta (Reserva)</span>
-                  <strong className="detalle-item-value">
-                    {turno.motivo_consulta || turno.notas_consulta || 'Sin motivo especificado al agendar'}
-                  </strong>
-                </div>
-
-                <div className="modal-detalle-grid-item modal-detalle-grid-full">
                   <span className="detalle-item-label">{esInasistente ? 'Práctica Agendada' : 'Práctica(s) Realizada(s)'}</span>
                   {practicasList.length === 0 ? (
                     <strong className="detalle-item-value">Consulta Odontológica General</strong>
@@ -273,25 +276,46 @@ export const ModalDetalleConsulta = ({
               </div>
             </div>
 
+            <div className="modal-detalle-seccion-bloque">
+              <label className="modal-detalle-label">
+                Motivo de la Cita:
+              </label>
+              <div className="modal-detalle-caja-lectura">
+                {turno.notas_consulta || 'Sin nota previa'}
+              </div>
+            </div>
+
             <div className="modal-detalle-field-group">
               <label htmlFor="notas-consulta-textarea" className="modal-detalle-label">
-                {esInasistente ? 'Motivo de la Inasistencia / Notas' : 'Notas de Consulta / Evolución Clínica'}
+                {esInasistente ? 'Motivo de la Inasistencia / Notas:' : 'Evolución Médica / Atención:'}
               </label>
-              <textarea
-                id="notas-consulta-textarea"
-                className="modal-detalle-textarea"
-                rows={5}
-                value={notas}
-                onChange={(e) => setNotas(e.target.value)}
-                placeholder={esInasistente ? 'Detalle del motivo de la inasistencia o reprogramación...' : 'Redacte aquí el diagnóstico clínico, observaciones del procedimiento, piezas dentales tratadas o evolución del paciente...'}
-                disabled={isSubmitting}
-                autoFocus
-              />
-              <span className="modal-detalle-helper-text">
-                {esInasistente
-                  ? 'Este motivo queda registrado en el historial de citas del paciente y en el registro diario de inasistencias.'
-                  : 'Estas observaciones quedan asociadas a la ficha del turno y pueden consultarse o actualizarse en cualquier momento.'}
-              </span>
+              {(!esInasistente && turno.id_estado !== 3 && !notas) ? (
+                <div className="modal-detalle-caja-lectura pendiente">
+                  Atención pendiente
+                </div>
+              ) : (
+                <>
+                  <textarea
+                    id="notas-consulta-textarea"
+                    className="modal-detalle-textarea"
+                    rows={5}
+                    value={notas}
+                    onChange={(e) => setNotas(e.target.value)}
+                    placeholder={
+                      esInasistente
+                        ? 'Detalle del motivo de la inasistencia o reprogramación...'
+                        : (turno.id_estado === 3 ? 'Sin detalles registrados' : 'Redacte aquí el diagnóstico clínico, observaciones del procedimiento, piezas dentales tratadas o evolución del paciente...')
+                    }
+                    disabled={isSubmitting}
+                    autoFocus
+                  />
+                  <span className="modal-detalle-helper-text">
+                    {esInasistente
+                      ? 'Este motivo queda registrado en el historial de citas del paciente y en el registro diario de inasistencias.'
+                      : 'Estas observaciones corresponden a la evolución médica del turno y pueden consultarse o actualizarse en cualquier momento.'}
+                  </span>
+                </>
+              )}
             </div>
 
             {errorMsg && (
@@ -311,20 +335,22 @@ export const ModalDetalleConsulta = ({
               Cerrar
             </button>
 
-            <button
-              type="submit"
-              className="btn-modal-detalle-guardar btn-primary"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  <span className="modal-detalle-spinner" aria-hidden="true"></span>
-                  <span>Guardando...</span>
-                </>
-              ) : (
-                esInasistente ? 'Guardar Motivo' : 'Guardar Observaciones'
-              )}
-            </button>
+            {(!esInasistente && turno.id_estado !== 3 && !notas) ? null : (
+              <button
+                type="submit"
+                className="btn-modal-detalle-guardar btn-primary"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <span className="modal-detalle-spinner" aria-hidden="true"></span>
+                    <span>Guardando...</span>
+                  </>
+                ) : (
+                  esInasistente ? 'Guardar Motivo' : 'Guardar Observaciones'
+                )}
+              </button>
+            )}
           </div>
         </form>
       </div>

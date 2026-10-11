@@ -348,6 +348,18 @@ describe("Suite de Tests Completa para /api/turnos", () => {
       expect(res.status).toBe(200);
     });
 
+    test("400: PATCH /:id/cancelar rechaza la cancelación de un turno en estado Inasistente", async () => {
+      const res = await request(app)
+        .patch(`/api/turnos/${turnoIdInasistente}/cancelar`)
+        .send({
+          motivo: "Intento inválido de cancelación",
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.status).toBe("error");
+      expect(res.body.error).toMatch(/No se puede cancelar un turno en estado Inasistente/);
+    });
+
     test("200: PATCH /:id/reprogramado - Reprograma la fecha del turno", async () => {
       const res = await request(app)
         .patch(`/api/turnos/${turnoIdInasistente}/reprogramado`)

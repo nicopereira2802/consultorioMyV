@@ -37,7 +37,53 @@ export const TurnoFilaCard = ({
     practica
   } = turno;
 
-  const estado = estado_nombre || (id_estado === 3 ? 'Atendido' : id_estado === 4 ? 'Inasistente' : id_estado === 2 ? 'Cancelado' : 'Programado');
+  const estadoStr = (
+    estado_nombre ||
+    turno.estado ||
+    turno.EstadoTurno?.estado ||
+    ''
+  ).toLowerCase().trim();
+
+  // Estados derivados garantizando compatibilidad con backend (1..5) y frontend normalizado (1..4):
+  const esInasistente =
+    estadoStr === 'inasistente' ||
+    id_estado === 5 ||
+    (id_estado === 4 && estadoStr !== 'atendido');
+
+  const esCancelado =
+    estadoStr === 'cancelado' ||
+    (id_estado === 2 && estadoStr !== 'reprogramado') ||
+    (id_estado === 3 && estadoStr === 'cancelado');
+
+  const esAtendido =
+    estadoStr === 'atendido' ||
+    (id_estado === 4 && estadoStr === 'atendido') ||
+    (id_estado === 3 && estadoStr !== 'cancelado');
+
+  // Solo turnos activos (Programado o Reprogramado) son cancelables o modificables
+  const esActivo =
+    !esInasistente &&
+    !esCancelado &&
+    !esAtendido &&
+    (id_estado === 1 ||
+      id_estado === 2 ||
+      estadoStr === 'programado' ||
+      estadoStr === 'reprogramado' ||
+      !estadoStr);
+
+  const puedeCancelar = !esDiaPasado && esActivo;
+  const puedeRegistrarInasistencia = !esDiaPasado && esActivo;
+  const tieneOpcionesSecundarias = !esDiaPasado && (puedeRegistrarInasistencia || puedeCancelar);
+
+  const estado =
+    estado_nombre ||
+    (esAtendido
+      ? 'Atendido'
+      : esInasistente
+      ? 'Inasistente'
+      : esCancelado
+      ? 'Cancelado'
+      : 'Programado');
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef(null);
@@ -70,18 +116,10 @@ export const TurnoFilaCard = ({
 
   const getBadgeClass = () => {
     if (isDisponible) return 'badge-disponible';
-    switch (id_estado) {
-      case 1:
-        return 'badge-confirmado';
-      case 2:
-        return 'badge-cancelado';
-      case 3:
-        return 'badge-realizado';
-      case 4:
-        return 'badge-inasistente';
-      default:
-        return 'badge-default';
-    }
+    if (esInasistente) return 'badge-inasistente';
+    if (esAtendido) return 'badge-realizado';
+    if (esCancelado) return 'badge-cancelado';
+    return 'badge-confirmado';
   };
 
   const nombreCompletoPaciente = paciente
@@ -132,7 +170,7 @@ export const TurnoFilaCard = ({
       );
     }
 
-    if (esDiaPasado && id_estado !== 3) {
+    if (esDiaPasado && !esAtendido) {
       if (isMobile) return null;
       return (
         <div className="acciones-fila-wrapper">
@@ -142,7 +180,7 @@ export const TurnoFilaCard = ({
     }
 
     const renderBotonPrincipal = () => {
-      if (id_estado === 3) {
+      if (esAtendido) {
         return (
           <button
             type="button"
@@ -157,7 +195,7 @@ export const TurnoFilaCard = ({
         );
       }
 
-      if (id_estado === 1) {
+      if (esActivo) {
         const handleRegistrar = onRegistrarAtencion || onIniciarAtencion;
         return (
           <button
@@ -172,7 +210,7 @@ export const TurnoFilaCard = ({
         );
       }
 
-      if (id_estado === 2 || id_estado === 4) {
+      if (esCancelado || esInasistente) {
         return (
           <button
             type="button"
@@ -190,7 +228,7 @@ export const TurnoFilaCard = ({
     };
 
     if (isMobile) {
-      if (id_estado === 1) {
+      if (esActivo) {
         const handleRegistrar = onRegistrarAtencion || onIniciarAtencion;
         return (
           <div className="mobile-card-actions-wrapper">
@@ -203,22 +241,26 @@ export const TurnoFilaCard = ({
               Registrar Atención
             </button>
             <div className="mobile-card-secondary-row">
-              <button
-                type="button"
-                className="btn-mobile-secondary-inasistencia"
-                onClick={() => dispararAccion('Inasistente')}
-                aria-label={`Registrar inasistencia de ${nombreCompletoPaciente}`}
-              >
-                Inasistente
-              </button>
-              <button
-                type="button"
-                className="btn-mobile-secondary-cancelar"
-                onClick={() => dispararAccion('Cancelado')}
-                aria-label={`Cancelar turno de ${nombreCompletoPaciente}`}
-              >
-                Cancelar
-              </button>
+              {puedeRegistrarInasistencia && (
+                <button
+                  type="button"
+                  className="btn-mobile-secondary-inasistencia"
+                  onClick={() => dispararAccion('Inasistente')}
+                  aria-label={`Registrar inasistencia de ${nombreCompletoPaciente}`}
+                >
+                  Inasistente
+                </button>
+              )}
+              {puedeCancelar && (
+                <button
+                  type="button"
+                  className="btn-mobile-secondary-cancelar"
+                  onClick={() => dispararAccion('Cancelado')}
+                  aria-label={`Cancelar turno de ${nombreCompletoPaciente}`}
+                >
+                  Cancelar
+                </button>
+              )}
             </div>
           </div>
         );
@@ -230,8 +272,6 @@ export const TurnoFilaCard = ({
         </div>
       );
     }
-
-    const tieneOpcionesSecundarias = !esDiaPasado && (id_estado === 1 || id_estado === 4);
 
     return (
       <div className="acciones-fila-wrapper">
@@ -253,7 +293,7 @@ export const TurnoFilaCard = ({
 
             {isMenuOpen && (
               <div className="dropdown-opciones-menu" role="menu">
-                {id_estado === 1 && (
+                {puedeRegistrarInasistencia && (
                   <button
                     type="button"
                     className="dropdown-opciones-item inasistencia"
@@ -263,14 +303,16 @@ export const TurnoFilaCard = ({
                     <span>⚠️</span> Registrar Inasistente
                   </button>
                 )}
-                <button
-                  type="button"
-                  className="dropdown-opciones-item cancelar"
-                  onClick={() => dispararAccion('Cancelado')}
-                  role="menuitem"
-                >
-                  <span>✕</span> Cancelar Turno
-                </button>
+                {puedeCancelar && (
+                  <button
+                    type="button"
+                    className="dropdown-opciones-item cancelar"
+                    onClick={() => dispararAccion('Cancelado')}
+                    role="menuitem"
+                  >
+                    <span>✕</span> Cancelar Turno
+                  </button>
+                )}
               </div>
             )}
           </div>

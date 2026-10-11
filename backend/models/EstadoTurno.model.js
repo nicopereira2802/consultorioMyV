@@ -15,6 +15,7 @@ export const EstadoTurno = sequelize.define(
     estado: {
       type: DataTypes.ENUM(
         "Programado",
+        "Reprogramado",
         "Cancelado",
         "Atendido",
         "Inasistente",
@@ -23,7 +24,7 @@ export const EstadoTurno = sequelize.define(
       unique: true,
       validate: {
         isIn: {
-          args: [["Programado", "Cancelado", "Atendido", "Inasistente"]],
+          args: [["Programado", "Reprogramado", "Cancelado", "Atendido", "Inasistente"]],
           msg: "El estado no es un valor permitido dentro del ENUM.",
         },
       },

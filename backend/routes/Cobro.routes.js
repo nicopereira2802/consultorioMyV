@@ -16,6 +16,8 @@ import {
 const router = express.Router();
 
 // Rutas para Cobro
+router.get("/", CobroController.getAllCobros);
+
 router.get(
   "/:turnoId/cobros",
   validarExistencia(Turno, "turnoId", "params"),
@@ -31,7 +33,7 @@ router.get(
 router.post(
   "/plan-pago",
   validateSchema(createPlanPagoSchema),
-  validarExistencia(Turno, "id_turno", "body"),
+  validarExistencia(Turno, "id_turno", "body", true),
   validarExistencia(Paciente, "id_paciente", "body"),
   CobroController.crearPlanPago,
 );

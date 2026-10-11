@@ -4,6 +4,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import AgendaDiaria from './pages/AgendaDiaria';
 import GestionPacientes from './pages/GestionPacientes';
 import CatalogoPracticas from './pages/CatalogoPracticas';
+import GestionCobros from './pages/GestionCobros';
 import BottomNav from './components/BottomNav';
 
 /**
@@ -38,6 +39,10 @@ function App() {
         <Route path="/registrar-paciente" element={<Navigate to="/pacientes" replace />} />
 
         <Route path="/practicas" element={<CatalogoPracticas />} />
+
+        <Route path="/cobros" element={<GestionCobros />} />
+        <Route path="/pagos" element={<Navigate to="/cobros" replace />} />
+        <Route path="/registro-cobros" element={<Navigate to="/cobros" replace />} />
 
         <Route path="*" element={<Navigate to="/agenda" replace />} />
       </Routes>

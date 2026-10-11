@@ -192,21 +192,15 @@ export const formatearTurnoResponse = (turnoInstance) => {
     ? [...rawHistorial].sort((a, b) => new Date(a.fecha_hora_cambio) - new Date(b.fecha_hora_cambio))
     : [];
 
-  // Extraer la evolución clínica del registro de atención en el historial (el más reciente con id_estado = 3: Atendido)
+  // Extraer la nota de atención médica (la más reciente del historial en estado Atendido)
   const registroAtendido = [...json.historial].reverse().find(
-    (h) => h.id_estado === 3 || h.EstadoTurno?.estado === "Atendido" || h.estado === "Atendido"
+    (h) => h.id_estado === 3 || h.id_estado === 4 || h.EstadoTurno?.estado === "Atendido" || h.estado === "Atendido"
   );
-  const evolucionClinica = registroAtendido ? registroAtendido.descripcion : null;
-  json.evolucion_clinica = evolucionClinica;
+  const evolucionHistorial = registroAtendido ? registroAtendido.descripcion : null;
+  json.descripcion_atencion = evolucionHistorial;
 
-  // El motivo inicial de reserva se preserva en motivo_consulta
-  json.motivo_consulta = json.motivo_consulta || json.notas_consulta || null;
-  json.notas_consulta = json.notas_consulta !== undefined && json.notas_consulta !== null ? json.notas_consulta : json.motivo_consulta;
-
-  // En turnos atendidos, exponer observaciones como la evolución clínica para máxima compatibilidad
-  if (json.id_estado === 3 && evolucionClinica) {
-    json.observaciones = evolucionClinica;
-  }
+  // En turnos atendidos, exponer observaciones como la nota de atención del historial; si no, la nota de consulta inicial
+  json.observaciones = (json.id_estado === 3 || json.id_estado === 4) ? (evolucionHistorial || json.notas_consulta || "") : (json.notas_consulta || "");
 
   return json;
 };
@@ -290,7 +284,6 @@ export const createTurno = async (req, res) => {
       fecha_hora_inicio,
       duracion_minutos,
       precio_final,
-      motivo_consulta,
       notas_consulta,
       observaciones,
       notas,
@@ -363,10 +356,7 @@ export const createTurno = async (req, res) => {
       precio = Number(precio_final);
     }
 
-    const motivoTexto =
-      motivo_consulta !== undefined && motivo_consulta !== null
-        ? String(motivo_consulta).trim() || null
-        : (notas_consulta || observaciones || notas || "").trim() || null;
+    const notasTexto = (notas_consulta || observaciones || notas || "").trim().slice(0, 255) || null;
 
     const result = await sequelize.transaction(async (t) => {
       let obraSocialId = null;
@@ -385,8 +375,7 @@ export const createTurno = async (req, res) => {
           fecha_hora_inicio: inicioStr,
           fecha_hora_fin: finStr,
           precio_final: precio,
-          motivo_consulta: motivoTexto,
-          notas_consulta: motivoTexto,
+          notas_consulta: notasTexto,
         },
         { transaction: t },
       );
@@ -396,7 +385,7 @@ export const createTurno = async (req, res) => {
           id_turno: nuevoTurno.id_turno,
           id_estado: estado.id_estado,
           fecha_hora_cambio: new Date(),
-          descripcion: motivoTexto || "Turno programado inicialmente",
+          descripcion: "Turno programado",
         },
         { transaction: t },
       );
@@ -450,7 +439,6 @@ export const updateTurno = async (req, res) => {
       fecha_hora_inicio,
       duracion_minutos,
       precio_final,
-      motivo_consulta,
       notas_consulta,
       observaciones,
       notas,
@@ -539,11 +527,6 @@ export const updateTurno = async (req, res) => {
         ? notas
         : turno.notas_consulta;
 
-    const motivoTexto =
-      motivo_consulta !== undefined
-        ? (motivo_consulta ? String(motivo_consulta).trim() : null)
-        : turno.motivo_consulta;
-
     await sequelize.transaction(async (t) => {
       const updateData = {
         id_paciente: id_paciente ? Number(id_paciente) : turno.id_paciente,
@@ -551,7 +534,6 @@ export const updateTurno = async (req, res) => {
         fecha_hora_inicio: inicioStr,
         fecha_hora_fin: finStr,
         precio_final: nuevoPrecio,
-        motivo_consulta: motivoTexto,
         notas_consulta: notasTexto,
       };
 
@@ -568,22 +550,23 @@ export const updateTurno = async (req, res) => {
 
       await turno.update(updateData, { transaction: t });
 
-      // Si el turno está atendido y se modifican las notas de consulta, actualizar la bitácora de auditoría
-      if (turno.id_estado === 3 && notasTexto !== undefined && notasTexto !== null) {
+      // Si el turno está atendido y se modifican las notas de atención (enviadas como descripcion u observaciones), actualizar la bitácora de auditoría
+      const notaAtencionEditada = req.body.descripcion !== undefined ? req.body.descripcion : (req.body.observaciones !== undefined ? req.body.observaciones : null);
+      if ((turno.id_estado === 3 || turno.id_estado === 4) && notaAtencionEditada !== null) {
         const histAtencion = await HistorialEstadoTurno.findOne({
-          where: { id_turno: turno.id_turno, id_estado: 3 },
+          where: { id_turno: turno.id_turno, id_estado: turno.id_estado },
           order: [["fecha_hora_cambio", "DESC"]],
           transaction: t,
         });
         if (histAtencion) {
-          await histAtencion.update({ descripcion: notasTexto }, { transaction: t });
+          await histAtencion.update({ descripcion: String(notaAtencionEditada).trim().slice(0, 255) }, { transaction: t });
         } else {
           await HistorialEstadoTurno.create(
             {
               id_turno: turno.id_turno,
-              id_estado: 3,
+              id_estado: turno.id_estado,
               fecha_hora_cambio: new Date(),
-              descripcion: notasTexto,
+              descripcion: String(notaAtencionEditada).trim().slice(0, 255),
             },
             { transaction: t },
           );
@@ -643,14 +626,16 @@ export const updateTurno = async (req, res) => {
 // Finalizar atención del turno y registrar prácticas (T-1314)
 export const turnoAtendido = async (req, res) => {
   try {
-    const notas_consulta =
-      req.body.notas_consulta !== undefined && req.body.notas_consulta !== null
-        ? String(req.body.notas_consulta).trim()
-        : req.body.notas_atencion !== undefined && req.body.notas_atencion !== null
-        ? String(req.body.notas_atencion).trim()
+    const notaAtencion =
+      req.body.descripcion !== undefined && req.body.descripcion !== null
+        ? String(req.body.descripcion).trim().slice(0, 255)
         : req.body.observaciones !== undefined && req.body.observaciones !== null
-        ? String(req.body.observaciones).trim()
-        : null;
+        ? String(req.body.observaciones).trim().slice(0, 255)
+        : req.body.notas_atencion !== undefined && req.body.notas_atencion !== null
+        ? String(req.body.notas_atencion).trim().slice(0, 255)
+        : req.body.notas_consulta !== undefined && req.body.notas_consulta !== null
+        ? String(req.body.notas_consulta).trim().slice(0, 255)
+        : "Atención odontológica finalizada";
 
     const rawPracticas =
       req.body.practicas ||
@@ -743,13 +728,13 @@ export const turnoAtendido = async (req, res) => {
       await estadoActual.atender(
         turno,
         {
-          observacion: notas_consulta || "Atención odontológica finalizada",
+          observacion: notaAtencion,
           practicas_realizadas: idsUnicos,
         },
         t,
       );
 
-      // 3. Actualizar precio_final SIN sobreescribir turno.notas_consulta (motivo de reserva preservado)
+      // 3. Actualizar precio_final SIN sobreescribir turno.notas_consulta (motivo/nota previa de reserva preservado)
       await turno.update(
         {
           precio_final: precioFinalAtendido ? Number(precioFinalAtendido) : 0,
@@ -832,7 +817,11 @@ export const turnoCancelado = async (req, res) => {
     });
   } catch (error) {
     console.error("Error al cancelar turno:", error);
-    res.status(400).json({ error: error.message });
+    res.status(400).json({
+      status: "error",
+      error: error.message,
+      message: error.message,
+    });
   }
 };
 
@@ -842,7 +831,7 @@ export const turnoInasistido = async (req, res) => {
     const turno = req.turno || (id ? await Turno.findByPk(id) : null);
 
     if (!turno) {
-      return res.status(404).json({ error: "Turno no encontrado" });
+      return res.status(404).json({ status: "error", error: "Turno no encontrado", message: "Turno no encontrado" });
     }
 
     const motivo =
@@ -869,7 +858,11 @@ export const turnoInasistido = async (req, res) => {
     });
   } catch (error) {
     console.error("Error al marcar inasistencia:", error);
-    res.status(400).json({ error: error.message });
+    res.status(400).json({
+      status: "error",
+      error: error.message,
+      message: error.message,
+    });
   }
 };
 
@@ -1013,10 +1006,10 @@ export const turnoReprogramado = async (req, res) => {
         precioNuevo = Number(turnoOriginal.precio_final);
       }
 
-      const motivoTexto =
-        req.body.motivo_consulta !== undefined
-          ? (req.body.motivo_consulta ? String(req.body.motivo_consulta).trim() : null)
-          : turnoOriginal.motivo_consulta;
+      const notasConsultaTexto =
+        req.body.notas_consulta !== undefined
+          ? (req.body.notas_consulta ? String(req.body.notas_consulta).trim().slice(0, 255) : null)
+          : (turnoOriginal.notas_consulta || null);
 
       // 4. Crear el nuevo turno en estado Programado (id_estado = 1)
       let idObraSocialReprog = null;
@@ -1040,8 +1033,7 @@ export const turnoReprogramado = async (req, res) => {
           fecha_hora_inicio: inicioStr,
           fecha_hora_fin: finStr,
           precio_final: precioNuevo,
-          motivo_consulta: motivoTexto,
-          notas_consulta: req.body.notas_consulta || null,
+          notas_consulta: notasConsultaTexto,
         },
         { transaction: t },
       );
