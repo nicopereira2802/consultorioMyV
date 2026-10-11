@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useScrollLock } from '../hooks/useScrollLock';
 import ToothLogo from './ToothLogo';
 import { getPacientes } from '../services/pacientes.service';
 import { getPracticas } from '../services/practicas.service';
@@ -39,6 +40,8 @@ export const ModalAsignarTurno = ({
   fechaSeleccionada = '',
   modoLibre = false
 }) => {
+  useScrollLock(isOpen);
+
   const esModoLibre = Boolean(modoLibre || !slotData);
   const fechaHoyStr = new Date().toLocaleDateString('en-CA');
 
@@ -287,8 +290,8 @@ export const ModalAsignarTurno = ({
         setPacientes(listaActualizada);
         setIdPacienteSeleccionado(nuevoPac.id_paciente);
       }
-    } catch (err) {
-      console.warn('Error al actualizar catálogo de pacientes:', err);
+    } catch {
+      // Error silencioso al refrescar catálogo secundario
     }
   };
 

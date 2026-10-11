@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { DollarSign, CreditCard, ArrowRightLeft, X } from 'lucide-react';
 import { registrarEntrega } from '../services/cobros.service';
+import { useScrollLock } from '../hooks/useScrollLock';
 import './ModalRegistrarEntrega.css';
 
 /**
@@ -23,6 +24,8 @@ const formatearMoneda = (val) => {
  * @param {function} onSuccess - callback al guardar
  */
 export const ModalRegistrarEntrega = ({ isOpen, onClose, acuerdo, onSuccess }) => {
+  useScrollLock(isOpen);
+
   const [monto, setMonto] = useState('');
   const [metodoPago, setMetodoPago] = useState('Efectivo');
   const [fechaCobro, setFechaCobro] = useState(new Date().toISOString().slice(0, 10));

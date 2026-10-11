@@ -81,6 +81,8 @@ body, #root {
   .agenda-container,
   .gestion-pacientes-card,
   .pacientes-container,
+  .gestion-cobros-card,
+  .cobros-container,
   .catalogo-card,
   .atencion-card,
   .registrar-paciente-card,
@@ -101,6 +103,7 @@ body, #root {
   .main-content,
   .agenda-container,
   .pacientes-container,
+  .cobros-container,
   .vista-contenedor {
     padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !important;
   }

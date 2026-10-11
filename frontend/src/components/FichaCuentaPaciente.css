@@ -115,6 +115,7 @@
 .ficha-cuenta-body {
   padding: 22px 28px;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   display: flex;
   flex-direction: column;
   gap: 22px;

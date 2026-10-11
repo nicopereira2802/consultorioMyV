@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
-import ToothLogo from './ToothLogo';
 import { getPacientes } from '../services/pacientes.service';
 import { getTurnosPorPaciente } from '../services/turnos.service';
 import { registrarCobro, crearAcuerdo, normalizarMetodoPago } from '../services/cobros.service';
+import { useScrollLock } from '../hooks/useScrollLock';
 import {
   X,
   DollarSign,
@@ -87,13 +87,31 @@ const FORMAS_PAGO = [
  * 2. Plan de Cuotas Fijas
  * 3. Acuerdo Informal / Saldo Libre
  */
-export const ModalRegistrarCobro = ({ isOpen, onClose, onCobroRegistrado }) => {
+export const ModalRegistrarCobro = ({
+  isOpen,
+  onClose,
+  onCobroRegistrado,
+  paciente = null,
+  pacienteInicial = null,
+  idPacienteInicial = null,
+}) => {
+  useScrollLock(isOpen);
+
+  const pacienteProp = paciente || pacienteInicial;
+  const idInicialProp = useMemo(() => {
+    if (idPacienteInicial) return String(idPacienteInicial);
+    if (!pacienteProp) return '';
+    if (typeof pacienteProp === 'object') {
+      return String(pacienteProp.id_paciente || pacienteProp.id || '');
+    }
+    return String(pacienteProp);
+  }, [pacienteProp, idPacienteInicial]);
+
   // --- Estados de Catálogos ---
   const [pacientes, setPacientes] = useState([]);
   const [cargandoPacientes, setCargandoPacientes] = useState(false);
 
   const [turnosPaciente, setTurnosPaciente] = useState([]);
-  const [cargandoTurnos, setCargandoTurnos] = useState(false);
 
   // --- Datos Comunes ---
   const [idPaciente, setIdPaciente] = useState('');
@@ -166,8 +184,8 @@ export const ModalRegistrarCobro = ({ isOpen, onClose, onCobroRegistrado }) => {
 
     cargar();
 
-    // Resetear formulario
-    setIdPaciente('');
+    // Resetear formulario (precargando idPaciente si se proporcionó)
+    setIdPaciente(idInicialProp || '');
     setConcepto('Consulta Odontológica');
     setIdTurno('');
     setModalidad('PAGO_TOTAL');
@@ -189,7 +207,7 @@ export const ModalRegistrarCobro = ({ isOpen, onClose, onCobroRegistrado }) => {
     return () => {
       montado = false;
     };
-  }, [isOpen]);
+  }, [isOpen, idInicialProp]);
 
   // Cargar turnos del paciente seleccionado
   useEffect(() => {
@@ -202,7 +220,6 @@ export const ModalRegistrarCobro = ({ isOpen, onClose, onCobroRegistrado }) => {
     let montado = true;
     const cargarTurnos = async () => {
       try {
-        setCargandoTurnos(true);
         const list = await getTurnosPorPaciente(idPaciente);
         if (!montado) return;
         const turnosValidos = (Array.isArray(list) ? list : []).filter(
@@ -213,8 +230,6 @@ export const ModalRegistrarCobro = ({ isOpen, onClose, onCobroRegistrado }) => {
         if (!montado) return;
         console.error('Error al obtener turnos:', err);
         setTurnosPaciente([]);
-      } finally {
-        if (montado) setCargandoTurnos(false);
       }
     };
 
@@ -251,8 +266,22 @@ export const ModalRegistrarCobro = ({ isOpen, onClose, onCobroRegistrado }) => {
 
   // Paciente seleccionado objeto
   const pacienteSeleccionadoObj = useMemo(() => {
-    return pacientes.find((p) => String(p.id_paciente || p.id) === String(idPaciente));
-  }, [pacientes, idPaciente]);
+    if (!idPaciente) return null;
+    const encontrado = pacientes.find((p) => String(p.id_paciente || p.id) === String(idPaciente));
+    if (encontrado) return encontrado;
+    if (
+      pacienteProp &&
+      typeof pacienteProp === 'object' &&
+      String(pacienteProp.id_paciente || pacienteProp.id) === String(idPaciente)
+    ) {
+      return {
+        ...pacienteProp,
+        nombre: pacienteProp.nombre || (pacienteProp.nombre_completo ? pacienteProp.nombre_completo.split(' ')[0] : ''),
+        apellido: pacienteProp.apellido || '',
+      };
+    }
+    return null;
+  }, [pacientes, idPaciente, pacienteProp]);
 
   // Previsualización dinámica de cuotas fijas
   const cuotasCalculadas = useMemo(() => {
@@ -414,8 +443,11 @@ export const ModalRegistrarCobro = ({ isOpen, onClose, onCobroRegistrado }) => {
             ========================================================== */}
         <div className="modal-reg-header">
           <div className="modal-reg-header-brand">
-            <div className="modal-reg-logo-circle" aria-hidden="true">
-              <ToothLogo size={32} />
+            <div
+              className="modal-reg-logo-circle w-11 h-11 rounded-full border-2 border-emerald-500 bg-emerald-50 flex items-center justify-center text-emerald-600 font-bold text-2xl select-none shrink-0 shadow-sm"
+              aria-hidden="true"
+            >
+              $
             </div>
             <div>
               <h2 id="modal-reg-titulo" className="modal-reg-titulo">
@@ -484,6 +516,12 @@ export const ModalRegistrarCobro = ({ isOpen, onClose, onCobroRegistrado }) => {
                     <option value="">
                       {cargandoPacientes ? 'Cargando pacientes...' : '-- Seleccionar Paciente --'}
                     </option>
+                    {idPaciente && pacienteSeleccionadoObj && !pacientes.some((p) => String(p.id_paciente || p.id) === String(idPaciente)) && (
+                      <option value={idPaciente}>
+                        {pacienteSeleccionadoObj.nombre_completo || `${pacienteSeleccionadoObj.apellido || ''}, ${pacienteSeleccionadoObj.nombre || ''}`}
+                        {pacienteSeleccionadoObj.dni ? ` - DNI: ${pacienteSeleccionadoObj.dni}` : ''}
+                      </option>
+                    )}
                     {pacientes.map((p) => {
                       const id = p.id_paciente || p.id;
                       const apellido = p.apellido || '';

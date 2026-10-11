@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { obtenerNombreCobertura, obtenerCredencialCobertura } from '../utils/paciente.utils';
+import { useScrollLock } from '../hooks/useScrollLock';
 import './ModalFichaPaciente.css';
 
 /**
@@ -21,6 +22,8 @@ export const ModalFichaPaciente = ({
   paciente,
   onEditar
 }) => {
+  useScrollLock(isOpen);
+
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape' && isOpen) {
@@ -30,12 +33,10 @@ export const ModalFichaPaciente = ({
 
     if (isOpen) {
       window.addEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = 'hidden';
     }
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = '';
     };
   }, [isOpen, onClose]);
 

@@ -27,7 +27,8 @@ export const HeaderVolver = ({
   showBack = true,
   backText = 'Volver',
   showMenu = true,
-  actions = null
+  actions = null,
+  logo = null,
 }) => {
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -74,9 +75,13 @@ export const HeaderVolver = ({
             </button>
           )}
 
-          <div className="header-volver-logo-badge" title="M&V Turnos Odontológicos">
-            <ToothLogo size={36} />
-          </div>
+          {logo ? (
+            logo
+          ) : (
+            <div className="header-volver-logo-badge" title="M&V Turnos Odontológicos">
+              <ToothLogo size={36} />
+            </div>
+          )}
           <h1 className="header-volver-title">{title}</h1>
         </div>
 

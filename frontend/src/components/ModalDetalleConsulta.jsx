@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useScrollLock } from '../hooks/useScrollLock';
 import './ModalDetalleConsulta.css';
 
 /**
@@ -59,6 +60,8 @@ export const ModalDetalleConsulta = ({
   const [notas, setNotas] = useState(extraerEvolucionClinica(turno));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+
+  useScrollLock(isOpen);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect

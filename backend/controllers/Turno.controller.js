@@ -124,8 +124,8 @@ export const cargarNombresObrasSociales = async () => {
   try {
     const list = await ObraSocial.findAll({ attributes: ["id_obra_social", "nombre"] });
     list.forEach((os) => nombresObrasSocialesMap.set(Number(os.id_obra_social), os.nombre));
-  } catch (e) {
-    console.warn("No se pudieron cargar nombres de obras sociales:", e.message);
+  } catch {
+    // Catálogo inicial vacío si aún no se migraron tablas
   }
 };
 cargarNombresObrasSociales();
@@ -241,8 +241,8 @@ export const getAllTurnos = async (req, res) => {
       data: turnosFormateados,
     });
   } catch (error) {
-    console.error(">>> ERROR REAL EN GET TURNOS:", error);
-    return res.status(500).json({ error: error.message, stack: error.stack });
+    console.error("Error al obtener los turnos:", error);
+    return res.status(500).json({ error: error.message });
   }
 };
 
@@ -714,8 +714,8 @@ export const turnoAtendido = async (req, res) => {
             activo: true,
           },
         });
-      } catch (e) {
-        console.warn("No se pudo asociar obra social al paciente:", e.message);
+      } catch {
+        // Obra social ya asociada o no disponible
       }
     }
 

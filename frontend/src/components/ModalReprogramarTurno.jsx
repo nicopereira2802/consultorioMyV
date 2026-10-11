@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useScrollLock } from '../hooks/useScrollLock';
 import {
   getTurnosDia,
   getHorariosHabiles,
@@ -31,6 +32,8 @@ export const ModalReprogramarTurno = ({
   onConfirmar,
   onTurnoReprogramado
 }) => {
+  useScrollLock(isOpen);
+
   const fechaHoyStr = new Date().toLocaleDateString('en-CA');
 
   const [nuevaFecha, setNuevaFecha] = useState(fechaHoyStr);
@@ -117,11 +120,9 @@ export const ModalReprogramarTurno = ({
     };
     if (isOpen) {
       window.addEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = 'hidden';
     }
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = '';
     };
   }, [isOpen, isSubmitting, onClose]);
 

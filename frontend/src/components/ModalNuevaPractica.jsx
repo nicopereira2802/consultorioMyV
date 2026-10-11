@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useScrollLock } from '../hooks/useScrollLock';
 import { ModalConfirmacion } from './ModalConfirmacion';
 import './ModalNuevaPractica.css';
 
@@ -34,6 +35,8 @@ export const ModalNuevaPractica = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [mostrarConfirmacion, setMostrarConfirmacion] = useState(false);
 
+  useScrollLock(isOpen);
+
   useEffect(() => {
     if (isOpen) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -67,11 +70,9 @@ export const ModalNuevaPractica = ({
     };
 
     window.addEventListener('keydown', handleKeyDown);
-    document.body.style.overflow = 'hidden';
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = '';
     };
   }, [isOpen, onClose, isSubmitting, mostrarConfirmacion]);
 

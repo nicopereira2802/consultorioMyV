@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { X, Plus } from 'lucide-react';
 import { getCuentaPaciente } from '../services/cobros.service';
 import ModalRegistrarEntrega from './ModalRegistrarEntrega';
+import { useScrollLock } from '../hooks/useScrollLock';
 import './FichaCuentaPaciente.css';
 
 /**
@@ -54,6 +55,8 @@ const getClaseMetodo = (metodo) => {
  * @param {function} onActualizar - callback al padre para refrescar listas
  */
 export const FichaCuentaPaciente = ({ isOpen, onClose, idPaciente, onActualizar }) => {
+  useScrollLock(isOpen);
+
   const [cuentaData, setCuentaData] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);

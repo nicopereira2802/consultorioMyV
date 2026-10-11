@@ -106,8 +106,7 @@ export const getCobrosByTurnoId = async (turnoId) => {
   try {
     const res = await api.get(`/cobros/${turnoId}/cobros`);
     return Array.isArray(res?.data) ? res.data : [];
-  } catch (err) {
-    console.warn(`No se pudieron obtener cobros para el turno ${turnoId}:`, extractErrorMessage(err));
+  } catch {
     return [];
   }
 };
@@ -121,8 +120,7 @@ export const getCuotasByCobroId = async (cobroId) => {
   try {
     const res = await api.get(`/cuotas/${cobroId}/cuotas`);
     return Array.isArray(res?.data) ? res.data : [];
-  } catch (err) {
-    console.warn(`No se pudieron obtener cuotas para el cobro ${cobroId}:`, extractErrorMessage(err));
+  } catch {
     return [];
   }
 };

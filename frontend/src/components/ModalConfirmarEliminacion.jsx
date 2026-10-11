@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useScrollLock } from '../hooks/useScrollLock';
 import './ModalConfirmarEliminacion.css';
 
 /**
@@ -28,6 +29,8 @@ export const ModalConfirmarEliminacion = ({
   textoCancelar = 'Cancelar',
   isLoading = false
 }) => {
+  useScrollLock(isOpen);
+
   useEffect(() => {
     if (!isOpen) return;
 
@@ -38,12 +41,9 @@ export const ModalConfirmarEliminacion = ({
     };
 
     window.addEventListener('keydown', handleKeyDown);
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = originalOverflow;
     };
   }, [isOpen, isLoading, onClose]);
 

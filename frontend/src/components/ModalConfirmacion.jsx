@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useScrollLock } from '../hooks/useScrollLock';
 import './ModalConfirmacion.css';
 export const ModalConfirmacion = ({
   isOpen,
@@ -12,6 +13,8 @@ export const ModalConfirmacion = ({
   textoCancelar = 'Volver',
   isLoading = false
 }) => {
+  useScrollLock(isOpen);
+
   // Estado local para almacenar el motivo opcional escrito por el odontologo
   const [motivo, setMotivo] = useState('');
 

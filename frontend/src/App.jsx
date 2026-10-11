@@ -6,12 +6,16 @@ import GestionPacientes from './pages/GestionPacientes';
 import CatalogoPracticas from './pages/CatalogoPracticas';
 import GestionCobros from './pages/GestionCobros';
 import BottomNav from './components/BottomNav';
+import { useSwipeNavigation } from './hooks/useSwipeNavigation';
 
 /**
  * App - Enrutador Principal Operativo (Sprint 1)
  * Conecta todas las pantallas operativas de M&V Turnos sin barreras de autenticación.
  */
 function App() {
+  // Habilitar navegación gestual (swipe horizontal) entre módulos en móviles
+  useSwipeNavigation();
+
   useEffect(() => {
     const splash = document.getElementById('splash-screen');
     if (splash) {

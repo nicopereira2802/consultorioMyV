@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useScrollLock } from '../hooks/useScrollLock';
 import { getCobroById } from '../services/cobros.service';
 import './ModalDetalleCobro.css';
 
@@ -64,6 +65,8 @@ const getBadgeClaseEstado = (estado) => {
  * @param {Object} cobro - Objeto del cobro seleccionado
  */
 export const ModalDetalleCobro = ({ isOpen, onClose, cobro }) => {
+  useScrollLock(isOpen);
+
   const [detalleCompleto, setDetalleCompleto] = useState(null);
   const [cargandoDetalle, setCargandoDetalle] = useState(false);
 
@@ -108,8 +111,8 @@ export const ModalDetalleCobro = ({ isOpen, onClose, cobro }) => {
           if (montado && res?.data) {
             setDetalleCompleto(res.data);
           }
-        } catch (err) {
-          console.warn('No se pudo cargar el detalle adicional del cobro:', err);
+        } catch {
+          // Detalle no disponible, se mantiene objeto base
         } finally {
           if (montado) setCargandoDetalle(false);
         }

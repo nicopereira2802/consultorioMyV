@@ -5,6 +5,7 @@ import api from '../services/api';
 import { crearPaciente, actualizarPaciente, existePacienteConDni } from '../services/pacientes.service';
 import { getObrasSociales } from '../services/obras_sociales.service';
 import pacienteSchema from '../schemas/paciente.schema';
+import { useScrollLock } from '../hooks/useScrollLock';
 import './ModalPaciente.css';
 
 /**
@@ -26,6 +27,8 @@ export const ModalPaciente = ({
   onPacienteGuardado,
   onSuccess
 }) => {
+  useScrollLock(isOpen);
+
   const esEdicion = Boolean(paciente && paciente.id_paciente);
 
   const [obrasSociales, setObrasSociales] = useState([]);

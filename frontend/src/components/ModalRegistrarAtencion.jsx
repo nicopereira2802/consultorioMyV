@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useScrollLock } from '../hooks/useScrollLock';
 import { getPracticas } from '../services/practicas.service';
 import { registrarAtencionTurno, calcularBloquesTurno } from '../services/turnos.service';
 import { obtenerNombreCobertura, obtenerCredencialCobertura } from '../utils/paciente.utils';
@@ -50,6 +51,8 @@ export const ModalRegistrarAtencion = ({
   onConfirmar,
   onSuccess
 }) => {
+  useScrollLock(isOpen);
+
   const [catalogoPracticas, setCatalogoPracticas] = useState([]);
   const [practicasSeleccionadas, setPracticasSeleccionadas] = useState(() =>
     obtenerPracticasIniciales(turno)

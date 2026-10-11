@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getTurnosAtendidosPorPaciente } from '../services/turnos.service';
 import { obtenerNombreCobertura } from '../utils/paciente.utils';
+import { useScrollLock } from '../hooks/useScrollLock';
 import './ModalHistorialPaciente.css';
 
 /**
@@ -17,6 +18,8 @@ export const ModalHistorialPaciente = ({
   onClose,
   paciente = null
 }) => {
+  useScrollLock(isOpen);
+
   const [atenciones, setAtenciones] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [detalleAbiertoId, setDetalleAbiertoId] = useState(null);
