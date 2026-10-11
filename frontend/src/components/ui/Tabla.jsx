@@ -2,7 +2,7 @@
 
 export default function Tabla({ columnas, cargando, sinDatosText = "No hay registros", children }) {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex-1">
+    <div className="bg-white border border-gray-100 shadow-sm overflow-hidden flex-1">
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>

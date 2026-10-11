@@ -12,7 +12,7 @@ export const getAllPacientes = async (req, res) => {
   try {
     // paginacion
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    const limit = parseInt(req.query.limit) || 9;
     const offset = (page - 1) * limit;
     const search = req.query.search || "";
     const sortField = req.query.sortField || "apellido";
@@ -175,7 +175,7 @@ export const deletePaciente = async (req, res) => {
     const paciente = req.paciente;
 
     await paciente.update({
-      activo: false,
+      activo: !paciente.activo,
     });
 
     res.status(200).json({ message: "Paciente eliminado correctamente" });

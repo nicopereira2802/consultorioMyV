@@ -75,14 +75,23 @@ export const updatePacientePorObraSocial = async (req, res) => {
 
     const pacientePorObraSocial = req.pacienteObraSocial;
 
-    if (id_paciente || id_obra_social) {
+    if (id_paciente) {
       const paciente = await Paciente.findByPk(id_paciente);
-      const obraSocial = await ObraSocial.findByPk(id_obra_social);
 
-      if (!paciente || !obraSocial) {
+      if (!paciente) {
         return res.status(400).json({
           status: "error",
-          message: "El paciente o la obra social seleccionada no existen.",
+          message: "El paciente seleccionado no existen.",
+        });
+      }
+    }
+
+    if (id_obra_social) {
+      const obraSocial = await ObraSocial.findByPk(id_obra_social);
+      if (!obraSocial) {
+        return res.status(400).json({
+          status: "error",
+          message: "La obra social seleccionada no existen.",
         });
       }
     }

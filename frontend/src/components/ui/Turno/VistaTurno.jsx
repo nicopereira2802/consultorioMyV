@@ -49,7 +49,6 @@ export function VistaTurno({ isOpen, onClose, turno }) {
       const resPracticas = await api.get(`/practicas-turnos`);
       const todasLasPracticas = resPracticas.data.data || [];
 
-      console.log(todasLasPracticas)
       // Filtrar localmente las que correspondan a este turno
       const delTurno = todasLasPracticas.filter(
         (pt) => Number(pt.id_turno) === Number(id_turno),
@@ -72,7 +71,7 @@ export function VistaTurno({ isOpen, onClose, turno }) {
       width="max-w-3xl"
       title={`Detalles del Turno #${turno.id_turno}`}
     >
-      <div className="flex flex-col gap-6 max-h-[75vh] overflow-y-auto pr-1 text-black">
+      <div className="flex flex-col gap-6 max-h-[69vh] overflow-y-auto pr-1 text-black">
         {/* ─── SECCIÓN 1: DATOS GENERALES Y ESTADO ───────────────── */}
         <div className="bg-gray-50 p-4 rounded-2xl border border-gray-200 grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Estado */}
@@ -230,7 +229,7 @@ export function VistaTurno({ isOpen, onClose, turno }) {
             <FileText size={18} className="text-[#2eb086]" />
             <span>Notas / Observaciones de la Consulta</span>
           </h3>
-          <div className="bg-gray-50 p-3.5 rounded-xl border border-gray-200 text-sm text-gray-700 min-h-[60px]">
+          <div className="bg-gray-50 p-3.5 rounded-xl border border-gray-200 text-sm text-gray-700 min-h-15">
             {turno.notas_consulta || (
               <span className="text-gray-400 italic">
                 Sin notas registradas para este turno.

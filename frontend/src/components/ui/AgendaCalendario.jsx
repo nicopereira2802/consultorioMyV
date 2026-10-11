@@ -64,10 +64,7 @@ export const AgendaCalendar = ({ turnos = [], onDateSelect, onEventClick }) => {
 
   /* ─── RETORNO DE LA PAGINA ─────────────────────────────────── */
   return (
-    <div
-      {...handlers}
-      className="w-full h-full bg-white "
-    >
+    <div {...handlers} className="w-full h-full bg-white ">
       <FullCalendar
         ref={calendarRef}
         plugins={[

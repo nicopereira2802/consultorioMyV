@@ -1,10 +1,11 @@
 /** @format */
 
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import AgendaCalendario from "../components/ui/AgendaCalendario";
 import api from "../services/api";
 import { formatDateTimeInput, formatFechaCortaTexto } from "../utils/index";
-import { Calendar, Plus } from "lucide-react";
+import { Calendar, Plus, AlertTriangle, X, UserCheck } from "lucide-react";
 import Header from "../components/ui/Header";
 import {
   FormularioCrearEditar,
@@ -13,11 +14,15 @@ import {
 } from "../components/ui/Turno/FormulariosTurno";
 
 export default function AgendaDiaria() {
+  const navigate = useNavigate();
   /* ─── VARIABLES GENERALES ─────────────────────────────────── */
   const [turnos, setTurnos] = useState();
   const [pacientes, setPacientes] = useState([]);
   const [practicasLista, setPracticasLista] = useState([]);
   const [pacientesObrasSociales, setPacientesObrasSociales] = useState([]);
+
+  /* ─── ESTADO PARA LA ADVERTENCIA DE PACIENTES INCOMPLETOS ─── */
+  const [advertenciaVisible, setAdvertenciaVisible] = useState(true);
 
   /* ─── VARIABLES DEL MODAL ─────────────────────────────────── */
   const [datosFormulario, setDatosFormulario] = useState({
@@ -111,6 +116,19 @@ export default function AgendaDiaria() {
     } catch (error) {
       console.error("Error al cargar relación paciente-obra social:", error);
     }
+  };
+
+  /* ─── LÓGICA DE PACIENTES INCOMPLETOS ─────────────────────────── */
+  const pacientesIncompletos = pacientes.filter(
+    (p) => !p.dni || !p.domicilio || !p.fecha_nacimiento,
+  );
+
+  const obtenerCamposFaltantes = (p) => {
+    const faltantes = [];
+    if (!p.dni) faltantes.push("DNI");
+    if (!p.domicilio) faltantes.push("domicilio");
+    if (!p.fecha_nacimiento) faltantes.push("fecha de nacimiento");
+    return faltantes.join(", ");
   };
 
   /* ─── FUNCION CALCULAR HORA FIN ─────────────────────────────────── */
@@ -276,9 +294,21 @@ export default function AgendaDiaria() {
       buscarTurnos();
       cerrarModal();
     } catch (error) {
-      console.error("Error al guardar el turno:", error);
-      if (error.response?.status === 409 || error.status === 409) {
+      console.error("Error al guardar el turno:", error.response);
+
+      const status = error.response?.status || error.status;
+      const errors = error.response?.data?.errors;
+
+      if (status === 409) {
         alert("El horario seleccionado se superpone con otro turno");
+      }
+
+      if (
+        status === 400 &&
+        errors &&
+        ("fecha_hora_inicio" in errors || "fecha_hora_fin" in errors)
+      ) {
+        alert("El horario seleccionado debe ser como minimo la hora actual");
       }
     }
   };
@@ -363,7 +393,7 @@ export default function AgendaDiaria() {
 
   /* ─── RETORNO DE LA PAGINA ─────────────────────────────────── */
   return (
-    <div className="w-full h-[calc(100vh-6rem)] flex flex-col gap-4">
+    <div className="w-full h-[calc(110vh-6rem)] flex flex-col gap-4">
       {/* ─── CABECERA PRINCIPAL ─────────────────────────────────── */}
       <Header
         icono={Calendar}
@@ -381,6 +411,61 @@ export default function AgendaDiaria() {
           </button>
         }
       />
+
+      {/* ─── ADVERTENCIA DINÁMICA DE PACIENTES INCOMPLETOS ──────── */}
+      {advertenciaVisible && pacientesIncompletos.length > 0 && (
+        <div className="mx-4 px-4 py-3 bg-amber-50 border border-amber-200 rounded-xl flex flex-col gap-2 text-amber-800 shadow-sm transition-all duration-200">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
+              <p className="text-sm font-semibold">
+                Hay {pacientesIncompletos.length}{" "}
+                {pacientesIncompletos.length > 1
+                  ? "pacientes creados "
+                  : "paciente creado "}
+                con datos faltantes:
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setAdvertenciaVisible(false)}
+              className="p-1.5 hover:bg-amber-100 rounded-lg text-amber-700 transition-colors"
+              title="Cerrar advertencia"
+            >
+              <X size={18} />
+            </button>
+          </div>
+
+          <div className="pl-8 flex flex-col gap-1 text-xs">
+            {pacientesIncompletos.map((paciente) => (
+              <div
+                key={paciente.id_paciente}
+                className="flex items-center justify-between py-1 border-b border-amber-200/50 last:border-0"
+              >
+                <span>
+                  <strong className="font-medium text-amber-900">
+                    {paciente.nombre} {paciente.apellido}
+                  </strong>{" "}
+                  - Faltan:{" "}
+                  <span className="text-amber-700 font-medium">
+                    {obtenerCamposFaltantes(paciente)}
+                  </span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigate(`/pacientes?editarId=${paciente.id_paciente}`);
+                  }}
+                  className="flex items-center gap-1 bg-amber-600 hover:bg-amber-700 text-white px-2.5 py-1 rounded-lg font-medium transition-colors shadow-sm"
+                >
+                  <UserCheck size={14} />
+                  <span>Completar</span>
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ─── CONTENEDOR DEL CALENDARIO ─────────────────────────── */}
       <div className="flex-1 w-full min-h-0 p-4 pt-0 text-black">
@@ -401,8 +486,10 @@ export default function AgendaDiaria() {
           cerrarModal={cerrarModal}
           editando={editando}
           pacientes={pacientes}
+          setPacientes={setPacientes}
           datosFormulario={datosFormulario}
           actualizarDatos={actualizarDatos}
+          setDatosFormulario={setDatosFormulario}
           procesarFormulario={procesarFormulario}
           abrirModalAtenderDesdeEdicion={abrirModalAtenderDesdeEdicion}
           abrirModalCancelarDesdeEdicion={abrirModalCancelarDesdeEdicion}

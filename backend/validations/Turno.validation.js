@@ -12,27 +12,18 @@ export const validarEstadoProgramado = async () => {
 };
 
 export const validarEstados = async (id_estado, estadoInicio, estadoFinal) => {
-  const estadoActual = await EstadoTurno.findByPk(id_estado);
-
-  if (!estadoActual) {
-    return false;
-  }
-
+  // Aseguramos que estadoInicio sea un array
   const estadosPermitidos = Array.isArray(estadoInicio)
     ? estadoInicio
     : [estadoInicio];
 
-  // Verificar si el estado actual está dentro de los permitidos
-  if (!estadosPermitidos.includes(estadoActual.estado)) {
+  // Verificar si el ID del estado actual está dentro de los permitidos
+  if (!estadosPermitidos.includes(id_estado)) {
     return false;
   }
 
-  // Buscar o retornar el estado destino
-  const [estadoDestino, created] = await EstadoTurno.findOrCreate({
-    where: { estado: estadoFinal },
-  });
-
-  return estadoDestino;
+  // Si es válido, retornamos directamente el ID del estado destino
+  return estadoFinal;
 };
 
 export const validarSolapaminetoHorarios = async (

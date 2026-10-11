@@ -57,7 +57,8 @@ export const createPacienteSchema = z.object({
       dniRegex,
       "El dni no puede contener números ni caracteres especiales como (), [], {}, comillas o comas",
     )
-    .optional(),
+    .optional()
+    .nullish(),
 
   fecha_nacimiento: z.coerce
     .date({
@@ -67,7 +68,8 @@ export const createPacienteSchema = z.object({
       message: "El paciente debe tener al menos 1 año de edad",
     })
     .min(fechaMinima, { message: "La fecha de nacimiento no es válida" })
-    .optional(),
+    .optional()
+    .nullish(),
 
   telefono: z
     .string()
@@ -82,7 +84,8 @@ export const createPacienteSchema = z.object({
       domicilioRegex,
       "El domicilio no puede contener caracteres especiales como (), [], {}",
     )
-    .optional(),
+    .optional()
+    .nullish(),
 });
 
 export const updatePacienteSchema = z.object({

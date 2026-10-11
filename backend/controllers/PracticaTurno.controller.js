@@ -88,16 +88,30 @@ export const updatePracticaTurno = async (req, res) => {
 
     const practicaTurno = req.practicaTurno;
 
-    if (id_turno || id_practica || id_obra_social) {
+    if (id_turno) {
       const turno = Turno.findByPk(id_turno);
-      const practica = Practica.findByPk(id_practica);
-      const obraSocial = ObraSocial.findByPk(id_obra_social);
-
-      if (!turno || !practica || !obraSocial) {
+      if (!turno) {
         return res.status(400).json({
           status: "error",
-          message:
-            "El turno, la practica o la obra social seleccionada no existen.",
+          message: "El turno seleccionado no existen.",
+        });
+      }
+    }
+    if (id_practica) {
+      const practica = Practica.findByPk(id_practica);
+      if (!practica) {
+        return res.status(400).json({
+          status: "error",
+          message: "La practica seleccionada no existen.",
+        });
+      }
+    }
+    if (id_obra_social) {
+      const obraSocial = ObraSocial.findByPk(id_obra_social);
+      if (!obraSocial) {
+        return res.status(400).json({
+          status: "error",
+          message: "La obra social seleccionada no existen.",
         });
       }
     }

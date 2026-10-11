@@ -15,11 +15,44 @@ import {
   validarEstados,
   validarSolapaminetoHorarios,
 } from "../validations/Turno.validation.js";
+import { ESTADOS } from "../constants/EstadosTurno.js";
 
 // Obtener todos los turnos
 export const getAllTurnos = async (req, res) => {
   try {
-    const turnos = await Turno.findAll({
+    // paginacion
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 9;
+    const offset = (page - 1) * limit;
+    const search = req.query.search || "";
+    const sortField = req.query.sortField || "fecha_hora_inicio";
+    const sortOrder = req.query.sortOrder || "ASC";
+    const estadoFiltrado = req.query.estadoFiltrado;
+    let where = {
+      activo: true,
+    };
+    if (estadoFiltrado) {
+      where = {
+        id_estado: estadoFiltrado,
+      };
+    }
+
+    // Busqueda por nombre apellido dni telefono
+    if (search.trim() !== "") {
+      where[Op.or] = [
+        { fecha_hora_inicio: { [Op.like]: `%${search}%` } },
+        { fecha_hora_fin: { [Op.like]: `%${search}%` } },
+        { "$Paciente.nombre$": { [Op.like]: `%${search}%` } },
+        { "$Paciente.apellido$": { [Op.like]: `%${search}%` } },
+        { "$Paciente.dni$": { [Op.like]: `%${search}%` } },
+        { "$Paciente.telefono$": { [Op.like]: `%${search}%` } },
+      ];
+    }
+    const { count, rows: turnos } = await Turno.findAndCountAll({
+      where,
+      limit,
+      offset,
+      order: [[sortField, sortOrder]],
       include: [
         {
           model: Paciente,
@@ -32,9 +65,19 @@ export const getAllTurnos = async (req, res) => {
       ],
     });
 
+    const totalPages = Math.ceil(count / limit);
+
     res.status(200).json({
       status: "success",
       data: turnos,
+      meta: {
+        total: count,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
     });
   } catch (error) {
     console.error("Error al obtener los turnos:", error);
@@ -68,8 +111,8 @@ export const createTurno = async (req, res) => {
       notas_consulta,
     } = req.body;
 
-    // Si no encuentra el estado lo crea
-    const estado = await validarEstadoProgramado();
+    // DEV: SUPONEMOS QUE ESTA CREADO EL ESTADO
+    const id_estado = ESTADOS.PROGRAMADO;
 
     const haySolapamiento = await validarSolapaminetoHorarios(
       fecha_hora_inicio,
@@ -88,7 +131,7 @@ export const createTurno = async (req, res) => {
       const nuevoTurno = await Turno.create(
         {
           id_paciente,
-          id_estado: estado.id_estado,
+          id_estado: id_estado,
           fecha_hora_inicio,
           fecha_hora_fin,
           precio_final,
@@ -100,7 +143,7 @@ export const createTurno = async (req, res) => {
       await HistorialEstadoTurno.create(
         {
           id_turno: nuevoTurno.id_turno,
-          id_estado: estado.id_estado,
+          id_estado: id_estado,
           fecha_hora_cambio: new Date(),
           descripcion: "Turno programado",
         },
@@ -133,6 +176,16 @@ export const updateTurno = async (req, res) => {
       precio_final,
       notas_consulta,
     } = req.body;
+
+    if (id_paciente) {
+      const paciente = Paciente.findByPk(id_paciente);
+      if (!paciente) {
+        return res.status(400).json({
+          status: "error",
+          message: "El paciente seleccionado no existen.",
+        });
+      }
+    }
 
     const haySolapamiento = await validarSolapaminetoHorarios(
       fecha_hora_inicio,
@@ -181,8 +234,8 @@ export const turnoAtendido = async (req, res) => {
 
     const estado = await validarEstados(
       turno.id_estado,
-      "Programado",
-      "Atendido",
+      ESTADOS.PROGRAMADO,
+      ESTADOS.ATENDIDO,
     );
 
     if (!estado) {
@@ -195,7 +248,7 @@ export const turnoAtendido = async (req, res) => {
     const result = await sequelize.transaction(async (t) => {
       await turno.update(
         {
-          id_estado: estado.id_estado,
+          id_estado: estado,
           notas_consulta: notas_consulta || null,
           precio_final: precio_final || turno.precio_final,
         },
@@ -206,7 +259,7 @@ export const turnoAtendido = async (req, res) => {
       await HistorialEstadoTurno.create(
         {
           id_turno: turno.id_turno,
-          id_estado: estado.id_estado,
+          id_estado: estado,
           fecha_hora_cambio: new Date(),
           descripcion: "Turno atendido",
         },
@@ -236,7 +289,6 @@ export const turnoAtendido = async (req, res) => {
             .status(400)
             .json({ error: "Una o más prácticas especificadas no existen" });
         }
-        console.log(idsUnicos);
         // 4. Mapear e insertar en lote (bulkCreate)
         const registrosPracticas = idsUnicos.map((id_practica, index) => ({
           id_turno: turno.id_turno,
@@ -268,8 +320,8 @@ export const turnoCancelado = async (req, res) => {
 
     const estado = await validarEstados(
       turno.id_estado,
-      ["Programado", "Inasistente"],
-      "Cancelado",
+      [ESTADOS.PROGRAMADO, ESTADOS.INASISTENTE],
+      ESTADOS.CANCELADO,
     );
 
     if (!estado) {
@@ -282,7 +334,7 @@ export const turnoCancelado = async (req, res) => {
     const result = await sequelize.transaction(async (t) => {
       await turno.update(
         {
-          id_estado: estado.id_estado,
+          id_estado: estado,
           notas_consulta: notas_consulta,
         },
         { transaction: t },
@@ -292,7 +344,7 @@ export const turnoCancelado = async (req, res) => {
       await HistorialEstadoTurno.create(
         {
           id_turno: turno.id_turno,
-          id_estado: estado.id_estado,
+          id_estado: estado,
           fecha_hora_cambio: new Date(),
           descripcion: "Turno cancelado",
         },
@@ -317,11 +369,12 @@ export const turnoCancelado = async (req, res) => {
 export const turnoInasistido = async (req, res) => {
   try {
     const turno = req.turno;
+    const { notas_consulta } = req.body;
 
     const estado = await validarEstados(
       turno.id_estado,
-      "Programado",
-      "Inasistente",
+      ESTADOS.PROGRAMADO,
+      ESTADOS.INASISTENTE,
     );
 
     if (!estado) {
@@ -334,7 +387,8 @@ export const turnoInasistido = async (req, res) => {
     const result = await sequelize.transaction(async (t) => {
       await turno.update(
         {
-          id_estado: estado.id_estado,
+          id_estado: estado,
+          notas_consulta: notas_consulta,
         },
         { transaction: t },
       );
@@ -343,9 +397,9 @@ export const turnoInasistido = async (req, res) => {
       await HistorialEstadoTurno.create(
         {
           id_turno: turno.id_turno,
-          id_estado: estado.id_estado,
+          id_estado: estado,
           fecha_hora_cambio: new Date(),
-          descripcion: "Turno cancelado",
+          descripcion: "Turno marcado como Inasistido",
         },
         { transaction: t },
       );
@@ -368,17 +422,12 @@ export const turnoInasistido = async (req, res) => {
 export const turnoReprogramado = async (req, res) => {
   try {
     const turno = req.turno;
-    const { fecha_hora_inicio, duracion_minutos } = req.body;
-
-    const inicio = new Date(fecha_hora_inicio);
-    const fecha_hora_fin = new Date(
-      inicio.getTime() + duracion_minutos * 60000,
-    );
+    const { fecha_hora_inicio, fecha_hora_fin } = req.body;
 
     const estado = await validarEstados(
       turno.id_estado,
-      ["Inasistente", "Cancelado"],
-      "Programado",
+      [ESTADOS.INASISTENTE, ESTADOS.CANCELADO],
+      ESTADOS.PROGRAMADO,
     );
 
     if (!estado) {
@@ -406,7 +455,7 @@ export const turnoReprogramado = async (req, res) => {
         {
           fecha_hora_inicio: fecha_hora_inicio,
           fecha_hora_fin: fecha_hora_fin,
-          id_estado: estado.id_estado,
+          id_estado: estado,
         },
         { transaction: t },
       );
@@ -415,7 +464,7 @@ export const turnoReprogramado = async (req, res) => {
       await HistorialEstadoTurno.create(
         {
           id_turno: turno.id_turno,
-          id_estado: estado.id_estado,
+          id_estado: estado,
           fecha_hora_cambio: new Date(),
           descripcion: "Turno reprogramado",
         },
@@ -441,8 +490,7 @@ export const turnoReprogramado = async (req, res) => {
 export const deleteTurno = async (req, res) => {
   try {
     const turno = req.turno;
-
-    await turno.destroy();
+    await turno.update({ activo: !turno.activo });
 
     res.status(200).json({ message: "Turno eliminado correctamente" });
   } catch (error) {

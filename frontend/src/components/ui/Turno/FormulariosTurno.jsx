@@ -1,7 +1,9 @@
 /** @format */
 
+import { useState } from "react";
+import api from "../../../services/api";
 import Modal from "../Modal";
-import { Plus, X, CheckSquare } from "lucide-react";
+import { Plus, X, CheckSquare, UserPlus } from "lucide-react";
 
 export function FormularioCrearEditar({
   // Props de estado/control general
@@ -10,15 +12,64 @@ export function FormularioCrearEditar({
   cerrarModal,
   editando,
   pacientes,
+  setPacientes, // <- Opcional pero recomendado para actualizar la lista global al crear rápido
 
   // Props para Crear / Editar Turno
   datosFormulario,
   actualizarDatos,
+  setDatosFormulario, // <- Necesario para autoseleccionar el paciente recién creado
   procesarFormulario,
   abrirModalAtenderDesdeEdicion,
   abrirModalCancelarDesdeEdicion,
   abrirModalInasistenteDesdeEdicion,
 }) {
+  /* ─── ESTADO PARA MODAL RÁPIDO DE PACIENTE ───────────────── */
+  const [modalPacienteRapidoAbierto, setModalPacienteRapidoAbierto] =
+    useState(false);
+  const [datosPacienteRapido, setDatosPacienteRapido] = useState({
+    nombre: "",
+    apellido: "",
+    telefono: "",
+  });
+
+  const actualizarDatosPacienteRapido = (e) => {
+    const { name, value } = e.target;
+    setDatosPacienteRapido((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const guardarPacienteRapido = async (e) => {
+    e.preventDefault();
+    try {
+      const respuesta = await api.post("/pacientes", {
+        nombre: datosPacienteRapido.nombre.trim(),
+        apellido: datosPacienteRapido.apellido.trim(),
+        telefono: datosPacienteRapido.telefono.trim(),
+        dni: null,
+        domicilio: null,
+      });
+
+      const nuevoPaciente = respuesta.data.data || respuesta.data;
+      const nuevoId = nuevoPaciente.id_paciente;
+
+      if (setPacientes) {
+        setPacientes((prev) => [...prev, nuevoPaciente]);
+      }
+
+      // Auto-seleccionar el paciente recién creado en el formulario del turno
+      setDatosFormulario((prev) => ({
+        ...prev,
+        id_paciente: nuevoId,
+      }));
+
+      // Limpiar y cerrar modal rápido
+      setDatosPacienteRapido({ nombre: "", apellido: "", telefono: "" });
+      setModalPacienteRapidoAbierto(false);
+    } catch (error) {
+      console.error("Error al crear paciente rápido:", error);
+      alert("No se pudo registrar el paciente de forma rápida.");
+    }
+  };
+
   return (
     <>
       <form onSubmit={procesarFormulario}>
@@ -31,9 +82,21 @@ export function FormularioCrearEditar({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Paciente */}
             <div className="col-span-1 md:col-span-2">
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Paciente *
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-sm font-semibold text-gray-700">
+                  Paciente *
+                </label>
+                {/* Botón rápido para crear paciente */}
+                <button
+                  type="button"
+                  onClick={() => setModalPacienteRapidoAbierto(true)}
+                  className="flex items-center gap-1 text-xs font-semibold text-[#2eb086] hover:text-[#259370] bg-[#e8f7f1] px-2.5 py-1 rounded-lg transition-colors"
+                  title="Crear paciente rápido"
+                >
+                  <UserPlus size={14} />
+                  <span>+ Nuevo Paciente</span>
+                </button>
+              </div>
               <select
                 name="id_paciente"
                 value={datosFormulario.id_paciente || ""}
@@ -122,7 +185,7 @@ export function FormularioCrearEditar({
           {/* Acciones */}
           <div className="flex items-center justify-between">
             {editando && page === "Agenda" ? (
-              <div>
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={abrirModalAtenderDesdeEdicion}
@@ -136,15 +199,13 @@ export function FormularioCrearEditar({
                   onClick={abrirModalInasistenteDesdeEdicion}
                   className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-white bg-yellow-600 hover:bg-yellow-700 transition-colors font-semibold text-sm shadow-sm"
                 >
-                  <CheckSquare size={16} />
-                  <span>Marcar como Inasistente</span>
+                  <span>Inasistente</span>
                 </button>
                 <button
                   type="button"
                   onClick={abrirModalCancelarDesdeEdicion}
                   className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-white bg-red-600 hover:bg-red-700 transition-colors font-semibold text-sm shadow-sm"
                 >
-                  <CheckSquare size={16} />
                   <span>Cancelar Turno</span>
                 </button>
               </div>
@@ -170,6 +231,83 @@ export function FormularioCrearEditar({
           </div>
         </Modal>
       </form>
+
+      {/* ─── MINI-MODAL: CREAR PACIENTE RÁPIDO ─────────────────── */}
+      {modalPacienteRapidoAbierto && (
+        <Modal
+          isOpen={modalPacienteRapidoAbierto}
+          onClose={() => setModalPacienteRapidoAbierto(false)}
+          width="max-w-md"
+          title="Registro Rápido de Paciente"
+        >
+          <form onSubmit={guardarPacienteRapido}>
+            <div className="flex flex-col gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                  Nombre *
+                </label>
+                <input
+                  type="text"
+                  name="nombre"
+                  value={datosPacienteRapido.nombre}
+                  onChange={actualizarDatosPacienteRapido}
+                  placeholder="Ej: Juan"
+                  required
+                  className="w-full border border-gray-300 p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2eb086]/50"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                  Apellido *
+                </label>
+                <input
+                  type="text"
+                  name="apellido"
+                  value={datosPacienteRapido.apellido}
+                  onChange={actualizarDatosPacienteRapido}
+                  placeholder="Ej: Pérez"
+                  required
+                  className="w-full border border-gray-300 p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2eb086]/50"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                  Teléfono *
+                </label>
+                <input
+                  type="text"
+                  name="telefono"
+                  value={datosPacienteRapido.telefono}
+                  onChange={actualizarDatosPacienteRapido}
+                  placeholder="Ej: 3515551234"
+                  required
+                  className="w-full border border-gray-300 p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2eb086]/50"
+                />
+              </div>
+            </div>
+
+            <div className="border-t border-gray-200 my-4" />
+
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setModalPacienteRapidoAbierto(false)}
+                className="px-4 py-2 rounded-xl text-gray-600 bg-gray-100 hover:bg-gray-200 font-medium text-sm"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 rounded-xl text-white bg-[#2eb086] hover:bg-[#259370] font-semibold text-sm transition-colors shadow-sm"
+              >
+                Guardar y Seleccionar
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
     </>
   );
 }
@@ -410,7 +548,7 @@ export function FormularioCancelar({
               </label>
               <textarea
                 rows={3}
-                value={notasCanceladoInasistente}
+                value={notasCanceladoInasistente.notas_consulta}
                 onChange={(e) =>
                   setNotasCanceladoInasistente((prev) => ({
                     ...prev,
@@ -445,5 +583,56 @@ export function FormularioCancelar({
         </Modal>
       </form>
     </>
+  );
+}
+
+export function FormularioEliminar({
+  modalEliminar,
+  cerrarModal,
+  turnoSeleccionado,
+  ejecutarEliminacion,
+}) {
+  return (
+    <Modal
+      isOpen={modalEliminar}
+      onClose={cerrarModal}
+      width="max-w-md"
+      title="Eliminar Turno"
+    >
+      <div className="flex flex-col gap-3">
+        <p className="text-sm text-gray-600">
+          ¿Estás seguro de que deseas eliminar el turno{" "}
+          <strong className="text-gray-800">
+            #{turnoSeleccionado?.id_turno}
+          </strong>{" "}
+          del paciente{" "}
+          <strong className="text-gray-800">
+            {turnoSeleccionado?.Paciente
+              ? `${turnoSeleccionado.Paciente.nombre} ${turnoSeleccionado.Paciente.apellido}`
+              : `#${turnoSeleccionado?.id_paciente}`}
+          </strong>
+          ?
+        </p>
+      </div>
+
+      <div className="border-t border-gray-200 my-4" />
+
+      <div className="flex justify-end gap-3">
+        <button
+          type="button"
+          onClick={cerrarModal}
+          className="px-4 py-2 rounded-xl text-gray-600 bg-gray-100 hover:bg-gray-200 font-medium text-sm"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          onClick={ejecutarEliminacion}
+          className="px-4 py-2 rounded-xl text-white bg-red-500 hover:bg-red-600 font-semibold text-sm transition-colors shadow-sm"
+        >
+          Sí, Eliminar
+        </button>
+      </div>
+    </Modal>
   );
 }

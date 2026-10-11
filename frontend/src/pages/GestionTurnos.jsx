@@ -1,7 +1,6 @@
 /** @format */
 
 import { useState, useEffect } from "react";
-import Modal from "../components/ui/Modal";
 import api from "../services/api";
 import { formatFechaHoraTabla, formatDateTimeInput } from "../utils/index";
 import {
@@ -25,24 +24,29 @@ import {
   FormularioAtender,
   FormularioCrearEditar,
   FormularioCancelar,
+  FormularioEliminar,
 } from "../components/ui/Turno/FormulariosTurno";
 import { VistaTurno } from "../components/ui/Turno/VistaTurno";
 
 // Mapeo básico de estados
 const estadosMap = {
   Programado: {
+    id_estado: 1,
     color: "bg-amber-50 text-amber-700 border-amber-200/60",
     icon: Clock,
   },
   Atendido: {
+    id_estado: 2,
     color: "bg-emerald-50 text-emerald-700 border-emerald-200/60",
     icon: CheckCircle2,
   },
   Cancelado: {
+    id_estado: 3,
     color: "bg-red-50 text-red-700 border-red-200/60",
     icon: XCircle,
   },
   Inasistente: {
+    id_estado: 4,
     color: "bg-yellow-50 text-yellow-700 border-yellow-200/60",
     icon: UserRoundX,
   },
@@ -54,8 +58,15 @@ export default function GestionTurnos() {
   const [pacientes, setPacientes] = useState([]);
   const [practicasLista, setPracticasLista] = useState([]);
   const [pacientesObrasSociales, setPacientesObrasSociales] = useState([]);
-  const [busqueda, setBusqueda] = useState("");
   const [cargando, setCargando] = useState(false);
+
+  /* ─── ESTADOS PAGINACION Y ORDEN ─────────────────────────────────── */
+  const [page, setPage] = useState(1);
+  const [totalTurnos, setTotalTurnos] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [search, setSearch] = useState("");
+  const [order, setOrder] = useState({ column: "id_turno", direction: "ASC" });
+  const [estadoFiltrado, setEstadoFiltrado] = useState("Programado");
 
   /* ─── ESTADOS DE LOS MODALES Y FORMULARIOS ───────────────── */
   const [modalAbierto, setModalAbierto] = useState(false);
@@ -85,23 +96,23 @@ export default function GestionTurnos() {
 
   // Estado específico para el modal de Cancelar e Inasistente
   const [inasistente, setInasistente] = useState(false);
-  const [notasCancelarInasistente, setNotasCancelarInasistente] = useState("");
+  const [notasCancelarInasistente, setNotasCancelarInasistente] = useState({
+    notas_consulta: "",
+  });
 
   // Estados espefíficos para vista de turno
   const [modalVerAbierto, setModalVerAbierto] = useState(false);
   const [turnoParaVer, setTurnoParaVer] = useState(null);
 
-  const abrirVistaTurno = (turno) => {
-    setTurnoParaVer(turno);
-    setModalVerAbierto(true);
-  };
-
   /* ─── USE-EFFECTS ─────────────────────────────────── */
   useEffect(() => {
-    buscarTurnos();
     buscarPacientes();
     buscarPracticas();
   }, []);
+
+  useEffect(() => {
+    buscarTurnos();
+  }, [page, search, order, estadoFiltrado]);
 
   // Cálculo automático de fecha_hora_fin en el modal principal
   useEffect(() => {
@@ -133,8 +144,19 @@ export default function GestionTurnos() {
   const buscarTurnos = async () => {
     setCargando(true);
     try {
-      const respuesta = await api.get("/turnos");
+      const respuesta = await api.get("/turnos", {
+        params: {
+          page: page,
+          search: search,
+          sortField: order.column,
+          sortOrder: order.direction,
+          estadoFiltrado: estadosMap[estadoFiltrado]?.id_estado || null,
+        },
+      });
       setTurnos(respuesta.data.data || []);
+      setPage(respuesta.data.meta.page);
+      setTotalPages(respuesta.data.meta.totalPages);
+      setTotalTurnos(respuesta.data.meta.total);
     } catch (error) {
       console.error("Error al cargar turnos:", error);
     } finally {
@@ -190,6 +212,11 @@ export default function GestionTurnos() {
   };
 
   /* ─── MANEJO DE MODALES ─────────────────────────────────── */
+  const abrirVistaTurno = (turno) => {
+    setTurnoParaVer(turno);
+    setModalVerAbierto(true);
+  };
+
   const modalCreando = () => {
     setEditando(false);
     setDatosFormulario({
@@ -221,7 +248,6 @@ export default function GestionTurnos() {
     setModalEliminar(true);
   };
 
-  // Abrir Modal Atender Turno
   const abrirModalAtender = (turno) => {
     setTurnoSeleccionado(turno);
     setDatosAtencion({
@@ -233,20 +259,16 @@ export default function GestionTurnos() {
     setModalAtenderAbierto(true);
   };
 
-  /* ─── ABRIR MODAL CANCELAR TURNO ──────────────────────────── */
   const abrirModalCancelar = (turno) => {
     setTurnoSeleccionado(turno);
     setModalAbierto(false);
-
     setInasistente(false);
     setModalCancelarAbierto(true);
   };
 
-  /* ─── ABRIR MODAL INASISTENTE TURNO ──────────────────────────── */
   const abrirModalInasistente = (turno) => {
     setTurnoSeleccionado(turno);
     setModalAbierto(false);
-
     setInasistente(true);
     setModalCancelarAbierto(true);
   };
@@ -272,10 +294,9 @@ export default function GestionTurnos() {
       practicas: [],
     });
     setInasistente(false);
-    setNotasCancelarInasistente("");
+    setNotasCancelarInasistente({ notas_consulta: "" });
   };
 
-  /* ─── CAMPOS FORMULARIO GENERAL ─────────────────────────── */
   const actualizarDatos = (e) => {
     const { name, value } = e.target;
     setDatosFormulario((prev) => ({
@@ -284,7 +305,6 @@ export default function GestionTurnos() {
     }));
   };
 
-  /* ─── MANEJO DINÁMICO DE PRÁCTICAS EN ATENCIÓN ───────────── */
   const agregarPracticaAtencion = () => {
     setDatosAtencion((prev) => ({
       ...prev,
@@ -307,20 +327,8 @@ export default function GestionTurnos() {
     }));
   };
 
-  // Filtrar las obras sociales correspondientes exclusivamente al paciente del turno actual
-  const obtenerObrasSocialesPacienteActual = () => {
-    if (!turnoSeleccionado) return [];
-    const idPaciente = turnoSeleccionado.id_paciente;
-    // Filtramos las relaciones asociadas a este paciente y populamos los datos de la obra social si vienen incluidos o los buscamos en la lista global
-    return pacientesObrasSociales.filter(
-      (rel) => Number(rel.id_paciente) === Number(idPaciente),
-    );
-  };
-
-  /* ─── GUARDAR / EDITAR TURNO ─────────────────────────────── */
   const procesarFormulario = async (e) => {
     e.preventDefault();
-
     if (!datosFormulario.id_paciente) {
       alert("Por favor seleccione un paciente.");
       return;
@@ -328,7 +336,6 @@ export default function GestionTurnos() {
 
     try {
       const { duracion_minutos, ...restoDatos } = datosFormulario;
-
       const payload = {
         ...restoDatos,
         id_paciente: Number(restoDatos.id_paciente),
@@ -357,27 +364,17 @@ export default function GestionTurnos() {
     }
   };
 
-  /* ─── PROCESAR ATENCIÓN DEL TURNO (PATCH /atender) ───────── */
   const procesarAtencionTurno = async (e) => {
     e.preventDefault();
     if (!turnoSeleccionado) return;
-    console.log(
-      datosAtencion.practicas
-        .filter((p) => p.id_practica)
-        .map((p) => Number(p.id_practica)),
-    );
 
     try {
-      // Preparamos los datos según lo que espera tu backend en turnoAtendido
-      // Enviamos las prácticas realizadas (IDs) y opcionalmente las obras sociales si tu backend las procesa en la intermedia
       const payloadAtencion = {
         notas_consulta: datosAtencion.notas_consulta.trim(),
         precio_final: parseFloat(datosAtencion.precio_final),
-        // Si tu backend espera una lista de IDs de prácticas (ej: practicas_realizadas)
         practicas_realizadas: datosAtencion.practicas
           .filter((p) => p.id_practica)
           .map((p) => Number(p.id_practica)),
-        // Si también quieres enviar los detalles de la obra social asociada a cada práctica:
         obras_sociales: datosAtencion.practicas
           .filter((p) => p.id_practica)
           .map((p) => (p.id_obra_social ? Number(p.id_obra_social) : null)),
@@ -399,14 +396,13 @@ export default function GestionTurnos() {
     }
   };
 
-  /* ─── PROCESAR CANCELACION O INASISTENCIA DEL TURNO (PATCH /cancelar o /inasistente) ───────── */
   const procesarCancelacionTurno = async (e) => {
     e.preventDefault();
     if (!turnoSeleccionado) return;
 
     try {
       const payloadAtencion = {
-        notas_consulta: notasCancelarInasistente.trim(),
+        notas_consulta: notasCancelarInasistente.notas_consulta.trim(),
       };
 
       if (inasistente) {
@@ -432,11 +428,10 @@ export default function GestionTurnos() {
     }
   };
 
-  /* ─── ELIMINAR TURNO (DELETE) ────────────────────────────── */
   const ejecutarEliminacion = async () => {
     if (!turnoSeleccionado) return;
     try {
-      await api.delete(`/turnos/${turnoSeleccionado.id_turno}`);
+      await api.patch(`/turnos/${turnoSeleccionado.id_turno}/delete`);
       buscarTurnos();
       cerrarModal();
     } catch (error) {
@@ -445,6 +440,10 @@ export default function GestionTurnos() {
     }
   };
 
+  // Cálculos dinámicos para el texto de paginación
+  const inicioRegistro = totalTurnos === 0 ? 0 : (page - 1) * 10 + 1;
+  const finRegistro = Math.min(page * 10, totalTurnos);
+
   return (
     <div className="w-full flex-1 flex flex-col gap-4">
       {/* ─── CABECERA PRINCIPAL ─────────────────────────────────── */}
@@ -452,7 +451,7 @@ export default function GestionTurnos() {
         icono={CalendarClock}
         titulo="Gestión de Turnos"
         subtitulo="Listado general y administración de turnos del consultorio"
-        badge={`${turnos.length} Registrados`}
+        badge={`${totalTurnos} Registrados`}
         botonAccion={
           <button
             type="button"
@@ -465,27 +464,56 @@ export default function GestionTurnos() {
         }
       />
 
-      <div className="flex-1 w-full min-h-0 p-4 pt-0">
-        {/* ─── BARRA DE BÚSQUEDA Y FILTROS ───────────────────────── */}
-        <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between gap-4">
-          <div className="relative flex-1 max-w-md">
-            <Search
-              size={18}
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
-            />
-            <input
-              type="text"
-              placeholder="Buscar por paciente, DNI o nota..."
-              value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2eb086]/50 focus:border-[#2eb086] transition-all"
-            />
-          </div>
-        </div>
+      <div className="flex-1 w-full min-h-0 p-4 pt-0 flex flex-col gap-4">
+        {/* ─── CONTENEDOR UNIFICADO (BÚSQUEDA, TABLA Y PAGINACIÓN) ─── */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col overflow-hidden">
+          {/* 1. Barra superior interna: Contador y Filtros */}
+          <div className="p-4 border-b border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="text-sm font-medium text-gray-500">
+              Mostrando {inicioRegistro} a {finRegistro} de {totalTurnos}{" "}
+              registros
+            </div>
 
-        {/* ─── TABLA DE TURNOS ────────────────────────────────────── */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex-1 mt-4">
-          <div className="overflow-x-auto">
+            <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+              {/* Selector de Estado */}
+              <select
+                className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#2eb086]/50"
+                value={estadoFiltrado}
+                onChange={(e) => {
+                  setEstadoFiltrado(e.target.value);
+                  setPage(1); // Resetear a página 1 al cambiar filtro
+                }}
+              >
+                <option value="all">Todos</option>
+                {Object.keys(estadosMap).map((nombreEstado) => (
+                  <option key={nombreEstado} value={nombreEstado}>
+                    {nombreEstado}
+                  </option>
+                ))}
+              </select>
+
+              {/* Buscador */}
+              <div className="relative flex-1 sm:w-80">
+                <Search
+                  size={18}
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+                />
+                <input
+                  type="text"
+                  placeholder="Buscar por paciente, DNI o nota..."
+                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setPage(1); // Resetear a página 1 al buscar
+                  }}
+                  className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2eb086]/50 focus:border-[#2eb086] transition-all"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* 2. Cuerpo de la Tabla */}
+          <div className="overflow-x-auto flex-1">
             <Tabla
               cargando={cargando}
               sinDatosText="No se encontraron turnos registrados."
@@ -580,9 +608,8 @@ export default function GestionTurnos() {
                         >
                           <Eye size={18} />
                         </button>
-                        {/* Botón Atender (Disponible si está pendiente/confirmado o según tu lógica) */}
                         {turno.EstadoTurno.estado === "Programado" && (
-                          <div>
+                          <div className="flex items-center gap-1">
                             <button
                               type="button"
                               onClick={() => abrirModalAtender(turno)}
@@ -632,10 +659,51 @@ export default function GestionTurnos() {
               })}
             </Tabla>
           </div>
+
+          {/* 3. Paginación Inferior integrada */}
+          <div className="flex items-center justify-between p-4 border-t border-gray-100 bg-white">
+            <div className="text-xs text-gray-500">
+              Página {page} de {totalPages || 1}
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                disabled={page <= 1}
+                className="px-3 py-1.5 border border-gray-200 rounded-xl text-xs font-medium text-gray-600 bg-white hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed disabled:bg-gray-100 transition-all"
+                onClick={() => setPage(page - 1)}
+              >
+                Anterior
+              </button>
+
+              {/* Selector directo de página en lugar de un div estático */}
+              <select
+                value={page}
+                onChange={(e) => setPage(Number(e.target.value))}
+                className="px-3 py-1.5 bg-[#2eb086] text-white rounded-xl text-xs font-semibold shadow-sm focus:outline-none cursor-pointer"
+              >
+                {Array.from({ length: totalPages }, (_, index) => (
+                  <option
+                    key={index + 1}
+                    value={index + 1}
+                    className="bg-white text-gray-800"
+                  >
+                    {index + 1}
+                  </option>
+                ))}
+              </select>
+
+              <button
+                disabled={page >= totalPages}
+                className="px-3 py-1.5 border border-gray-200 rounded-xl text-xs font-medium text-gray-600 bg-white hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed disabled:bg-gray-100 transition-all"
+                onClick={() => setPage(page + 1)}
+              >
+                Siguiente
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* ─── MODAL VER DETALLE DE TURNO ─────────────────────────── */}
+      {/* ─── MODALES ────────────────────────────────────────────── */}
       <VistaTurno
         isOpen={modalVerAbierto}
         onClose={() => {
@@ -645,7 +713,6 @@ export default function GestionTurnos() {
         turno={turnoParaVer}
       />
 
-      {/* ─── MODAL CREAR / EDITAR TURNO ─────────────────────────── */}
       {modalAbierto && (
         <FormularioCrearEditar
           page={"Turnos"}
@@ -659,7 +726,6 @@ export default function GestionTurnos() {
         />
       )}
 
-      {/* ─── MODAL: MARCAR COMO ATENDIDO Y REGISTRAR PRÁCTICAS ──── */}
       {modalAtenderAbierto && (
         <FormularioAtender
           modalAtenderAbierto={modalAtenderAbierto}
@@ -676,7 +742,6 @@ export default function GestionTurnos() {
         />
       )}
 
-      {/* ─── MODAL: MARCAR COMO CANCELADO O INASISTENTE ──── */}
       {modalCancelarAbierto && (
         <FormularioCancelar
           modalCancelarAbierto={modalCancelarAbierto}
@@ -689,49 +754,13 @@ export default function GestionTurnos() {
         />
       )}
 
-      {/* ─── MODAL CONFIRMAR ELIMINACIÓN ─────────────────────────── */}
       {modalEliminar && (
-        <Modal
-          isOpen={modalEliminar}
-          onClose={cerrarModal}
-          width="max-w-md"
-          title="Eliminar Turno"
-        >
-          <div className="flex flex-col gap-3">
-            <p className="text-sm text-gray-600">
-              ¿Estás seguro de que deseas eliminar el turno{" "}
-              <strong className="text-gray-800">
-                #{turnoSeleccionado?.id_turno}
-              </strong>{" "}
-              del paciente{" "}
-              <strong className="text-gray-800">
-                {turnoSeleccionado?.Paciente
-                  ? `${turnoSeleccionado.Paciente.nombre} ${turnoSeleccionado.Paciente.apellido}`
-                  : `#${turnoSeleccionado?.id_paciente}`}
-              </strong>
-              ?
-            </p>
-          </div>
-
-          <div className="border-t border-gray-200 my-4" />
-
-          <div className="flex justify-end gap-3">
-            <button
-              type="button"
-              onClick={cerrarModal}
-              className="px-4 py-2 rounded-xl text-gray-600 bg-gray-100 hover:bg-gray-200 font-medium text-sm"
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              onClick={ejecutarEliminacion}
-              className="px-4 py-2 rounded-xl text-white bg-red-500 hover:bg-red-600 font-semibold text-sm transition-colors shadow-sm"
-            >
-              Sí, Eliminar
-            </button>
-          </div>
-        </Modal>
+        <FormularioEliminar
+          modalEliminar={modalEliminar}
+          cerrarModal={cerrarModal}
+          turnoSeleccionado={turnoSeleccionado}
+          ejecutarEliminacion={ejecutarEliminacion}
+        />
       )}
     </div>
   );

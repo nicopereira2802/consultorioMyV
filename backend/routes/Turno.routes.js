@@ -57,7 +57,7 @@ router.patch(
   "/:id/inasistente",
   validateSchema(updateTurnoSchema),
   validarExistencia(Turno, "id", "params"),
-  TurnoController.turnoCancelado,
+  TurnoController.turnoInasistido,
 );
 
 // Marcar como reprogramado
@@ -67,8 +67,8 @@ router.patch(
   TurnoController.turnoReprogramado,
 );
 
-router.delete(
-  "/:id",
+router.patch(
+  "/:id/delete",
   validarExistencia(Turno, "id", "params"),
   TurnoController.deleteTurno,
 );

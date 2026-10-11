@@ -1,15 +1,46 @@
 /** @format */
 
+import { where } from "sequelize";
 import { ObraSocial } from "../models/index.model.js";
 
 // Obtener todas las obras sociales
 export const getAllObrasSociales = async (req, res) => {
   try {
-    const obrasSociales = await ObraSocial.findAll();
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 9;
+    const offset = (page - 1) * limit;
+    const search = req.query.search || "";
+    const sortField = req.query.sortField || "nombre";
+    const sortOrder = req.query.sortOrder || "ASC";
+    const where = {
+      activo: true,
+    };
+
+    // Busqueda por nombre apellido dni telefono
+    if (search.trim() !== "") {
+      where[Op.or] = [{ nombre: { [Op.like]: `%${search}%` } }];
+    }
+
+    const {count, rows: obrasSociales} = await ObraSocial.findAndCountAll({
+      where,
+      limit,
+      offset,
+      order: [[sortField, sortOrder]],
+    });
+
+    const totalPages = Math.ceil(count / limit);
 
     res.status(200).json({
       status: "success",
       data: obrasSociales,
+      meta: {
+        total: count,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
     });
   } catch (error) {
     console.error("Error al obtener las obras sociales:", error);

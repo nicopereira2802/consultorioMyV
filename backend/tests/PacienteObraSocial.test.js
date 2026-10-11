@@ -1,5 +1,6 @@
 /**
  * MODELO PacienteObraSocial:
+ * id_paciente_obra_social -> INTEGER ; PK ; FK
  * id_obra_social -> INTEGER ; PK ; FK
  * id_paciente -> INTEGER ; PK ; FK
  * nro_afiliado -> STRING ; allowNull: false

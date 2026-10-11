@@ -20,8 +20,17 @@ import Tabla from "../../components/ui/Tabla";
 export default function GestionPracticas() {
   /* ─── ESTADOS GENERALES ─────────────────────────────────── */
   const [practicas, setPracticas] = useState([]);
-  const [busqueda, setBusqueda] = useState("");
   const [cargando, setCargando] = useState(false);
+
+  /* ─── ESTADOS PAGINACION, BÚSQUEDA Y ORDEN ───────────────── */
+  const [page, setPage] = useState(1);
+  const [totalPracticas, setTotalPracticas] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [search, setSearch] = useState("");
+  const [order, setOrder] = useState({
+    column: "id_practica",
+    direction: "ASC",
+  });
 
   /* ─── ESTADOS DEL MODAL Y FORMULARIO ─────────────────────── */
   const [modalAbierto, setModalAbierto] = useState(false);
@@ -40,14 +49,24 @@ export default function GestionPracticas() {
   /* ─── USE-EFFECTS ─────────────────────────────────── */
   useEffect(() => {
     buscarPracticas();
-  }, []);
+  }, [page, search, order]);
 
   /* ─── PETICIONES API ─────────────────────────────────── */
   const buscarPracticas = async () => {
     setCargando(true);
     try {
-      const respuesta = await api.get("/practicas");
+      const respuesta = await api.get("/practicas", {
+        params: {
+          page: page,
+          search: search,
+          sortField: order.column,
+          sortOrder: order.direction,
+        },
+      });
       setPracticas(respuesta.data.data || []);
+      setPage(respuesta.data.meta?.page || page);
+      setTotalPages(respuesta.data.meta?.totalPages || 1);
+      setTotalPracticas(respuesta.data.meta?.total || 0);
     } catch (error) {
       console.error("Error al cargar prácticas:", error);
     } finally {
@@ -151,21 +170,9 @@ export default function GestionPracticas() {
     }
   };
 
-  /* ─── FILTRADO EN VIVO ──────────────────────────────────── */
-  const practicasFiltradas = practicas.filter((p) => {
-    const termino = busqueda.toLowerCase();
-    const codigo = p.codigo_nomenclador?.toLowerCase() || "";
-    const nombreNom = p.nombre_nomenclador?.toLowerCase() || "";
-    const nombreRef = p.nombre_referencia?.toLowerCase() || "";
-    const especialidad = p.especialidad?.toLowerCase() || "";
-
-    return (
-      codigo.includes(termino) ||
-      nombreNom.includes(termino) ||
-      nombreRef.includes(termino) ||
-      especialidad.includes(termino)
-    );
-  });
+  // Cálculos dinámicos para los índices del texto de paginación
+  const inicioRegistro = totalPracticas === 0 ? 0 : (page - 1) * 10 + 1;
+  const finRegistro = Math.min(page * 10, totalPracticas);
 
   return (
     <div className="w-full flex-1 flex flex-col gap-4">
@@ -174,7 +181,7 @@ export default function GestionPracticas() {
         icono={FileText}
         titulo="Catálogo de Prácticas"
         subtitulo="Nomenclador de tratamientos, prestaciones y aranceles"
-        badge={`${practicas.length} Registradas`}
+        badge={`${totalPracticas} Registradas`}
         botonAccion={
           <button
             type="button"
@@ -187,30 +194,42 @@ export default function GestionPracticas() {
         }
       />
 
-      <div className=" flex-1 w-full min-h-0 p-4 pt-0">
-        {/* ─── BARRA DE BÚSQUEDA Y FILTROS ───────────────────────── */}
-        <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between gap-4">
-          <div className="relative flex-1 max-w-md">
-            <Search
-              size={18}
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
-            />
-            <input
-              type="text"
-              placeholder="Buscar por código, tratamiento o especialidad..."
-              value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2eb086]/50 focus:border-[#2eb086] transition-all"
-            />
-          </div>
-        </div>
+      <div className="flex-1 w-full min-h-0 p-4 pt-0 flex flex-col gap-4">
+        {/* ─── CONTENEDOR UNIFICADO (BÚSQUEDA, TABLA Y PAGINACIÓN) ─── */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col overflow-hidden">
+          {/* 1. Barra superior interna: Contador y Buscador */}
+          <div className="p-4 border-b border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="text-sm font-medium text-gray-500">
+              Mostrando {inicioRegistro} a {finRegistro} de {totalPracticas}{" "}
+              registros
+            </div>
 
-        {/* ─── TABLA DE PRÁCTICAS ─────────────────────────────────── */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex-1 mt-4">
-          <div className="overflow-x-auto">
+            <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+              {/* Buscador conectado a la API */}
+              <div className="relative flex-1 sm:w-80">
+                <Search
+                  size={18}
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+                />
+                <input
+                  type="text"
+                  placeholder="Buscar por código, tratamiento o especialidad..."
+                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setPage(1); // Resetear a la página 1 al buscar
+                  }}
+                  className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2eb086]/50 focus:border-[#2eb086] transition-all"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* 2. Cuerpo de la Tabla */}
+          <div className="overflow-x-auto flex-1">
             <Tabla
               cargando={cargando}
-              sinDatosText="No se encontraron pacientes registrados."
+              sinDatosText="No se encontraron prácticas registradas."
               columnas={[
                 { label: "Código" },
                 { label: "Tratamiento / Nomenclador" },
@@ -220,7 +239,7 @@ export default function GestionPracticas() {
                 { label: "Acciones", align: "center" },
               ]}
             >
-              {practicasFiltradas.map((practica) => (
+              {practicas.map((practica) => (
                 <tr
                   key={practica.id_practica}
                   className="hover:bg-gray-50/60 transition-colors"
@@ -313,6 +332,46 @@ export default function GestionPracticas() {
                 </tr>
               ))}
             </Tabla>
+          </div>
+
+          {/* 3. Paginación Inferior integrada con selector directo */}
+          <div className="flex items-center justify-between p-4 border-t border-gray-100 bg-white">
+            <div className="text-xs text-gray-500">
+              Página {page} de {totalPages || 1}
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                disabled={page <= 1}
+                className="px-3 py-1.5 border border-gray-200 rounded-xl text-xs font-medium text-gray-600 bg-white hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed disabled:bg-gray-100 transition-all"
+                onClick={() => setPage(page - 1)}
+              >
+                Anterior
+              </button>
+
+              <select
+                value={page}
+                onChange={(e) => setPage(Number(e.target.value))}
+                className="px-3 py-1.5 bg-[#2eb086] text-white rounded-xl text-xs font-semibold shadow-sm focus:outline-none cursor-pointer"
+              >
+                {Array.from({ length: totalPages }, (_, index) => (
+                  <option
+                    key={index + 1}
+                    value={index + 1}
+                    className="bg-white text-gray-800"
+                  >
+                    Pág. {index + 1}
+                  </option>
+                ))}
+              </select>
+
+              <button
+                disabled={page >= totalPages}
+                className="px-3 py-1.5 border border-gray-200 rounded-xl text-xs font-medium text-gray-600 bg-white hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed disabled:bg-gray-100 transition-all"
+                onClick={() => setPage(page + 1)}
+              >
+                Siguiente
+              </button>
+            </div>
           </div>
         </div>
       </div>

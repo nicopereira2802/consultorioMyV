@@ -5,11 +5,46 @@ import { Practica } from "../models/Practica.model.js";
 // Obtener todas las prácticas
 export const getAllPracticas = async (req, res) => {
   try {
-    const practicas = await Practica.findAll();
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 9;
+    const offset = (page - 1) * limit;
+    const search = req.query.search || "";
+    const sortField = req.query.sortField || "apellido";
+    const sortOrder = req.query.sortOrder || "ASC";
+    const where = {
+      activo: true,
+    };
+
+    // Busqueda por nombre apellido dni telefono
+    if (search.trim() !== "") {
+      where[Op.or] = [
+        { nombre: { [Op.like]: `%${search}%` } },
+        { apellido: { [Op.like]: `%${search}%` } },
+        { dni: { [Op.like]: `%${search}%` } },
+        { telefono: { [Op.like]: `%${search}%` } },
+      ];
+    }
+
+    const { count, rows: practicas } = await Practica.findAndCountAll({
+      where,
+      limit,
+      offset,
+      order: [[sortField, sortOrder]],
+    });
+
+    const totalPages = Math.ceil(count / limit);
 
     res.status(200).json({
       status: "success",
       data: practicas,
+      meta: {
+        total: count,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

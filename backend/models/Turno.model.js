@@ -1,3 +1,5 @@
+/** @format */
+
 import { DataTypes } from "sequelize";
 import sequelize from "../config/database.js";
 import { EstadoTurno, Paciente } from "./index.model.js";
@@ -42,9 +44,14 @@ export const Turno = sequelize.define(
       type: DataTypes.STRING,
       allowNull: true,
     },
+    activo: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+    },
   },
   {
     tableName: "turno",
     timestamps: false,
-  }
+  },
 );

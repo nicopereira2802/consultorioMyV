@@ -66,14 +66,24 @@ export const updateCobro = async (req, res) => {
 
     const cobro = req.cobro;
 
-    if (id_turno || id_paciente) {
+    if (id_turno) {
       const turno = await Turno.findByPk(id_turno);
-      const paciente = await Paciente.findByPk(id_paciente);
 
-      if (!turno || !paciente) {
+      if (!turno) {
         res.status(400).json({
           status: "error",
-          message: "El paciente o el turno seleccionado no existe.",
+          message: "El turno seleccionado no existe.",
+        });
+      }
+    }
+
+    if (id_paciente) {
+      const paciente = await Paciente.findByPk(id_paciente);
+
+      if (!paciente) {
+        res.status(400).json({
+          status: "error",
+          message: "El paciente seleccionado no existe.",
         });
       }
     }

@@ -19,8 +19,14 @@ import Tabla from "../../components/ui/Tabla";
 export default function GestionObrasSociales() {
   /* ─── ESTADOS GENERALES ─────────────────────────────────── */
   const [obrasSociales, setObrasSociales] = useState([]);
-  const [busqueda, setBusqueda] = useState("");
   const [cargando, setCargando] = useState(false);
+
+  /* ─── ESTADOS PAGINACION, BÚSQUEDA Y ORDEN ───────────────── */
+  const [page, setPage] = useState(1);
+  const [totalObrasSociales, setTotalObrasSociales] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [search, setSearch] = useState("");
+  const [order, setOrder] = useState({ column: "id_obra_social", direction: "ASC" });
 
   /* ─── ESTADOS DEL MODAL Y FORMULARIO ─────────────────────── */
   const [modalAbierto, setModalAbierto] = useState(false);
@@ -35,14 +41,24 @@ export default function GestionObrasSociales() {
   /* ─── USE-EFFECTS ─────────────────────────────────── */
   useEffect(() => {
     buscarObrasSociales();
-  }, []);
+  }, [page, search, order]);
 
   /* ─── PETICIONES API ─────────────────────────────────── */
   const buscarObrasSociales = async () => {
     setCargando(true);
     try {
-      const respuesta = await api.get("/obras-sociales");
+      const respuesta = await api.get("/obras-sociales", {
+        params: {
+          page: page,
+          search: search,
+          sortField: order.column,
+          sortOrder: order.direction,
+        },
+      });
       setObrasSociales(respuesta.data.data || []);
+      setPage(respuesta.data.meta?.page || page);
+      setTotalPages(respuesta.data.meta?.totalPages || 1);
+      setTotalObrasSociales(respuesta.data.meta?.total || 0);
     } catch (error) {
       console.error("Error al cargar obras sociales:", error);
     } finally {
@@ -137,10 +153,9 @@ export default function GestionObrasSociales() {
     }
   };
 
-  /* ─── FILTRADO EN VIVO POR NOMBRE ───────────────────────── */
-  const obrasSocialesFiltradas = obrasSociales.filter((os) =>
-    os.nombre?.toLowerCase().includes(busqueda.toLowerCase()),
-  );
+  // Cálculos dinámicos para los índices del texto de paginación
+  const inicioRegistro = totalObrasSociales === 0 ? 0 : (page - 1) * 10 + 1;
+  const finRegistro = Math.min(page * 10, totalObrasSociales);
 
   return (
     <div className="w-full flex-1 flex flex-col gap-4">
@@ -149,7 +164,7 @@ export default function GestionObrasSociales() {
         icono={Shield}
         titulo="Catálogo de Obras Sociales"
         subtitulo="Gestión de coberturas médicas y mutuales del consultorio"
-        badge={`${obrasSociales.length} Registradas`}
+        badge={`${totalObrasSociales} Registradas`}
         botonAccion={
           <button
             type="button"
@@ -162,30 +177,42 @@ export default function GestionObrasSociales() {
         }
       />
 
-      <div className="flex-1 w-full min-h-0 p-4 pt-0">
-        {/* ─── BARRA DE BÚSQUEDA Y FILTROS ───────────────────────── */}
-        <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between gap-4">
-          <div className="relative flex-1 max-w-md">
-            <Search
-              size={18}
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
-            />
-            <input
-              type="text"
-              placeholder="Buscar por nombre de obra social o prepaga..."
-              value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2eb086]/50 focus:border-[#2eb086] transition-all"
-            />
-          </div>
-        </div>
+      <div className="flex-1 w-full min-h-0 p-4 pt-0 flex flex-col gap-4">
+        {/* ─── CONTENEDOR UNIFICADO (BÚSQUEDA, TABLA Y PAGINACIÓN) ─── */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col overflow-hidden">
+          
+          {/* 1. Barra superior interna: Contador y Buscador */}
+          <div className="p-4 border-b border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="text-sm font-medium text-gray-500">
+              Mostrando {inicioRegistro} a {finRegistro} de {totalObrasSociales} registros
+            </div>
 
-        {/* ─── TABLA DE OBRAS SOCIALES ───────────────────────────── */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex-1 mt-4">
-          <div className="overflow-x-auto">
+            <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+              {/* Buscador conectado a la API */}
+              <div className="relative flex-1 sm:w-80">
+                <Search
+                  size={18}
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+                />
+                <input
+                  type="text"
+                  placeholder="Buscar por nombre de obra social o prepaga..."
+                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setPage(1); // Resetear a la página 1 al buscar
+                  }}
+                  className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2eb086]/50 focus:border-[#2eb086] transition-all"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* 2. Cuerpo de la Tabla */}
+          <div className="overflow-x-auto flex-1">
             <Tabla
               cargando={cargando}
-              sinDatosText="No se encontraron pacientes registrados."
+              sinDatosText="No se encontraron obras sociales registradas."
               columnas={[
                 { label: "ID" },
                 { label: "Obra Social / Prepaga" },
@@ -193,7 +220,7 @@ export default function GestionObrasSociales() {
                 { label: "Acciones", align: "center" },
               ]}
             >
-              {obrasSocialesFiltradas.map((os) => (
+              {obrasSociales.map((os) => (
                 <tr
                   key={os.id_obra_social}
                   className="hover:bg-gray-50/60 transition-colors"
@@ -242,7 +269,6 @@ export default function GestionObrasSociales() {
                         <Edit size={18} />
                       </button>
 
-                      {/* Botón Dinámico según Estado (Activar / Desactivar) */}
                       {os.activo ? (
                         <button
                           type="button"
@@ -268,6 +294,43 @@ export default function GestionObrasSociales() {
               ))}
             </Tabla>
           </div>
+
+          {/* 3. Paginación Inferior integrada con selector directo */}
+          <div className="flex items-center justify-between p-4 border-t border-gray-100 bg-white">
+            <div className="text-xs text-gray-500">
+              Página {page} de {totalPages || 1}
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                disabled={page <= 1}
+                className="px-3 py-1.5 border border-gray-200 rounded-xl text-xs font-medium text-gray-600 bg-white hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed disabled:bg-gray-100 transition-all"
+                onClick={() => setPage(page - 1)}
+              >
+                Anterior
+              </button>
+
+              <select
+                value={page}
+                onChange={(e) => setPage(Number(e.target.value))}
+                className="px-3 py-1.5 bg-[#2eb086] text-white rounded-xl text-xs font-semibold shadow-sm focus:outline-none cursor-pointer"
+              >
+                {Array.from({ length: totalPages }, (_, index) => (
+                  <option key={index + 1} value={index + 1} className="bg-white text-gray-800">
+                    {index + 1}
+                  </option>
+                ))}
+              </select>
+
+              <button
+                disabled={page >= totalPages}
+                className="px-3 py-1.5 border border-gray-200 rounded-xl text-xs font-medium text-gray-600 bg-white hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed disabled:bg-gray-100 transition-all"
+                onClick={() => setPage(page + 1)}
+              >
+                Siguiente
+              </button>
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -281,7 +344,6 @@ export default function GestionObrasSociales() {
             title={editando ? "Editar Obra Social" : "Nueva Obra Social"}
           >
             <div className="grid grid-cols-1 gap-4">
-              {/* Nombre */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">
                   Nombre de la Obra Social / Prepaga *
@@ -298,10 +360,8 @@ export default function GestionObrasSociales() {
               </div>
             </div>
 
-            {/* Separador */}
             <div className="border-t border-gray-200 my-5" />
 
-            {/* Acciones */}
             <div className="flex justify-end gap-3">
               <button
                 type="button"
@@ -321,7 +381,7 @@ export default function GestionObrasSociales() {
         </form>
       )}
 
-      {/* ─── MODAL CONFIRMAR CAMBIO DE ESTADO (ACTIVAR / DESACTIVAR) ──── */}
+      {/* ─── MODAL CONFIRMAR CAMBIO DE ESTADO ────────────────────── */}
       {modalEliminar && (
         <Modal
           isOpen={modalEliminar}
