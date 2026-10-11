@@ -10,7 +10,18 @@ import {
 // Obtener todas las prácticas de turno
 export const getAllPracticaTurno = async (req, res) => {
   try {
-    const practicaTurnos = await PracticaTurno.findAll();
+    const practicaTurnos = await PracticaTurno.findAll({
+      include: [
+        {
+          model: Practica,
+          attributes: ["codigo_nomenclador"],
+        },
+        {
+          model: ObraSocial,
+          attributes: ["nombre"],
+        },
+      ],
+    });
 
     res.status(200).json({
       status: "success",

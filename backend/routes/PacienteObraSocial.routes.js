@@ -22,9 +22,9 @@ const router = express.Router();
 router.get("/", PacienteObraSocialController.getAllPacientesPorObraSocial);
 
 router.get(
-  "/:id",
-  validarExistencia(PacienteObraSocial, "id", "params"),
-  PacienteObraSocialController.getPacientePorObraSocialById,
+  "/:id_paciente",
+  validarExistencia(Paciente, "id_paciente", "params"),
+  PacienteObraSocialController.getObrasSocialesByPacienteID,
 );
 
 router.post(

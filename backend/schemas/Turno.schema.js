@@ -1,6 +1,6 @@
 /** @format */
 
-import { z } from "zod";
+import { optional, z } from "zod";
 
 const hoy = new Date();
 
@@ -73,7 +73,8 @@ export const updateTurnoSchema = z.object({
     .nonnegative("El precio final debe ser mayor o igual a 0")
     .refine((val) => Number.isInteger(val * 100), {
       message: "El precio no puede tener más de 2 decimales",
-    }).optional(),
+    })
+    .optional(),
 
   notas_consulta: z
     .string({ invalid_type_error: "Las notas de consulta deben ser un texto" })
@@ -113,11 +114,23 @@ export const atenderTurnoSchema = z.object({
     .positive("El precio final debe ser mayor a 0")
     .refine((val) => Number.isInteger(val * 100), {
       message: "El precio no puede tener más de 2 decimales",
-    }).optional(),
+    })
+    .optional(),
 
   notas_consulta: z
     .string({ invalid_type_error: "Las notas de consulta deben ser un texto" })
     .trim()
     .optional(),
-});
 
+  practicas_realizadas: z
+    .array(z.number(), {
+      invalid_type_error: "Las prácticas realizadas deben venir en un array",
+    })
+    .optional(),
+
+  obras_sociales: z
+    .array(z.number().nullable(), {
+      invalid_type_error: "Las obras sociales deben venir en un array",
+    })
+    .nullish(),
+});

@@ -1,9 +1,11 @@
 /** @format */
 
 import sequelize from "../config/database.js";
+import { Op } from "sequelize";
 import {
   Turno,
   HistorialEstadoTurno,
+  Practica,
   PracticaTurno,
   EstadoTurno,
   Paciente,
@@ -18,7 +20,16 @@ import {
 export const getAllTurnos = async (req, res) => {
   try {
     const turnos = await Turno.findAll({
-      include: [{ model: Paciente, attributes: ["nombre", "apellido"] }],
+      include: [
+        {
+          model: Paciente,
+          attributes: ["nombre", "apellido", "dni", "telefono"], // Atributos que quieres traer del paciente
+        },
+        {
+          model: EstadoTurno,
+          attributes: ["estado"], // Atributos que quieres traer del estado
+        },
+      ],
     });
 
     res.status(200).json({
@@ -128,7 +139,7 @@ export const updateTurno = async (req, res) => {
       fecha_hora_fin,
       turno.id_turno,
     );
-    
+
     if (haySolapamiento) {
       return res.status(409).json({
         error:
@@ -159,7 +170,12 @@ export const updateTurno = async (req, res) => {
 // Finalizar atención del turno y registrar prácticas (T-1314)
 export const turnoAtendido = async (req, res) => {
   try {
-    const { notas_consulta, practicas_realizadas } = req.body;
+    const {
+      notas_consulta,
+      practicas_realizadas,
+      obras_sociales,
+      precio_final,
+    } = req.body;
 
     const turno = req.turno;
 
@@ -181,6 +197,7 @@ export const turnoAtendido = async (req, res) => {
         {
           id_estado: estado.id_estado,
           notas_consulta: notas_consulta || null,
+          precio_final: precio_final || turno.precio_final,
         },
         { transaction: t },
       );
@@ -219,11 +236,12 @@ export const turnoAtendido = async (req, res) => {
             .status(400)
             .json({ error: "Una o más prácticas especificadas no existen" });
         }
-
+        console.log(idsUnicos);
         // 4. Mapear e insertar en lote (bulkCreate)
-        const registrosPracticas = idsUnicos.map((id_practica) => ({
+        const registrosPracticas = idsUnicos.map((id_practica, index) => ({
           id_turno: turno.id_turno,
           id_practica,
+          id_obra_social: obras_sociales ? obras_sociales[index] : null,
         }));
 
         await PracticaTurno.bulkCreate(registrosPracticas, { transaction: t });

@@ -1,7 +1,7 @@
 Toda la parte de usuario (Validacion, login, token -> bcrypt y jwtoken, etc)
 
-Dejamos como unique el telefono?
-Validaciones de zod de decimales no funcionan, lo dejamos asi?
+Validar bien todas las sub_entidades (FK) en los controllers
+No poder asignar la misma practica al turno mas de una vez
 
 TESTS:
 Usuario --- PENDIENTE PARA CUANDO ESTE TODO (Validacion, login, token, ...)

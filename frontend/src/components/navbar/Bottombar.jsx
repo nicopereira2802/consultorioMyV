@@ -36,7 +36,7 @@ const NAV_ITEMS = [
   },
 ];
 
-export const BottomNav = () => {
+export const Bottombar = () => {
   const location = useLocation();
   const [toastMsg, setToastMsg] = useState("");
 
@@ -135,4 +135,4 @@ export const BottomNav = () => {
   );
 };
 
-export default BottomNav;
+export default Bottombar;

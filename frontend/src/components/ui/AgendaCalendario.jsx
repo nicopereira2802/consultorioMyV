@@ -10,7 +10,7 @@ import { useSwipeable } from "react-swipeable";
 
 import "@fullcalendar/react/skeleton.css";
 import "@fullcalendar/react/themes/forma/theme.css";
-import "@fullcalendar/react/themes/forma/palettes/purple.css";
+import "@fullcalendar/react/themes/forma/palettes/green.css";
 
 const VISTAS = ["timeGridDay", "timeGridWeek", "dayGridMonth"];
 
@@ -59,7 +59,7 @@ export const AgendaCalendar = ({ turnos = [], onDateSelect, onEventClick }) => {
     onSwipedRight: () => cambiarVista("RIGHT"),
     preventScrollOnSwipe: true, // Evita scroll vertical accidental mientras se desliza de lado
     trackTouch: true,
-    trackMouse: true, // Solo actúa en pantallas táctiles
+    trackMouse: false, // Solo actúa en pantallas táctiles
   });
 
   /* ─── RETORNO DE LA PAGINA ─────────────────────────────────── */

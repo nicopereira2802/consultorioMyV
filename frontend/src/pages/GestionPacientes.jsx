@@ -1,7 +1,7 @@
 /** @format */
 
 import { useState, useEffect } from "react";
-import Modal from "../components/Modal";
+import Modal from "../components/ui/Modal";
 import api from "../services/api";
 import { formatFechaTabla, formatFechaInput } from "../utils/index";
 import {
@@ -16,6 +16,8 @@ import {
   Phone,
   UserCheck,
 } from "lucide-react";
+import Header from "../components/ui/Header";
+import Tabla from "../components/ui/Tabla";
 
 export default function GestionPacientes() {
   /* ─── ESTADOS GENERALES ─────────────────────────────────── */
@@ -97,7 +99,7 @@ export default function GestionPacientes() {
       const resOS = await api.get("/pacientes-por-obras-sociales");
       const todasLasOS = resOS.data.data || [];
       obrasSocialesPaciente = todasLasOS.filter(
-        (item) => Number(item.id_paciente) === Number(paciente.id_paciente)
+        (item) => Number(item.id_paciente) === Number(paciente.id_paciente),
       );
     } catch (err) {
       console.error("Error al obtener obras sociales del paciente:", err);
@@ -190,7 +192,8 @@ export default function GestionPacientes() {
         await api.put(`/pacientes/${idPacienteGuardado}`, payloadPaciente);
       } else {
         const resCrear = await api.post("/pacientes", payloadPaciente);
-        idPacienteGuardado = resCrear.data.data?.id_paciente || resCrear.data.id_paciente;
+        idPacienteGuardado =
+          resCrear.data.data?.id_paciente || resCrear.data.id_paciente;
       }
 
       // Procesar asignación de obras sociales si se seleccionaron
@@ -243,157 +246,128 @@ export default function GestionPacientes() {
   return (
     <div className="w-full flex-1 flex flex-col gap-4">
       {/* ─── CABECERA PRINCIPAL ─────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 border-b border-gray-100 shadow-sm">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-[#e8f7f1] text-[#2eb086] flex items-center justify-center shrink-0 shadow-sm">
-            <Users size={24} />
-          </div>
+      <Header
+        icono={Users}
+        titulo="Gestión de Pacientes"
+        subtitulo="Administración de historias clínicas, datos personales y coberturas"
+        badge={`${pacientes.length} Registrados`}
+        botonAccion={
+          <button
+            type="button"
+            onClick={modalCreando}
+            className="flex items-center justify-center gap-2 bg-[#2eb086] hover:bg-[#259370] text-white px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 shadow-sm hover:shadow active:scale-95 shrink-0"
+          >
+            <Plus size={18} />
+            <span>Nuevo Paciente</span>
+          </button>
+        }
+      />
 
-          <div className="flex flex-col">
-            <div className="flex items-center gap-2.5">
-              <h1 className="text-2xl font-bold text-gray-800 tracking-tight">
-                Gestión de Pacientes
-              </h1>
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#e8f7f1] text-[#2eb086] border border-[#2eb086]/20">
-                {pacientes.length} Registrados
-              </span>
-            </div>
-            <p className="text-sm text-gray-500 font-medium">
-              Administración de historias clínicas, datos personales y coberturas
-            </p>
+      <div className="flex-1 w-full min-h-0 p-4 pt-0">
+        {/* ─── BARRA DE BÚSQUEDA Y FILTROS ───────────────────────── */}
+        <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between gap-4">
+          <div className="relative flex-1 max-w-md">
+            <Search
+              size={18}
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+            />
+            <input
+              type="text"
+              placeholder="Buscar por nombre, apellido o DNI..."
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2eb086]/50 focus:border-[#2eb086] transition-all"
+            />
           </div>
         </div>
 
-        {/* Botón de Agregar Paciente */}
-        <button
-          type="button"
-          onClick={modalCreando}
-          className="flex items-center justify-center gap-2 bg-[#2eb086] hover:bg-[#259370] text-white px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 shadow-sm hover:shadow active:scale-95 shrink-0"
-        >
-          <Plus size={18} />
-          <span>Nuevo Paciente</span>
-        </button>
-      </div>
+        {/* ─── TABLA DE PACIENTES ─────────────────────────────────── */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex-1 mt-4">
+          <div className="overflow-x-auto">
+            <Tabla
+              cargando={cargando}
+              sinDatosText="No se encontraron pacientes registrados."
+              columnas={[
+                { label: "Paciente" },
+                { label: "DNI" },
+                { label: "Teléfono" },
+                { label: "F. Nacimiento" },
+                { label: "Domicilio" },
+                { label: "Acciones", align: "center" },
+              ]}
+            >
+              {pacientesFiltrados.map((paciente) => (
+                <tr
+                  key={paciente.id_paciente}
+                  className="hover:bg-gray-50/60 transition-colors"
+                >
+                  {/* Nombre y Apellido */}
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-full bg-[#e8f7f1] text-[#2eb086] flex items-center justify-center font-bold text-sm shrink-0">
+                        {paciente.nombre?.charAt(0)}
+                        {paciente.apellido?.charAt(0)}
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-gray-800">
+                          {paciente.nombre} {paciente.apellido}
+                        </span>
+                      </div>
+                    </div>
+                  </td>
 
-      {/* ─── BARRA DE BÚSQUEDA Y FILTROS ───────────────────────── */}
-      <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between gap-4">
-        <div className="relative flex-1 max-w-md">
-          <Search
-            size={18}
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
-          />
-          <input
-            type="text"
-            placeholder="Buscar por nombre, apellido o DNI..."
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2eb086]/50 focus:border-[#2eb086] transition-all"
-          />
-        </div>
-      </div>
+                  {/* DNI */}
+                  <td className="px-6 py-4 text-gray-600 font-medium">
+                    {paciente.dni || (
+                      <span className="text-gray-400 italic">S/D</span>
+                    )}
+                  </td>
 
-      {/* ─── TABLA DE PACIENTES ─────────────────────────────────── */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex-1">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-gray-50/80 border-b border-gray-100 text-xs font-bold text-gray-500 uppercase tracking-wider">
-                <th className="px-6 py-4">Paciente</th>
-                <th className="px-6 py-4">DNI</th>
-                <th className="px-6 py-4">Teléfono</th>
-                <th className="px-6 py-4">F. Nacimiento</th>
-                <th className="px-6 py-4">Domicilio</th>
-                <th className="px-6 py-4 text-center">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 text-sm">
-              {cargando ? (
-                <tr>
-                  <td colSpan="6" className="py-12 text-center text-gray-400">
-                    Cargando listado de pacientes...
+                  {/* Teléfono */}
+                  <td className="px-6 py-4 text-gray-600">
+                    <div className="flex items-center gap-1.5">
+                      <Phone size={14} className="text-gray-400" />
+                      <span>{paciente.telefono}</span>
+                    </div>
+                  </td>
+
+                  {/* Fecha Nacimiento */}
+                  <td className="px-6 py-4 text-gray-600">
+                    {formatFechaTabla(paciente.fecha_nacimiento)}
+                  </td>
+
+                  {/* Domicilio */}
+                  <td className="px-6 py-4 text-gray-600 max-w-xs truncate">
+                    {paciente.domicilio || (
+                      <span className="text-gray-400 italic">S/D</span>
+                    )}
+                  </td>
+
+                  {/* Acciones */}
+                  <td className="px-6 py-4">
+                    <div className="flex items-center justify-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => modalEditando(paciente)}
+                        className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
+                        title="Editar Paciente"
+                      >
+                        <Edit size={18} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => confirmarEliminar(paciente)}
+                        className="p-2 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
+                        title="Desactivar Paciente"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
-              ) : pacientesFiltrados.length > 0 ? (
-                pacientesFiltrados.map((paciente) => (
-                  <tr
-                    key={paciente.id_paciente}
-                    className="hover:bg-gray-50/60 transition-colors"
-                  >
-                    {/* Nombre y Apellido */}
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-[#e8f7f1] text-[#2eb086] flex items-center justify-center font-bold text-sm shrink-0">
-                          {paciente.nombre?.charAt(0)}
-                          {paciente.apellido?.charAt(0)}
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="font-semibold text-gray-800">
-                            {paciente.nombre} {paciente.apellido}
-                          </span>
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* DNI */}
-                    <td className="px-6 py-4 text-gray-600 font-medium">
-                      {paciente.dni || <span className="text-gray-400 italic">S/D</span>}
-                    </td>
-
-                    {/* Teléfono */}
-                    <td className="px-6 py-4 text-gray-600">
-                      <div className="flex items-center gap-1.5">
-                        <Phone size={14} className="text-gray-400" />
-                        <span>{paciente.telefono}</span>
-                      </div>
-                    </td>
-
-                    {/* Fecha Nacimiento */}
-                    <td className="px-6 py-4 text-gray-600">
-                      {formatFechaTabla(paciente.fecha_nacimiento)}
-                    </td>
-
-                    {/* Domicilio */}
-                    <td className="px-6 py-4 text-gray-600 max-w-xs truncate">
-                      {paciente.domicilio || (
-                        <span className="text-gray-400 italic">S/D</span>
-                      )}
-                    </td>
-
-                    {/* Acciones */}
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => modalEditando(paciente)}
-                          className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
-                          title="Editar Paciente"
-                        >
-                          <Edit size={18} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => confirmarEliminar(paciente)}
-                          className="p-2 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
-                          title="Desactivar Paciente"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td
-                    colSpan="6"
-                    className="py-12 text-center text-gray-400 font-medium"
-                  >
-                    No se encontraron pacientes registrados.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+              ))}
+            </Tabla>
+          </div>
         </div>
       </div>
 
@@ -520,7 +494,8 @@ export default function GestionPacientes() {
 
                 {datosFormulario.obrasSociales.length === 0 ? (
                   <p className="text-xs text-gray-400 italic">
-                    Sin obras sociales asociadas. El paciente se registrará como Particular.
+                    Sin obras sociales asociadas. El paciente se registrará como
+                    Particular.
                   </p>
                 ) : (
                   <div className="flex flex-col gap-3">
@@ -536,7 +511,7 @@ export default function GestionPacientes() {
                             actualizarObraSocialForm(
                               index,
                               "id_obra_social",
-                              e.target.value
+                              e.target.value,
                             )
                           }
                           required
@@ -544,7 +519,10 @@ export default function GestionPacientes() {
                         >
                           <option value="">Seleccione obra social...</option>
                           {obrasSocialesLista.map((os) => (
-                            <option key={os.id_obra_social} value={os.id_obra_social}>
+                            <option
+                              key={os.id_obra_social}
+                              value={os.id_obra_social}
+                            >
                               {os.nombre}
                             </option>
                           ))}
@@ -559,7 +537,7 @@ export default function GestionPacientes() {
                             actualizarObraSocialForm(
                               index,
                               "nro_afiliado",
-                              e.target.value
+                              e.target.value,
                             )
                           }
                           required

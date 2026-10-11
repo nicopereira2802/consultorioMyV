@@ -24,13 +24,16 @@ export const getAllPacientesPorObraSocial = async (req, res) => {
 };
 
 // Obtener un paciente por obra social por su ID
-export const getPacientePorObraSocialById = async (req, res) => {
+export const getObrasSocialesByPacienteID = async (req, res) => {
   try {
-    const pacientePorObraSocial = req.pacienteObraSocial;
+    const pacienteId = req.paciente.id_paciente;
+    const obrasSocialesPaciente = await PacienteObraSocial.findAll({
+      where: { id_paciente: pacienteId },
+    });
 
     res.status(200).json({
       status: "success",
-      data: pacientePorObraSocial,
+      data: obrasSocialesPaciente,
     });
   } catch (error) {
     console.error("Error al obtener la obra social del paciente:", error);

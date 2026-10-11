@@ -1,7 +1,7 @@
 /** @format */
 
 import { useState, useEffect } from "react";
-import Modal from "../../components/Modal";
+import Modal from "../../components/ui/Modal";
 import api from "../../services/api";
 import {
   FileText,
@@ -14,6 +14,8 @@ import {
   RotateCcw,
   Tag,
 } from "lucide-react";
+import Header from "../../components/ui/Header";
+import Tabla from "../../components/ui/Tabla";
 
 export default function GestionPracticas() {
   /* ─── ESTADOS GENERALES ─────────────────────────────────── */
@@ -122,7 +124,7 @@ export default function GestionPracticas() {
       if (editando) {
         await api.put(
           `/practicas/${practicaSeleccionada.id_practica}`,
-          payload
+          payload,
         );
       } else {
         await api.post("/practicas", payload);
@@ -140,9 +142,7 @@ export default function GestionPracticas() {
   const ejecutarCambioEstado = async () => {
     if (!practicaSeleccionada) return;
     try {
-      await api.patch(
-        `/practicas/${practicaSeleccionada.id_practica}/delete`
-      );
+      await api.patch(`/practicas/${practicaSeleccionada.id_practica}/delete`);
       buscarPracticas();
       cerrarModal();
     } catch (error) {
@@ -170,177 +170,150 @@ export default function GestionPracticas() {
   return (
     <div className="w-full flex-1 flex flex-col gap-4">
       {/* ─── CABECERA PRINCIPAL ─────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 border-b border-gray-100 shadow-sm">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-[#e8f7f1] text-[#2eb086] flex items-center justify-center shrink-0 shadow-sm">
-            <FileText size={24} />
-          </div>
+      <Header
+        icono={FileText}
+        titulo="Catálogo de Prácticas"
+        subtitulo="Nomenclador de tratamientos, prestaciones y aranceles"
+        badge={`${practicas.length} Registradas`}
+        botonAccion={
+          <button
+            type="button"
+            onClick={modalCreando}
+            className="flex items-center justify-center gap-2 bg-[#2eb086] hover:bg-[#259370] text-white px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 shadow-sm hover:shadow active:scale-95 shrink-0"
+          >
+            <Plus size={18} />
+            <span>Nueva Práctica</span>
+          </button>
+        }
+      />
 
-          <div className="flex flex-col">
-            <div className="flex items-center gap-2.5">
-              <h1 className="text-2xl font-bold text-gray-800 tracking-tight">
-                Catálogo de Prácticas
-              </h1>
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#e8f7f1] text-[#2eb086] border border-[#2eb086]/20">
-                {practicas.length} Registradas
-              </span>
-            </div>
-            <p className="text-sm text-gray-500 font-medium">
-              Nomenclador de tratamientos, prestaciones y aranceles
-            </p>
+      <div className=" flex-1 w-full min-h-0 p-4 pt-0">
+        {/* ─── BARRA DE BÚSQUEDA Y FILTROS ───────────────────────── */}
+        <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between gap-4">
+          <div className="relative flex-1 max-w-md">
+            <Search
+              size={18}
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+            />
+            <input
+              type="text"
+              placeholder="Buscar por código, tratamiento o especialidad..."
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2eb086]/50 focus:border-[#2eb086] transition-all"
+            />
           </div>
         </div>
 
-        {/* Botón Nueva Práctica */}
-        <button
-          type="button"
-          onClick={modalCreando}
-          className="flex items-center justify-center gap-2 bg-[#2eb086] hover:bg-[#259370] text-white px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 shadow-sm hover:shadow active:scale-95 shrink-0"
-        >
-          <Plus size={18} />
-          <span>Nueva Práctica</span>
-        </button>
-      </div>
-
-      {/* ─── BARRA DE BÚSQUEDA Y FILTROS ───────────────────────── */}
-      <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between gap-4">
-        <div className="relative flex-1 max-w-md">
-          <Search
-            size={18}
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
-          />
-          <input
-            type="text"
-            placeholder="Buscar por código, tratamiento o especialidad..."
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2eb086]/50 focus:border-[#2eb086] transition-all"
-          />
-        </div>
-      </div>
-
-      {/* ─── TABLA DE PRÁCTICAS ─────────────────────────────────── */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex-1">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-gray-50/80 border-b border-gray-100 text-xs font-bold text-gray-500 uppercase tracking-wider">
-                <th className="px-6 py-4">Código</th>
-                <th className="px-6 py-4">Tratamiento / Nomenclador</th>
-                <th className="px-6 py-4">Especialidad</th>
-                <th className="px-6 py-4">Precio Ref.</th>
-                <th className="px-6 py-4">Estado</th>
-                <th className="px-6 py-4 text-center">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 text-sm">
-              {cargando ? (
-                <tr>
-                  <td colSpan="6" className="py-12 text-center text-gray-400">
-                    Cargando catálogo de prácticas...
+        {/* ─── TABLA DE PRÁCTICAS ─────────────────────────────────── */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex-1 mt-4">
+          <div className="overflow-x-auto">
+            <Tabla
+              cargando={cargando}
+              sinDatosText="No se encontraron pacientes registrados."
+              columnas={[
+                { label: "Código" },
+                { label: "Tratamiento / Nomenclador" },
+                { label: "Especialidad" },
+                { label: "Precio Ref." },
+                { label: "Estado" },
+                { label: "Acciones", align: "center" },
+              ]}
+            >
+              {practicasFiltradas.map((practica) => (
+                <tr
+                  key={practica.id_practica}
+                  className="hover:bg-gray-50/60 transition-colors"
+                >
+                  {/* Código Nomenclador */}
+                  <td className="px-6 py-4">
+                    <span className="inline-flex items-center gap-1 font-mono font-bold text-xs bg-gray-100 text-gray-700 px-2.5 py-1 rounded-lg border border-gray-200">
+                      <Tag size={12} className="text-[#2eb086]" />
+                      {practica.codigo_nomenclador}
+                    </span>
                   </td>
-                </tr>
-              ) : practicasFiltradas.length > 0 ? (
-                practicasFiltradas.map((practica) => (
-                  <tr
-                    key={practica.id_practica}
-                    className="hover:bg-gray-50/60 transition-colors"
-                  >
-                    {/* Código Nomenclador */}
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center gap-1 font-mono font-bold text-xs bg-gray-100 text-gray-700 px-2.5 py-1 rounded-lg border border-gray-200">
-                        <Tag size={12} className="text-[#2eb086]" />
-                        {practica.codigo_nomenclador}
+
+                  {/* Nombres (Referencia y Nomenclador) */}
+                  <td className="px-6 py-4">
+                    <div className="flex flex-col">
+                      <span className="font-semibold text-gray-800">
+                        {practica.nombre_referencia}
                       </span>
-                    </td>
+                      <span className="text-xs text-gray-400">
+                        {practica.nombre_nomenclador}
+                      </span>
+                    </div>
+                  </td>
 
-                    {/* Nombres (Referencia y Nomenclador) */}
-                    <td className="px-6 py-4">
-                      <div className="flex flex-col">
-                        <span className="font-semibold text-gray-800">
-                          {practica.nombre_referencia}
-                        </span>
-                        <span className="text-xs text-gray-400">
-                          {practica.nombre_nomenclador}
-                        </span>
-                      </div>
-                    </td>
+                  {/* Especialidad */}
+                  <td className="px-6 py-4 text-gray-600 font-medium">
+                    {practica.especialidad}
+                  </td>
 
-                    {/* Especialidad */}
-                    <td className="px-6 py-4 text-gray-600 font-medium">
-                      {practica.especialidad}
-                    </td>
-
-                    {/* Precio de Referencia */}
-                    <td className="px-6 py-4 font-semibold text-gray-800">
-                      ${Number(practica.precio_referencia).toLocaleString("es-AR", {
+                  {/* Precio de Referencia */}
+                  <td className="px-6 py-4 font-semibold text-gray-800">
+                    $
+                    {Number(practica.precio_referencia).toLocaleString(
+                      "es-AR",
+                      {
                         minimumFractionDigits: 2,
-                      })}
-                    </td>
+                      },
+                    )}
+                  </td>
 
-                    {/* Estado */}
-                    <td className="px-6 py-4">
+                  {/* Estado */}
+                  <td className="px-6 py-4">
+                    {practica.activo ? (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+                        <CheckCircle2 size={14} />
+                        <span>Activa</span>
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500 border border-gray-200">
+                        <XCircle size={14} />
+                        <span>Inactiva</span>
+                      </span>
+                    )}
+                  </td>
+
+                  {/* Acciones */}
+                  <td className="px-6 py-4">
+                    <div className="flex items-center justify-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => modalEditando(practica)}
+                        className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
+                        title="Editar Práctica"
+                      >
+                        <Edit size={18} />
+                      </button>
+
+                      {/* Botón Activar / Desactivar */}
                       {practica.activo ? (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/60">
-                          <CheckCircle2 size={14} />
-                          <span>Activa</span>
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500 border border-gray-200">
-                          <XCircle size={14} />
-                          <span>Inactiva</span>
-                        </span>
-                      )}
-                    </td>
-
-                    {/* Acciones */}
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-center gap-2">
                         <button
                           type="button"
-                          onClick={() => modalEditando(practica)}
-                          className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
-                          title="Editar Práctica"
+                          onClick={() => confirmarCambioEstado(practica)}
+                          className="p-2 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
+                          title="Desactivar Práctica"
                         >
-                          <Edit size={18} />
+                          <Trash2 size={18} />
                         </button>
-
-                        {/* Botón Activar / Desactivar */}
-                        {practica.activo ? (
-                          <button
-                            type="button"
-                            onClick={() => confirmarCambioEstado(practica)}
-                            className="p-2 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
-                            title="Desactivar Práctica"
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => confirmarCambioEstado(practica)}
-                            className="p-2 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors"
-                            title="Activar Práctica"
-                          >
-                            <RotateCcw size={18} />
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td
-                    colSpan="6"
-                    className="py-12 text-center text-gray-400 font-medium"
-                  >
-                    No se encontraron prácticas registradas.
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => confirmarCambioEstado(practica)}
+                          className="p-2 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors"
+                          title="Activar Práctica"
+                        >
+                          <RotateCcw size={18} />
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              ))}
+            </Tabla>
+          </div>
         </div>
       </div>
 
@@ -474,7 +447,8 @@ export default function GestionPracticas() {
           <div className="flex flex-col gap-3">
             <p className="text-sm text-gray-600">
               ¿Estás seguro de que deseas{" "}
-              {practicaSeleccionada?.activo ? "desactivar" : "activar"} la práctica{" "}
+              {practicaSeleccionada?.activo ? "desactivar" : "activar"} la
+              práctica{" "}
               <strong className="text-gray-800">
                 {practicaSeleccionada?.nombre_referencia}
               </strong>{" "}
@@ -501,9 +475,7 @@ export default function GestionPracticas() {
                   : "bg-[#2eb086] hover:bg-[#259370]"
               }`}
             >
-              {practicaSeleccionada?.activo
-                ? "Sí, Desactivar"
-                : "Sí, Activar"}
+              {practicaSeleccionada?.activo ? "Sí, Desactivar" : "Sí, Activar"}
             </button>
           </div>
         </Modal>

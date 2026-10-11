@@ -1,8 +1,8 @@
 /** @format */
 
 import { Outlet } from "react-router-dom";
-import { Sidebar } from "./Sidebar";
-import { BottomNav } from "./BottomNav";
+import { Sidebar } from "./navbar/Sidebar";
+import { Bottombar } from "./navbar/Bottombar";
 import { useSidebar } from "../context/SidebarProvider";
 
 export default function Layout() {
@@ -23,7 +23,7 @@ export default function Layout() {
 
       {/* Navegación móvil */}
           <div className="block md:hidden">
-            <BottomNav />
+            <Bottombar />
           </div>
     </div>
   );

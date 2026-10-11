@@ -2,20 +2,20 @@
 
 import { useState, useRef, useEffect } from "react";
 import { NavLink } from "react-router-dom";
-import { Calendar, Users, FileText, PanelLeftClose } from "lucide-react";
-import { useSidebar } from "../context/SidebarProvider";
-import ToothLogo from "./ToothLogo";
+import { Users, FileText, PanelLeftClose, CalendarDays, CalendarCheck, CalendarClock } from "lucide-react";
+import { useSidebar } from "../../context/SidebarProvider";
+import ToothLogo from "../ToothLogo";
 
 const NAV_ITEMS = [
   {
     to: "/",
     label: "Agenda Diaria",
-    Icon: Calendar,
+    Icon: CalendarDays,
   },
   {
     to: "/turnos",
     label: "Turnos",
-    Icon: Users,
+    Icon: CalendarClock,
   },
   {
     to: "/pacientes",
@@ -57,7 +57,7 @@ export const Sidebar = () => {
         className={`flex items-center border-b border-gray-200 min-h-21.25 transition-all duration-300 ${
           !isOpen
             ? "flex-col justify-center gap-4 py-4"
-            : "justify-between px-5 py-4"
+            : "justify-between px-5 py-6.5"
         }`}
       >
         <div className="flex items-center gap-3">

@@ -1,7 +1,7 @@
 /** @format */
 
 import { useState, useEffect } from "react";
-import Modal from "../../components/Modal";
+import Modal from "../../components/ui/Modal";
 import api from "../../services/api";
 import {
   Shield,
@@ -13,6 +13,8 @@ import {
   XCircle,
   RotateCcw,
 } from "lucide-react";
+import Header from "../../components/ui/Header";
+import Tabla from "../../components/ui/Tabla";
 
 export default function GestionObrasSociales() {
   /* ─── ESTADOS GENERALES ─────────────────────────────────── */
@@ -106,7 +108,7 @@ export default function GestionObrasSociales() {
       if (editando) {
         await api.put(
           `/obras-sociales/${obraSocialSeleccionada.id_obra_social}`,
-          payload
+          payload,
         );
       } else {
         await api.post("/obras-sociales", payload);
@@ -125,7 +127,7 @@ export default function GestionObrasSociales() {
     if (!obraSocialSeleccionada) return;
     try {
       await api.patch(
-        `/obras-sociales/${obraSocialSeleccionada.id_obra_social}/delete`
+        `/obras-sociales/${obraSocialSeleccionada.id_obra_social}/delete`,
       );
       buscarObrasSociales();
       cerrarModal();
@@ -137,166 +139,135 @@ export default function GestionObrasSociales() {
 
   /* ─── FILTRADO EN VIVO POR NOMBRE ───────────────────────── */
   const obrasSocialesFiltradas = obrasSociales.filter((os) =>
-    os.nombre?.toLowerCase().includes(busqueda.toLowerCase())
+    os.nombre?.toLowerCase().includes(busqueda.toLowerCase()),
   );
 
   return (
     <div className="w-full flex-1 flex flex-col gap-4">
       {/* ─── CABECERA PRINCIPAL ─────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 border-b border-gray-100 shadow-sm">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-[#e8f7f1] text-[#2eb086] flex items-center justify-center shrink-0 shadow-sm">
-            <Shield size={24} />
-          </div>
+      <Header
+        icono={Shield}
+        titulo="Catálogo de Obras Sociales"
+        subtitulo="Gestión de coberturas médicas y mutuales del consultorio"
+        badge={`${obrasSociales.length} Registradas`}
+        botonAccion={
+          <button
+            type="button"
+            onClick={modalCreando}
+            className="flex items-center justify-center gap-2 bg-[#2eb086] hover:bg-[#259370] text-white px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 shadow-sm hover:shadow active:scale-95 shrink-0"
+          >
+            <Plus size={18} />
+            <span>Nueva Obra Social</span>
+          </button>
+        }
+      />
 
-          <div className="flex flex-col">
-            <div className="flex items-center gap-2.5">
-              <h1 className="text-2xl font-bold text-gray-800 tracking-tight">
-                Catálogo de Obras Sociales
-              </h1>
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#e8f7f1] text-[#2eb086] border border-[#2eb086]/20">
-                {obrasSociales.length} Registradas
-              </span>
-            </div>
-            <p className="text-sm text-gray-500 font-medium">
-              Gestión de coberturas médicas y mutuales del consultorio
-            </p>
+      <div className="flex-1 w-full min-h-0 p-4 pt-0">
+        {/* ─── BARRA DE BÚSQUEDA Y FILTROS ───────────────────────── */}
+        <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between gap-4">
+          <div className="relative flex-1 max-w-md">
+            <Search
+              size={18}
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+            />
+            <input
+              type="text"
+              placeholder="Buscar por nombre de obra social o prepaga..."
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2eb086]/50 focus:border-[#2eb086] transition-all"
+            />
           </div>
         </div>
 
-        {/* Botón Nueva Obra Social */}
-        <button
-          type="button"
-          onClick={modalCreando}
-          className="flex items-center justify-center gap-2 bg-[#2eb086] hover:bg-[#259370] text-white px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 shadow-sm hover:shadow active:scale-95 shrink-0"
-        >
-          <Plus size={18} />
-          <span>Nueva Obra Social</span>
-        </button>
-      </div>
-
-      {/* ─── BARRA DE BÚSQUEDA Y FILTROS ───────────────────────── */}
-      <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between gap-4">
-        <div className="relative flex-1 max-w-md">
-          <Search
-            size={18}
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
-          />
-          <input
-            type="text"
-            placeholder="Buscar por nombre de obra social o prepaga..."
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2eb086]/50 focus:border-[#2eb086] transition-all"
-          />
-        </div>
-      </div>
-
-      {/* ─── TABLA DE OBRAS SOCIALES ───────────────────────────── */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex-1">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-gray-50/80 border-b border-gray-100 text-xs font-bold text-gray-500 uppercase tracking-wider">
-                <th className="px-6 py-4">ID</th>
-                <th className="px-6 py-4">Obra Social / Prepaga</th>
-                <th className="px-6 py-4">Estado</th>
-                <th className="px-6 py-4 text-center">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 text-sm">
-              {cargando ? (
-                <tr>
-                  <td colSpan="4" className="py-12 text-center text-gray-400">
-                    Cargando obras sociales...
+        {/* ─── TABLA DE OBRAS SOCIALES ───────────────────────────── */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex-1 mt-4">
+          <div className="overflow-x-auto">
+            <Tabla
+              cargando={cargando}
+              sinDatosText="No se encontraron pacientes registrados."
+              columnas={[
+                { label: "ID" },
+                { label: "Obra Social / Prepaga" },
+                { label: "Estado" },
+                { label: "Acciones", align: "center" },
+              ]}
+            >
+              {obrasSocialesFiltradas.map((os) => (
+                <tr
+                  key={os.id_obra_social}
+                  className="hover:bg-gray-50/60 transition-colors"
+                >
+                  {/* ID */}
+                  <td className="px-6 py-4 font-semibold text-gray-500 w-24">
+                    #{os.id_obra_social}
                   </td>
-                </tr>
-              ) : obrasSocialesFiltradas.length > 0 ? (
-                obrasSocialesFiltradas.map((os) => (
-                  <tr
-                    key={os.id_obra_social}
-                    className="hover:bg-gray-50/60 transition-colors"
-                  >
-                    {/* ID */}
-                    <td className="px-6 py-4 font-semibold text-gray-500 w-24">
-                      #{os.id_obra_social}
-                    </td>
 
-                    {/* Nombre */}
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-[#e8f7f1] text-[#2eb086] flex items-center justify-center font-bold text-sm shrink-0">
-                          {os.nombre?.charAt(0)}
-                        </div>
-                        <span className="font-semibold text-gray-800">
-                          {os.nombre}
-                        </span>
+                  {/* Nombre */}
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-full bg-[#e8f7f1] text-[#2eb086] flex items-center justify-center font-bold text-sm shrink-0">
+                        {os.nombre?.charAt(0)}
                       </div>
-                    </td>
+                      <span className="font-semibold text-gray-800">
+                        {os.nombre}
+                      </span>
+                    </div>
+                  </td>
 
-                    {/* Estado */}
-                    <td className="px-6 py-4">
+                  {/* Estado */}
+                  <td className="px-6 py-4">
+                    {os.activo ? (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+                        <CheckCircle2 size={14} />
+                        <span>Activa</span>
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500 border border-gray-200">
+                        <XCircle size={14} />
+                        <span>Inactiva</span>
+                      </span>
+                    )}
+                  </td>
+
+                  {/* Acciones */}
+                  <td className="px-6 py-4">
+                    <div className="flex items-center justify-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => modalEditando(os)}
+                        className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
+                        title="Editar Obra Social"
+                      >
+                        <Edit size={18} />
+                      </button>
+
+                      {/* Botón Dinámico según Estado (Activar / Desactivar) */}
                       {os.activo ? (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/60">
-                          <CheckCircle2 size={14} />
-                          <span>Activa</span>
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500 border border-gray-200">
-                          <XCircle size={14} />
-                          <span>Inactiva</span>
-                        </span>
-                      )}
-                    </td>
-
-                    {/* Acciones */}
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-center gap-2">
                         <button
                           type="button"
-                          onClick={() => modalEditando(os)}
-                          className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
-                          title="Editar Obra Social"
+                          onClick={() => confirmarCambioEstado(os)}
+                          className="p-2 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
+                          title="Desactivar Obra Social"
                         >
-                          <Edit size={18} />
+                          <Trash2 size={18} />
                         </button>
-
-                        {/* Botón Dinámico según Estado (Activar / Desactivar) */}
-                        {os.activo ? (
-                          <button
-                            type="button"
-                            onClick={() => confirmarCambioEstado(os)}
-                            className="p-2 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
-                            title="Desactivar Obra Social"
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => confirmarCambioEstado(os)}
-                            className="p-2 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors"
-                            title="Activar Obra Social"
-                          >
-                            <RotateCcw size={18} />
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td
-                    colSpan="4"
-                    className="py-12 text-center text-gray-400 font-medium"
-                  >
-                    No se encontraron obras sociales registradas.
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => confirmarCambioEstado(os)}
+                          className="p-2 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors"
+                          title="Activar Obra Social"
+                        >
+                          <RotateCcw size={18} />
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              ))}
+            </Tabla>
+          </div>
         </div>
       </div>
 
@@ -365,8 +336,8 @@ export default function GestionObrasSociales() {
           <div className="flex flex-col gap-3">
             <p className="text-sm text-gray-600">
               ¿Estás seguro de que deseas{" "}
-              {obraSocialSeleccionada?.activo ? "desactivar" : "activar"} la obra
-              social{" "}
+              {obraSocialSeleccionada?.activo ? "desactivar" : "activar"} la
+              obra social{" "}
               <strong className="text-gray-800">
                 {obraSocialSeleccionada?.nombre}
               </strong>

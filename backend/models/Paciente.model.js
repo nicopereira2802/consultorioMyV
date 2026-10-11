@@ -33,6 +33,7 @@ export const Paciente = sequelize.define(
     },
     telefono: {
       type: DataTypes.STRING,
+      unique: true,
       allowNull: false,
     },
     domicilio: {
