@@ -5,9 +5,27 @@ import { useScrollLock } from '../hooks/useScrollLock';
 import './ModalHistorialPaciente.css';
 
 /**
+ * Helper para formatear fecha y hora de auditoría
+ */
+const formatearFechaHoraAuditoria = (fechaStr) => {
+  if (!fechaStr) return '';
+  try {
+    const d = new Date(fechaStr);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleString('es-AR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }) + ' hs';
+  } catch {
+    return '';
+  }
+};
+
+/**
  * ModalHistorialPaciente - Modal de Ficha e Historial Clínico de Atenciones
- * Consulta los turnos del paciente y muestra cronológicamente las prácticas.
- * Al desplegar el detalle, muestra la nota/descripción registrada en el historial.
  */
 export const ModalHistorialPaciente = ({
   isOpen,
@@ -116,11 +134,15 @@ export const ModalHistorialPaciente = ({
             ? t.HistorialEstadoTurnos
             : [];
 
+          // Fecha de reserva inicial (estado Programado o primera entrada)
+          const registroProgramado = histArr.find(
+            (h) => Number(h.id_estado) === 1 || h.EstadoTurno?.estado === 'Programado' || h.estado === 'Programado'
+          ) || histArr[0];
 
-          // 1. Extraer nota/descripción de ATENCIÓN desde el historial (id_estado = 3)
+          // 1. Extraer nota y fecha de ATENCIÓN (id_estado = 3)
           const registroAtendido = [...histArr].reverse().find(
             (h) =>
-              h.id_estado === 3 ||
+              Number(h.id_estado) === 3 ||
               h.EstadoTurno?.estado === 'Atendido' ||
               h.estado === 'Atendido'
           );
@@ -131,24 +153,33 @@ export const ModalHistorialPaciente = ({
             ''
           ).trim();
 
-          // 2. Extraer nota/descripción de CANCELACIÓN (id_estado = 2)
+          // 2. Extraer nota y fecha de CANCELACIÓN (id_estado = 2)
           const registroCancelado = [...histArr].reverse().find(
             (h) =>
-              h.id_estado === 2 ||
-              h.EstadoTurno?.estado === 'Cancelado' ||
-              h.estado === 'Cancelado'
+              Number(h.id_estado) === 2 ||
+              h.EstadoTurno?.estado?.toLowerCase() === 'cancelado' ||
+              h.estado?.toLowerCase() === 'cancelado'
           );
 
+          const descHistorial =
+            registroCancelado?.descripcion && registroCancelado.descripcion !== 'Turno cancelado'
+              ? registroCancelado.descripcion
+              : null;
+
           const notaCancelacion = (
+            (t.motivo_cancelacion && t.motivo_cancelacion !== 'Turno cancelado' ? t.motivo_cancelacion : null) ||
+            descHistorial ||
+            (t.observaciones && t.observaciones !== 'Turno cancelado' ? t.observaciones : null) ||
+            (t.notas_consulta && !t.notas_consulta.startsWith('Turno programado') ? t.notas_consulta : null) ||
             registroCancelado?.descripcion ||
             t.motivo_cancelacion ||
             ''
           ).trim();
 
-          // 3. Extraer nota/descripción de INASISTENCIA (id_estado = 4)
+          // 3. Extraer nota y fecha de INASISTENCIA (id_estado = 4)
           const registroInasistente = [...histArr].reverse().find(
             (h) =>
-              h.id_estado === 4 ||
+              Number(h.id_estado) === 4 ||
               h.EstadoTurno?.estado === 'Inasistente' ||
               h.estado === 'Inasistente'
           );
@@ -167,11 +198,15 @@ export const ModalHistorialPaciente = ({
             estado: mapEstadoNombre(t.id_estado, t.estado || t.estado_nombre),
             practicas,
             nota_previa: notaPrevia,
+            fecha_reserva: registroProgramado?.fecha_hora_cambio || null,
             nota_atencion: notaAtencion,
+            fecha_atencion: registroAtendido?.fecha_hora_cambio || null,
             nota_cancelacion: notaCancelacion,
+            fecha_cancelacion: registroCancelado?.fecha_hora_cambio || null,
+            nota_inasistencia: notaInasistencia,
+            fecha_inasistencia: registroInasistente?.fecha_hora_cambio || null,
             profesional: t.profesional || 'Dra. Valenzuela',
-            origen: 'agenda',
-            historial: histArr
+            origen: 'agenda'
           };
 
           listaConsolidada.push(consultaObj);
@@ -205,10 +240,13 @@ export const ModalHistorialPaciente = ({
             ? item.HistorialEstadoTurnos
             : [];
 
+          const registroProgramado = histArr.find(
+            (h) => Number(h.id_estado) === 1 || h.EstadoTurno?.estado === 'Programado' || h.estado === 'Programado'
+          ) || histArr[0];
+
           const registroAtendido = [...histArr].reverse().find(
             (h) =>
-              h.id_estado === 4 ||
-              h.id_estado === 3 ||
+              Number(h.id_estado) === 3 ||
               h.EstadoTurno?.estado === 'Atendido' ||
               h.estado === 'Atendido'
           );
@@ -224,7 +262,7 @@ export const ModalHistorialPaciente = ({
 
           const registroCancelado = [...histArr].reverse().find(
             (h) =>
-              h.id_estado === 2 ||
+              Number(h.id_estado) === 2 ||
               h.EstadoTurno?.estado === 'Cancelado' ||
               h.estado === 'Cancelado'
           );
@@ -242,11 +280,13 @@ export const ModalHistorialPaciente = ({
             estado: mapEstadoNombre(item.id_estado, item.estado || 'ATENDIDO'),
             practicas,
             nota_previa: notaPrevia,
+            fecha_reserva: registroProgramado?.fecha_hora_cambio || null,
             nota_atencion: notaAtencion,
+            fecha_atencion: registroAtendido?.fecha_hora_cambio || null,
             nota_cancelacion: notaCancelacion,
+            fecha_cancelacion: registroCancelado?.fecha_hora_cambio || null,
             profesional: item.profesional || 'Dra. Valenzuela',
-            origen: 'registro',
-            historial: histArr
+            origen: 'registro'
           };
 
           listaConsolidada.push(consultaObj);
@@ -371,11 +411,10 @@ export const ModalHistorialPaciente = ({
             <div className="historial-atenciones-list">
               {atenciones.map((item) => {
                 const isExpanded = detalleAbiertoId === item.id;
-                const esCancelado = item.estado === 'CANCELADO';
 
                 return (
                   <article key={item.id} className="atencion-card-item">
-                    {/* Encabezado limpio: Fecha y Estado */}
+                    {/* Encabezado: Fecha y Estado */}
                     <div className="atencion-card-meta">
                       <div className="atencion-meta-left">
                         <span className="atencion-fecha-badge">
@@ -387,7 +426,7 @@ export const ModalHistorialPaciente = ({
                       </span>
                     </div>
 
-                    {/* Cuerpo limpio: Prácticas realizadas */}
+                    {/* Prácticas realizadas */}
                     <div className="atencion-card-main">
                       <div className="atencion-practica-info">
                         <span className="atencion-practica-label">
@@ -423,16 +462,21 @@ export const ModalHistorialPaciente = ({
                       </button>
                     </div>
 
-                    {/* DETALLE DESPLEGABLE: Historial completo de observaciones del turno */}
+                    {/* DETALLE DESPLEGABLE: Observaciones y fechas de auditoría integradas */}
                     {isExpanded && (
                       <div className="atencion-detalle-box">
-                        {/* 1. Motivo original de la reserva / consulta previa (siempre visible si existió) */}
+                        {/* 1. Motivo original de reserva con fecha/hora */}
                         {item.nota_previa && (
                           <div className="atencion-motivo-seccion" style={{ marginBottom: '12px' }}>
-                            <div className="atencion-detalle-header">
-                              <span className="atencion-detalle-title" style={{ color: '#0369a1' }}>
+                            <div className="atencion-detalle-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                              <span className="atencion-detalle-title" style={{ color: '#0369a1', fontWeight: 600 }}>
                                  Nota previa / Motivo de reserva:
                               </span>
+                              {item.fecha_reserva && (
+                                <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 500 }}>
+                                  {formatearFechaHoraAuditoria(item.fecha_reserva)}
+                                </span>
+                              )}
                             </div>
                             <div className="atencion-detalle-text" style={{ background: '#f0f9ff', borderLeft: '4px solid #0284c7', padding: '8px 12px', borderRadius: '4px' }}>
                               <p style={{ margin: 0, color: '#0c4a6e', fontWeight: 500 }}>{item.nota_previa}</p>
@@ -440,13 +484,18 @@ export const ModalHistorialPaciente = ({
                           </div>
                         )}
 
-                        {/* 2. Observación según el estado final */}
+                        {/* 2. Motivo de Cancelación con fecha/hora */}
                         {item.estado === 'CANCELADO' && (
                           <div className="atencion-notas-seccion" style={{ marginBottom: '12px' }}>
-                            <div className="atencion-detalle-header">
-                              <span className="atencion-detalle-title" style={{ color: '#b91c1c' }}>
+                            <div className="atencion-detalle-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                              <span className="atencion-detalle-title" style={{ color: '#b91c1c', fontWeight: 600 }}>
                                  Motivo de Cancelación:
                               </span>
+                              {item.fecha_cancelacion && (
+                                <span style={{ fontSize: '0.78rem', color: '#991b1b', fontWeight: 500 }}>
+                                  {formatearFechaHoraAuditoria(item.fecha_cancelacion)}
+                                </span>
+                              )}
                             </div>
                             <div className="atencion-detalle-text" style={{ background: '#fef2f2', borderLeft: '4px solid #ef4444', padding: '8px 12px', borderRadius: '4px' }}>
                               <p style={{ margin: 0, color: '#991b1b', fontWeight: 500 }}>
@@ -456,12 +505,18 @@ export const ModalHistorialPaciente = ({
                           </div>
                         )}
 
+                        {/* 3. Motivo de Inasistencia con fecha/hora */}
                         {item.estado === 'INASISTENTE' && (
                           <div className="atencion-notas-seccion" style={{ marginBottom: '12px' }}>
-                            <div className="atencion-detalle-header">
-                              <span className="atencion-detalle-title" style={{ color: '#b45309' }}>
+                            <div className="atencion-detalle-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                              <span className="atencion-detalle-title" style={{ color: '#b45309', fontWeight: 600 }}>
                                  Motivo de Inasistencia:
                               </span>
+                              {item.fecha_inasistencia && (
+                                <span style={{ fontSize: '0.78rem', color: '#b45309', fontWeight: 500 }}>
+                                  {formatearFechaHoraAuditoria(item.fecha_inasistencia)}
+                                </span>
+                              )}
                             </div>
                             <div className="atencion-detalle-text" style={{ background: '#fffbeb', borderLeft: '4px solid #f59e0b', padding: '8px 12px', borderRadius: '4px' }}>
                               <p style={{ margin: 0, color: '#92400e', fontWeight: 500 }}>
@@ -471,12 +526,18 @@ export const ModalHistorialPaciente = ({
                           </div>
                         )}
 
+                        {/* 4. Evolución Médica con fecha/hora */}
                         {item.estado === 'ATENDIDO' && (
                           <div className="atencion-notas-seccion" style={{ marginBottom: '12px' }}>
-                            <div className="atencion-detalle-header">
-                              <span className="atencion-detalle-title" style={{ color: '#15803d' }}>
+                            <div className="atencion-detalle-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                              <span className="atencion-detalle-title" style={{ color: '#15803d', fontWeight: 600 }}>
                                  Evolución Médica / Notas Clínicas:
                               </span>
+                              {item.fecha_atencion && (
+                                <span style={{ fontSize: '0.78rem', color: '#15803d', fontWeight: 500 }}>
+                                  {formatearFechaHoraAuditoria(item.fecha_atencion)}
+                                </span>
+                              )}
                             </div>
                             <div className="atencion-detalle-text" style={{ background: '#f0fdf4', borderLeft: '4px solid #22c55e', padding: '8px 12px', borderRadius: '4px' }}>
                               {item.nota_atencion ? (
@@ -487,56 +548,6 @@ export const ModalHistorialPaciente = ({
                                 </p>
                               )}
                             </div>
-                          </div>
-                        )}
-
-                        {/* 3. Línea de tiempo completa con todas las transiciones y fechas */}
-                        {Array.isArray(item.historial) && item.historial.length > 0 && (
-                          <div className="atencion-historial-timeline" style={{ marginTop: '16px', borderTop: '1px solid #e2e8f0', paddingTop: '12px' }}>
-                            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                              Línea de tiempo de auditoría:
-                            </span>
-                            <ul style={{ listStyle: 'none', padding: 0, margin: '8px 0 0 0', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                              {item.historial.map((h, i) => {
-                                const fechaHora = h.fecha_hora_cambio
-                                  ? new Date(h.fecha_hora_cambio).toLocaleString('es-AR', {
-                                      day: '2-digit',
-                                      month: '2-digit',
-                                      year: 'numeric',
-                                      hour: '2-digit',
-                                      minute: '2-digit',
-                                    })
-                                  : '';
-                                const nombreEstado = h.EstadoTurno?.estado || h.estado || 'Estado';
-
-                                return (
-                                  <li
-                                    key={h.id_historial || i}
-                                    style={{
-                                      display: 'flex',
-                                      alignItems: 'baseline',
-                                      gap: '8px',
-                                      fontSize: '0.86rem',
-                                      color: '#334155',
-                                      background: '#f8fafc',
-                                      padding: '6px 10px',
-                                      borderRadius: '6px',
-                                      border: '1px solid #edf2f7'
-                                    }}
-                                  >
-                                    <span style={{ fontSize: '0.78rem', color: '#64748b', whiteSpace: 'nowrap', fontFamily: 'monospace' }}>
-                                      {fechaHora}
-                                    </span>
-                                    <span style={{ fontWeight: 600, color: '#0f172a' }}>
-                                      [{nombreEstado}]:
-                                    </span>
-                                    <span style={{ flex: 1 }}>
-                                      {h.descripcion || 'Sin descripción'}
-                                    </span>
-                                  </li>
-                                );
-                              })}
-                            </ul>
                           </div>
                         )}
                       </div>
