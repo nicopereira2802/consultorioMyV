@@ -12,6 +12,7 @@ export function FormularioCrearEditar({
   agregarObraSocialForm,
   obrasSocialesLista,
   actualizarObraSocialForm,
+  eliminarObraSocialForm,
 }) {
   return (
     <form onSubmit={procesarFormulario}>
@@ -116,7 +117,7 @@ export function FormularioCrearEditar({
 
           {/* ─── SECCIÓN: OBRAS SOCIALES (MUCHAS A MUCHAS) ────────────── */}
           <div className="col-span-1 md:col-span-2 mt-2 pt-4 border-t border-gray-200">
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
               <div className="flex items-center gap-2">
                 <CreditCard size={18} className="text-[#2eb086]" />
                 <h3 className="text-sm font-bold text-gray-800">
@@ -143,7 +144,7 @@ export function FormularioCrearEditar({
                 {datosFormulario.obrasSociales.map((osItem, index) => (
                   <div
                     key={index}
-                    className="flex items-center gap-2 bg-gray-50 p-2.5 rounded-xl border border-gray-200"
+                    className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-gray-50 p-3 rounded-xl border border-gray-200"
                   >
                     {/* Selector de Obra Social */}
                     <select
@@ -156,7 +157,7 @@ export function FormularioCrearEditar({
                         )
                       }
                       required
-                      className="flex-1 border border-gray-300 p-2 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#2eb086]/50"
+                      className="w-full sm:flex-1 border border-gray-300 p-2.5 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#2eb086]/50"
                     >
                       <option value="">Seleccione obra social...</option>
                       {obrasSocialesLista.map((os) => (
@@ -169,30 +170,33 @@ export function FormularioCrearEditar({
                       ))}
                     </select>
 
-                    {/* N° de Afiliado */}
-                    <input
-                      type="text"
-                      placeholder="N° de Afiliado *"
-                      value={osItem.nro_afiliado}
-                      onChange={(e) =>
-                        actualizarObraSocialForm(
-                          index,
-                          "nro_afiliado",
-                          e.target.value,
-                        )
-                      }
-                      required
-                      className="flex-1 border border-gray-300 p-2 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#2eb086]/50"
-                    />
+                    <div className="flex items-center gap-2 w-full sm:w-auto sm:flex-1">
+                      {/* N° de Afiliado */}
+                      <input
+                        type="text"
+                        placeholder="N° de Afiliado *"
+                        value={osItem.nro_afiliado}
+                        onChange={(e) =>
+                          actualizarObraSocialForm(
+                            index,
+                            "nro_afiliado",
+                            e.target.value,
+                          )
+                        }
+                        required
+                        className="w-full border border-gray-300 p-2.5 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#2eb086]/50"
+                      />
 
-                    {/* Botón Eliminar fila de OS */}
-                    <button
-                      type="button"
-                      onClick={() => eliminarObraSocialForm(index)}
-                      className="p-2 text-gray-400 hover:text-red-500 rounded-lg hover:bg-gray-200 transition-colors"
-                    >
-                      <X size={16} />
-                    </button>
+                      {/* Botón Eliminar fila de OS */}
+                      <button
+                        type="button"
+                        onClick={() => eliminarObraSocialForm(index)}
+                        className="p-2 text-gray-400 hover:text-red-500 rounded-lg hover:bg-gray-200 transition-colors shrink-0"
+                        title="Quitar obra social"
+                      >
+                        <X size={18} />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>

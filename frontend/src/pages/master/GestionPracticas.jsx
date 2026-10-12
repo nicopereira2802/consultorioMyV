@@ -170,14 +170,13 @@ export default function GestionPracticas() {
     }
   };
 
-  // Cálculos dinámicos para los índices del texto de paginación
   const inicioRegistro = totalPracticas === 0 ? 0 : (page - 1) * 9 + 1;
   const finRegistro =
     totalPages === 0 ? 0 : page === totalPages ? totalPracticas : page * 9;
 
   return (
-    <div className="w-full flex-1 flex flex-col gap-4">
-      {/* ─── CABECERA PRINCIPAL ─────────────────────────────────── */}
+    <div className="w-full flex-1 flex flex-col gap-4 pb-24">
+      {/* ─── CABECERA PRINCIPAL CON BOTÓN EXCLUSIVO PARA PC ───────────────── */}
       <Header
         icono={FileText}
         titulo="Catálogo de Prácticas"
@@ -187,7 +186,7 @@ export default function GestionPracticas() {
           <button
             type="button"
             onClick={modalCreando}
-            className="flex items-center justify-center gap-2 bg-[#2eb086] hover:bg-[#259370] text-white px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 shadow-sm hover:shadow active:scale-95 shrink-0"
+            className="hidden sm:flex items-center justify-center gap-2 bg-[#2eb086] hover:bg-[#259370] text-white px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 shadow-sm hover:shadow active:scale-95 shrink-0"
           >
             <Plus size={18} />
             <span>Nueva Práctica</span>
@@ -196,9 +195,9 @@ export default function GestionPracticas() {
       />
 
       <div className="flex-1 w-full min-h-0 p-4 pt-0 flex flex-col gap-4">
-        {/* ─── CONTENEDOR UNIFICADO (BÚSQUEDA, TABLA Y PAGINACIÓN) ─── */}
+        {/* ─── CONTENEDOR UNIFICADO ───────────────────────────────── */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col overflow-hidden">
-          {/* 1. Barra superior interna: Contador y Buscador */}
+          {/* Barra superior */}
           <div className="p-4 border-b border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="text-sm font-medium text-gray-500">
               Mostrando {inicioRegistro} a {finRegistro} de {totalPracticas}{" "}
@@ -206,7 +205,6 @@ export default function GestionPracticas() {
             </div>
 
             <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
-              {/* Buscador conectado a la API */}
               <div className="relative flex-1 sm:w-80">
                 <Search
                   size={18}
@@ -218,7 +216,7 @@ export default function GestionPracticas() {
                   value={search}
                   onChange={(e) => {
                     setSearch(e.target.value);
-                    setPage(1); // Resetear a la página 1 al buscar
+                    setPage(1);
                   }}
                   className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2eb086]/50 focus:border-[#2eb086] transition-all"
                 />
@@ -226,15 +224,15 @@ export default function GestionPracticas() {
             </div>
           </div>
 
-          {/* 2. Cuerpo de la Tabla */}
+          {/* Tabla adaptada (Solo muestra el nombre del nomenclador) */}
           <div className="overflow-x-auto flex-1">
             <Tabla
               cargando={cargando}
               sinDatosText="No se encontraron prácticas registradas."
               columnas={[
                 { label: "Código" },
-                { label: "Tratamiento / Nomenclador" },
-                { label: "Especialidad" },
+                { label: "Tratamiento" },
+                { label: "Especialidad", className: "hidden md:table-cell" },
                 { label: "Precio Ref." },
                 { label: "Estado" },
                 { label: "Acciones", align: "center" },
@@ -245,7 +243,6 @@ export default function GestionPracticas() {
                   key={practica.id_practica}
                   className="hover:bg-gray-50/60 transition-colors"
                 >
-                  {/* Código Nomenclador */}
                   <td className="px-6 py-4">
                     <span className="inline-flex items-center gap-1 font-mono font-bold text-xs bg-gray-100 text-gray-700 px-2.5 py-1 rounded-lg border border-gray-200">
                       <Tag size={12} className="text-[#2eb086]" />
@@ -253,25 +250,21 @@ export default function GestionPracticas() {
                     </span>
                   </td>
 
-                  {/* Nombres (Referencia y Nomenclador) */}
                   <td className="px-6 py-4">
-                    <div className="flex flex-col">
-                      <span className="font-semibold text-gray-800">
-                        {practica.nombre_referencia}
-                      </span>
-                      <span className="text-xs text-gray-400">
-                        {practica.nombre_nomenclador}
-                      </span>
-                    </div>
+                    <span className="font-semibold text-gray-800 text-sm">
+                      {practica.nombre_nomenclador}
+                    </span>
+                    <br className="hidden md:block"/>
+                    <span className="hidden md:block texs-xs text-gray-400 text-sm">
+                      {practica.nombre_referencia}
+                    </span>
                   </td>
 
-                  {/* Especialidad */}
-                  <td className="px-6 py-4 text-gray-600 font-medium">
+                  <td className="hidden md:table-cell px-6 py-4 text-gray-600 font-medium text-sm">
                     {practica.especialidad}
                   </td>
 
-                  {/* Precio de Referencia */}
-                  <td className="px-6 py-4 font-semibold text-gray-800">
+                  <td className="px-6 py-4 font-semibold text-gray-800 text-sm">
                     $
                     {Number(practica.precio_referencia).toLocaleString(
                       "es-AR",
@@ -281,7 +274,6 @@ export default function GestionPracticas() {
                     )}
                   </td>
 
-                  {/* Estado */}
                   <td className="px-6 py-4">
                     {practica.activo ? (
                       <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/60">
@@ -296,7 +288,6 @@ export default function GestionPracticas() {
                     )}
                   </td>
 
-                  {/* Acciones */}
                   <td className="px-6 py-4">
                     <div className="flex items-center justify-center gap-2">
                       <button
@@ -308,7 +299,6 @@ export default function GestionPracticas() {
                         <Edit size={18} />
                       </button>
 
-                      {/* Botón Activar / Desactivar */}
                       {practica.activo ? (
                         <button
                           type="button"
@@ -335,7 +325,7 @@ export default function GestionPracticas() {
             </Tabla>
           </div>
 
-          {/* 3. Paginación Inferior integrada con selector directo */}
+          {/* Paginación */}
           <div className="flex items-center justify-between p-4 border-t border-gray-100 bg-white">
             <div className="text-xs text-gray-500">
               Página {page} de {totalPages || 1}
@@ -377,7 +367,20 @@ export default function GestionPracticas() {
         </div>
       </div>
 
-      {/* ─── MODAL CREAR / EDITAR PRÁCTICA ─────────────────────── */}
+      {/* ─── BOTÓN FLOTANTE INFERIOR DERECHO (EXCLUSIVO PARA MÓVIL) ─── */}
+      <button
+        type="button"
+        onClick={modalCreando}
+        className="fixed bottom-20 right-4 z-40 flex md:hidden items-center justify-center gap-2 bg-[#2eb086] hover:bg-[#259370] text-white px-3 py-3 rounded-full font-semibold text-sm shadow-2xl transition-all duration-300 active:scale-95 group"
+        title="Nueva Práctica"
+      >
+        <Plus
+          size={20}
+          className="transition-transform group-hover:rotate-90 duration-300"
+        />
+      </button>
+
+      {/* MODAL CREAR / EDITAR PRÁCTICA */}
       {modalAbierto && (
         <form onSubmit={procesarFormulario}>
           <Modal
@@ -387,7 +390,6 @@ export default function GestionPracticas() {
             title={editando ? "Editar Práctica" : "Nueva Práctica Odontológica"}
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Código Nomenclador */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">
                   Código Nomenclador *
@@ -403,7 +405,6 @@ export default function GestionPracticas() {
                 />
               </div>
 
-              {/* Especialidad */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">
                   Especialidad *
@@ -419,7 +420,6 @@ export default function GestionPracticas() {
                 />
               </div>
 
-              {/* Nombre Nomenclador */}
               <div className="col-span-1 md:col-span-2">
                 <label className="block text-sm font-semibold text-gray-700 mb-1">
                   Nombre Nomenclador (Oficial) *
@@ -435,7 +435,6 @@ export default function GestionPracticas() {
                 />
               </div>
 
-              {/* Nombre Referencia (Nombre Corto / Informal) */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">
                   Nombre de Referencia *
@@ -451,7 +450,6 @@ export default function GestionPracticas() {
                 />
               </div>
 
-              {/* Precio de Referencia */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">
                   Precio de Referencia ($) *
@@ -469,10 +467,8 @@ export default function GestionPracticas() {
               </div>
             </div>
 
-            {/* Separador */}
             <div className="border-t border-gray-200 my-5" />
 
-            {/* Acciones */}
             <div className="flex justify-end gap-3">
               <button
                 type="button"
@@ -492,7 +488,7 @@ export default function GestionPracticas() {
         </form>
       )}
 
-      {/* ─── MODAL CONFIRMAR CAMBIO DE ESTADO ───────────────────── */}
+      {/* MODAL CONFIRMAR CAMBIO DE ESTADO */}
       {modalEliminar && (
         <Modal
           isOpen={modalEliminar}

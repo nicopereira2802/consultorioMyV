@@ -1,5 +1,5 @@
 /** @format */
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/react/daygrid";
 import timeGridPlugin from "@fullcalendar/react/timegrid";
@@ -15,13 +15,21 @@ import "@fullcalendar/react/themes/forma/palettes/green.css";
 const VISTAS = ["timeGridDay", "timeGridWeek", "dayGridMonth"];
 
 export const AgendaCalendar = ({ turnos = [], onDateSelect, onEventClick }) => {
-  /* ─── VARIABLES GENERALES ─────────────────────────────────── */
   const calendarRef = useRef(null);
   const [vistaActual, setVistaActual] = useState(0);
+  const [esMobile, setEsMobile] = useState(window.innerWidth < 768);
 
-  /* ─── FORMATEAR TURNOS PARA QUE SEAN COMPATIBLES CON CALENDARIO ─────────────────────────────────── */
+  // Detectar cambios de pantalla para ajustar la barra del calendario
+  useEffect(() => {
+    const handleResize = () => {
+      setEsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  /* ─── FORMATEAR TURNOS ─────────────────────────────────── */
   const turnosFormateados = turnos.map((turno) => {
-    // Si el backend incluye la asociación con Paciente (e.g. turno.Paciente)
     const nombrePaciente = turno.Paciente
       ? `${turno.Paciente.nombre} ${turno.Paciente.apellido}`
       : `Paciente #${turno.id_paciente}`;
@@ -31,12 +39,10 @@ export const AgendaCalendar = ({ turnos = [], onDateSelect, onEventClick }) => {
       title: `${nombrePaciente} ${turno.notas_consulta ? `- ${turno.notas_consulta}` : ""} - ${turno.EstadoTurno.estado} `,
       start: turno.fecha_hora_inicio,
       end: turno.fecha_hora_fin,
-      // Guardamos el objeto original dentro de 'extendedProps' para recuperarlo al hacer clic
       extendedProps: { ...turno },
     };
   });
 
-  /* ─── DEFINIR LADOS PARA DESLIZAR Y CAMBIAR VISTA ─────────────────────────────────── */
   const cambiarVista = (direccion) => {
     let siguienteVista = vistaActual;
 
@@ -53,18 +59,16 @@ export const AgendaCalendar = ({ turnos = [], onDateSelect, onEventClick }) => {
     }
   };
 
-  /* ─── DEFINIR ACCIONES QUE PERMITEN DESLIZAR ─────────────────────────────────── */
   const handlers = useSwipeable({
     onSwipedLeft: () => cambiarVista("LEFT"),
     onSwipedRight: () => cambiarVista("RIGHT"),
-    preventScrollOnSwipe: true, // Evita scroll vertical accidental mientras se desliza de lado
+    preventScrollOnSwipe: true,
     trackTouch: true,
-    trackMouse: false, // Solo actúa en pantallas táctiles
+    trackMouse: false,
   });
 
-  /* ─── RETORNO DE LA PAGINA ─────────────────────────────────── */
   return (
-    <div {...handlers} className="w-full h-full bg-white ">
+    <div {...handlers} className="w-full h-full bg-white">
       <FullCalendar
         ref={calendarRef}
         plugins={[
@@ -74,11 +78,20 @@ export const AgendaCalendar = ({ turnos = [], onDateSelect, onEventClick }) => {
           interactionPlugin,
         ]}
         initialView="timeGridDay"
-        headerToolbar={{
-          left: "prev,next today",
-          center: "title",
-          right: "timeGridDay,timeGridWeek,dayGridMonth",
-        }}
+        // Adaptamos la botonera superior para móviles (botones más compactos o separados)
+        headerToolbar={
+          esMobile
+            ? {
+                left: "prev,next",
+                center: "title",
+                right: "timeGridDay,timeGridWeek,dayGridMonth",
+              }
+            : {
+                left: "prev,next today",
+                center: "title",
+                right: "timeGridDay,timeGridWeek,dayGridMonth",
+              }
+        }
         locale={esLocale}
         firstDay={1}
         slotMinTime="08:00:00"

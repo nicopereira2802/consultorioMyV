@@ -1,53 +1,34 @@
-import { useState } from "react";
-import { NavLink, useLocation } from "react-router-dom";
-import { DollarSign, CalendarPlus, Calendar, Users, FileText } from "lucide-react";
+/** @format */
 
-// Estructura declarativa de items idéntica a la convención de Sidebar
-const NAV_ITEMS = [
-  {
-    id: "pagos",
-    label: "Pagos",
-    Icon: DollarSign,
-    disabled: true,
-  },
-  {
-    id: "nuevo-turno",
-    label: "Turno",
-    Icon: CalendarPlus,
-    disabled: true,
-  },
-  {
-    id: "agenda",
-    to: "/",
-    label: "Agenda",
-    Icon: Calendar,
-  },
-  {
-    id: "pacientes",
-    to: "/pacientes",
-    label: "Pacientes",
-    Icon: Users,
-  },
-  {
-    id: "practicas",
-    to: "/practicas",
-    label: "Prácticas",
-    Icon: FileText,
-  },
-];
+import { useState, useRef, useEffect } from "react";
+import { NavLink, useLocation } from "react-router-dom";
+import {
+  Calendar,
+  CalendarClock,
+  FileText,
+  Users,
+  Settings,
+  Shield,
+  ChevronUp,
+} from "lucide-react";
 
 export const Bottombar = () => {
   const location = useLocation();
-  const [toastMsg, setToastMsg] = useState("");
+  const [dropdownAbierto, setDropdownAbierto] = useState(false);
+  const dropdownRef = useRef(null);
 
-  const mostrarToast = (mensaje = "Función no disponible") => {
-    setToastMsg(mensaje);
-    setTimeout(() => {
-      setToastMsg("");
-    }, 2500);
-  };
+  // Cerrar el dropdown si se hace clic fuera de él
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdownAbierto(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
-  // Función helper para determinar si un NavLink está activo (contemplando sub-rutas como /registrar-paciente)
+  // Función helper para determinar si un NavLink está activo (contemplando sub-rutas)
   const checkIsActive = (itemTo) => {
     const currentPath = location.pathname;
     if (!itemTo) return false;
@@ -58,77 +39,151 @@ export const Bottombar = () => {
         currentPath.startsWith("/atencion")
       );
     }
-    if (itemTo === "/pacientes") {
-      return (
-        currentPath.startsWith("/pacientes") ||
-        currentPath === "/registrar-paciente"
-      );
-    }
     return currentPath.startsWith(itemTo);
   };
 
+  // Verificar si alguna ruta de configuración está activa para iluminar el botón principal
+  const isConfigActive =
+    location.pathname.startsWith("/configuracion") ||
+    location.pathname.startsWith("/obras-sociales") ||
+    location.pathname.startsWith("/practicas");
+
   return (
     <>
-      {/* Toast Flotante Informativo */}
-      {toastMsg && (
-        <aside
-          className="fixed bottom-24 left-1/2 -translate-x-1/2 z-1050 bg-slate-900/90 backdrop-blur-md text-white px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap shadow-xl border border-white/10 pointer-events-none transition-all duration-200"
-          role="status"
-          aria-live="polite"
+      {/* ─── MENÚ DESPLEGABLE DE CONFIGURACIÓN (Flotante hacia arriba) ─── */}
+      {dropdownAbierto && (
+        <div
+          ref={dropdownRef}
+          className="fixed bottom-16 right-2 z-10001 w-52 bg-[#3B7A94] border border-white/20 rounded-2xl shadow-2xl p-2 flex flex-col gap-1 animate-in fade-in slide-in-from-bottom-2 duration-200"
         >
-          {toastMsg}
-        </aside>
+          <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-white/60 border-b border-white/10 mb-1">
+            Configuración
+          </div>
+
+          <NavLink
+            to="/configuracion/obras-sociales"
+            onClick={() => setDropdownAbierto(false)}
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-colors ${
+                isActive
+                  ? "bg-white/20 text-white shadow-sm"
+                  : "text-white/80 hover:bg-white/10 hover:text-white"
+              }`
+            }
+          >
+            <Shield size={18} className="shrink-0 text-white/80" />
+            <span>Obras Sociales</span>
+          </NavLink>
+
+          <NavLink
+            to="/configuracion/practicas"
+            onClick={() => setDropdownAbierto(false)}
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-colors ${
+                isActive
+                  ? "bg-white/20 text-white shadow-sm"
+                  : "text-white/80 hover:bg-white/10 hover:text-white"
+              }`
+            }
+          >
+            <FileText size={18} className="shrink-0 text-white/80" />
+            <span>Prácticas</span>
+          </NavLink>
+        </div>
       )}
 
-      {/* Navegación Inferior Flotante (Píldora estilo App Moderna) */}
-      <div className="fixed bottom-3 left-0 right-0 z-10000 px-4 flex justify-center md:hidden pointer-events-none">
+      {/* ─── BARRA DE NAVEGACIÓN INFERIOR ─── */}
+      <div className="fixed bottom-0 left-0 right-0 z-10000 md:hidden bg-[#3B7A94] border-t border-white/15 shadow-[0_-4px_20px_rgba(0,0,0,0.15)]">
         <nav
-          className="w-full max-w-md bg-white/95 backdrop-blur-lg border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.12)] rounded-2xl px-2 py-2 flex items-center justify-between pointer-events-auto transition-all duration-300"
+          className="w-full px-2 py-1.5 flex items-center justify-around"
           aria-label="Navegación inferior móvil M&V"
         >
-          {NAV_ITEMS.map(({ id, to, label, Icon, disabled }) => {
-            // Si el ítem es deshabilitado (ej. Pagos o Nuevo Turno), renderiza botón con Toast
-            if (disabled) {
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => mostrarToast("Función no disponible")}
-                  aria-label={label}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-gray-500 hover:text-gray-800 hover:bg-gray-50 transition-all duration-300 touch-manipulation select-none active:scale-95"
-                >
-                  <Icon size={20} className="transition-transform duration-200" />
-                </button>
-              );
-            }
+          {/* 1. Cobros (Izquierda) */}
+          <NavLink
+            to="/cobros"
+            aria-label="Cobros"
+            className={`flex flex-col items-center justify-center py-1.5 px-2.5 rounded-xl transition-all duration-200 touch-manipulation select-none active:scale-95 ${
+              checkIsActive("/cobros")
+                ? "bg-white/20 text-white shadow-sm font-semibold"
+                : "text-white/80 hover:bg-white/10 hover:text-white"
+            }`}
+          >
+            <FileText size={20} />
+            <span className="text-[10px] font-medium leading-tight mt-1">
+              Cobros
+            </span>
+          </NavLink>
 
-            const isActive = checkIsActive(to);
+          {/* 2. Turnos (Izquierda) */}
+          <NavLink
+            to="/turnos"
+            aria-label="Turnos"
+            className={`flex flex-col items-center justify-center py-1.5 px-2.5 rounded-xl transition-all duration-200 touch-manipulation select-none active:scale-95 ${
+              checkIsActive("/turnos")
+                ? "bg-white/20 text-white shadow-sm font-semibold"
+                : "text-white/80 hover:bg-white/10 hover:text-white"
+            }`}
+          >
+            <CalendarClock size={20} />
+            <span className="text-[10px] font-medium leading-tight mt-1">
+              Turnos
+            </span>
+          </NavLink>
 
-            return (
-              <NavLink
-                key={id}
-                to={to}
-                aria-label={label}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl transition-all duration-300 touch-manipulation select-none active:scale-95 ${
-                  isActive
-                    ? "bg-[#2eb086] text-white shadow-md shadow-[#2eb086]/30 font-semibold"
-                    : "text-gray-500 hover:text-gray-800 hover:bg-gray-50"
-                }`}
-              >
-                <Icon
-                  size={20}
-                  className={`transition-transform duration-200 ${
-                    isActive ? "scale-105" : ""
-                  }`}
-                />
-                {isActive && (
-                  <span className="text-xs font-medium leading-none animate-in fade-in zoom-in-95 duration-200">
-                    {label}
-                  </span>
-                )}
-              </NavLink>
-            );
-          })}
+          {/* 3. Agenda (Centro - Destacado) */}
+          <NavLink
+            to="/"
+            aria-label="Agenda"
+            className={`flex flex-col items-center justify-center py-1.5 px-3 rounded-xl transition-all duration-200 touch-manipulation select-none active:scale-95 ${
+              checkIsActive("/")
+                ? "bg-white/25 text-white shadow-md font-bold"
+                : "text-white/90 hover:bg-white/10 hover:text-white"
+            }`}
+          >
+            <Calendar size={22} className="text-white" />
+            <span className="text-[10px] font-bold leading-tight mt-1">
+              Agenda
+            </span>
+          </NavLink>
+
+          {/* 4. Pacientes (Derecha) */}
+          <NavLink
+            to="/pacientes"
+            aria-label="Pacientes"
+            className={`flex flex-col items-center justify-center py-1.5 px-2.5 rounded-xl transition-all duration-200 touch-manipulation select-none active:scale-95 ${
+              checkIsActive("/pacientes")
+                ? "bg-white/20 text-white shadow-sm font-semibold"
+                : "text-white/80 hover:bg-white/10 hover:text-white"
+            }`}
+          >
+            <Users size={20} />
+            <span className="text-[10px] font-medium leading-tight mt-1">
+              Pacientes
+            </span>
+          </NavLink>
+
+          {/* 5. Configuración (Derecha - Desplegable) */}
+          <button
+            type="button"
+            onClick={() => setDropdownAbierto(!dropdownAbierto)}
+            aria-label="Configuración"
+            className={`flex flex-col items-center justify-center py-1.5 px-2.5 rounded-xl transition-all duration-200 touch-manipulation select-none active:scale-95 ${
+              isConfigActive || dropdownAbierto
+                ? "bg-white/20 text-white shadow-sm font-semibold"
+                : "text-white/80 hover:bg-white/10 hover:text-white"
+            }`}
+          >
+            <div className="relative flex items-center justify-center">
+              <Settings size={20} />
+              <ChevronUp
+                size={10}
+                className={`absolute -bottom-1 -right-1 transition-transform duration-200 ${dropdownAbierto ? "rotate-180" : ""}`}
+              />
+            </div>
+            <span className="text-[10px] font-medium leading-tight mt-1">
+              Config
+            </span>
+          </button>
         </nav>
       </div>
     </>

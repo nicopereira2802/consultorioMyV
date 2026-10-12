@@ -36,10 +36,6 @@ export default function GestionPacientes() {
   const [editando, setEditando] = useState(false);
   const [pacienteSeleccionado, setPacienteSeleccionado] = useState(null);
 
-  /* 
-    Formulario del paciente con sub-lista dinámica para manejar
-    la relación N:M con PacienteObraSocial
-  */
   const [datosFormulario, setDatosFormulario] = useState({
     nombre: "",
     apellido: "",
@@ -47,7 +43,7 @@ export default function GestionPacientes() {
     fecha_nacimiento: "",
     telefono: "",
     domicilio: "",
-    obrasSociales: [], // Array de objetos { id_obra_social, nro_afiliado }
+    obrasSociales: [],
   });
 
   /* ─── USE-EFFECTS ─────────────────────────────────── */
@@ -55,12 +51,10 @@ export default function GestionPacientes() {
     buscarObrasSociales();
   }, []);
 
-  // Recargar pacientes al cambiar página, búsqueda u orden
   useEffect(() => {
     buscarPacientes();
   }, [page, search, order]);
 
-  // Manejo de parámetros en la URL para auto-abrir modal de edición (por ejemplo, desde la agenda)
   useEffect(() => {
     const idParaEditar = searchParams.get("editarId");
 
@@ -89,7 +83,6 @@ export default function GestionPacientes() {
         },
       });
       setPacientes(respuesta.data.data || []);
-      // Mapeo seguro de metadatos de paginación del backend
       setPage(respuesta.data.meta?.page || page);
       setTotalPages(respuesta.data.meta?.totalPages || 1);
       setTotalPacientes(respuesta.data.meta?.total || 0);
@@ -128,7 +121,6 @@ export default function GestionPacientes() {
     setEditando(true);
     setPacienteSeleccionado(paciente);
 
-    // Cargar las obras sociales asociadas a este paciente si existen
     let obrasSocialesPaciente = [];
     try {
       const resOS = await api.get("/pacientes-por-obras-sociales");
@@ -231,7 +223,6 @@ export default function GestionPacientes() {
           resCrear.data.data?.id_paciente || resCrear.data.id_paciente;
       }
 
-      // Procesar asignación de obras sociales si se seleccionaron
       if (datosFormulario.obrasSociales.length > 0 && idPacienteGuardado) {
         for (const os of datosFormulario.obrasSociales) {
           if (os.id_obra_social && os.nro_afiliado) {
@@ -269,14 +260,13 @@ export default function GestionPacientes() {
     }
   };
 
-  // Cálculos dinámicos para los índices del texto de paginación
   const inicioRegistro = totalPacientes === 0 ? 0 : (page - 1) * 9 + 1;
   const finRegistro =
     totalPacientes === 0 ? 0 : page === totalPages ? totalPacientes : page * 9;
 
   return (
-    <div className="w-full flex-1 flex flex-col gap-4">
-      {/* ─── CABECERA PRINCIPAL ─────────────────────────────────── */}
+    <div className="w-full flex-1 flex flex-col gap-4 pb-24">
+      {/* ─── CABECERA PRINCIPAL CON BOTÓN EXCLUSIVO PARA PC ───────────────── */}
       <Header
         icono={Users}
         titulo="Gestión de Pacientes"
@@ -286,7 +276,7 @@ export default function GestionPacientes() {
           <button
             type="button"
             onClick={modalCreando}
-            className="flex items-center justify-center gap-2 bg-[#2eb086] hover:bg-[#259370] text-white px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 shadow-sm hover:shadow active:scale-95 shrink-0"
+            className="hidden sm:flex items-center justify-center gap-2 bg-[#2eb086] hover:bg-[#259370] text-white px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 shadow-sm hover:shadow active:scale-95 shrink-0"
           >
             <Plus size={18} />
             <span>Nuevo Paciente</span>
@@ -295,9 +285,9 @@ export default function GestionPacientes() {
       />
 
       <div className="flex-1 w-full min-h-0 p-4 pt-0 flex flex-col gap-4">
-        {/* ─── CONTENEDOR UNIFICADO (BÚSQUEDA, TABLA Y PAGINACIÓN) ─── */}
+        {/* ─── CONTENEDOR UNIFICADO ───────────────────────────────── */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col overflow-hidden">
-          {/* 1. Barra superior interna: Contador y Buscador */}
+          {/* Barra superior */}
           <div className="p-4 border-b border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="text-sm font-medium text-gray-500">
               Mostrando {inicioRegistro} a {finRegistro} de {totalPacientes}{" "}
@@ -305,7 +295,6 @@ export default function GestionPacientes() {
             </div>
 
             <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
-              {/* Buscador conectado a la API */}
               <div className="relative flex-1 sm:w-80">
                 <Search
                   size={18}
@@ -317,7 +306,7 @@ export default function GestionPacientes() {
                   value={search}
                   onChange={(e) => {
                     setSearch(e.target.value);
-                    setPage(1); // Resetear a la página 1 al buscar
+                    setPage(1);
                   }}
                   className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2eb086]/50 focus:border-[#2eb086] transition-all"
                 />
@@ -325,7 +314,7 @@ export default function GestionPacientes() {
             </div>
           </div>
 
-          {/* 2. Cuerpo de la Tabla */}
+          {/* Tabla adaptada (Avatar oculto en móvil, "F. Nac." abreviado) */}
           <div className="overflow-x-auto flex-1">
             <Tabla
               cargando={cargando}
@@ -334,7 +323,7 @@ export default function GestionPacientes() {
                 { label: "Paciente" },
                 { label: "DNI" },
                 { label: "Teléfono" },
-                { label: "F. Nacimiento" },
+                { label: "F. Nac." },
                 { label: "Domicilio" },
                 { label: "Acciones", align: "center" },
               ]}
@@ -344,10 +333,9 @@ export default function GestionPacientes() {
                   key={paciente.id_paciente}
                   className="hover:bg-gray-50/60 transition-colors"
                 >
-                  {/* Nombre y Apellido */}
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-[#e8f7f1] text-[#2eb086] flex items-center justify-center font-bold text-sm shrink-0">
+                      <div className="hidden md:flex w-9 h-9 rounded-full bg-[#e8f7f1] text-[#2eb086] items-center justify-center font-bold text-sm shrink-0">
                         {paciente.nombre?.charAt(0)}
                         {paciente.apellido?.charAt(0)}
                       </div>
@@ -359,14 +347,12 @@ export default function GestionPacientes() {
                     </div>
                   </td>
 
-                  {/* DNI */}
                   <td className="px-6 py-4 text-gray-600 font-medium">
                     {paciente.dni || (
                       <span className="text-gray-400 italic">S/D</span>
                     )}
                   </td>
 
-                  {/* Teléfono */}
                   <td className="px-6 py-4 text-gray-600">
                     <div className="flex items-center gap-1.5">
                       <Phone size={14} className="text-gray-400" />
@@ -374,19 +360,16 @@ export default function GestionPacientes() {
                     </div>
                   </td>
 
-                  {/* Fecha Nacimiento */}
-                  <td className="px-6 py-4 text-gray-600">
+                  <td className="px-6 py-4 text-gray-600 whitespace-nowrap">
                     {formatFechaTabla(paciente.fecha_nacimiento)}
                   </td>
 
-                  {/* Domicilio */}
                   <td className="px-6 py-4 text-gray-600 max-w-xs truncate">
                     {paciente.domicilio || (
                       <span className="text-gray-400 italic">S/D</span>
                     )}
                   </td>
 
-                  {/* Acciones */}
                   <td className="px-6 py-4">
                     <div className="flex items-center justify-center gap-2">
                       <button
@@ -412,7 +395,7 @@ export default function GestionPacientes() {
             </Tabla>
           </div>
 
-          {/* 3. Paginación Inferior integrada con selector directo de página */}
+          {/* Paginación */}
           <div className="flex items-center justify-between p-4 border-t border-gray-100 bg-white">
             <div className="text-xs text-gray-500">
               Página {page} de {totalPages || 1}
@@ -426,7 +409,6 @@ export default function GestionPacientes() {
                 Anterior
               </button>
 
-              {/* Selector directo de página */}
               <select
                 value={page}
                 onChange={(e) => setPage(Number(e.target.value))}
@@ -455,7 +437,20 @@ export default function GestionPacientes() {
         </div>
       </div>
 
-      {/* ─── MODALES ────────────────────────────────────────────── */}
+      {/* ─── BOTÓN FLOTANTE INFERIOR DERECHO (EXCLUSIVO PARA MÓVIL) ─── */}
+      <button
+        type="button"
+        onClick={modalCreando}
+        className="fixed bottom-20 right-4 z-40 flex md:hidden items-center justify-center gap-2 bg-[#2eb086] hover:bg-[#259370] text-white px-3 py-3 rounded-full font-semibold text-sm shadow-2xl transition-all duration-300 active:scale-95 group"
+        title="Nuevo Paciente"
+      >
+        <Plus
+          size={20}
+          className="transition-transform group-hover:rotate-90 duration-300"
+        />
+      </button>
+
+      {/* Modales */}
       {modalAbierto && (
         <FormularioCrearEditar
           procesarFormulario={procesarFormulario}
@@ -467,6 +462,7 @@ export default function GestionPacientes() {
           agregarObraSocialForm={agregarObraSocialForm}
           obrasSocialesLista={obrasSocialesLista}
           actualizarObraSocialForm={actualizarObraSocialForm}
+          eliminarObraSocialForm={eliminarObraSocialForm}
         />
       )}
 

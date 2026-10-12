@@ -57,6 +57,7 @@ const estadosMap = {
     icon: UserRoundX,
   },
 };
+
 export default function GestionTurnos() {
   /* ─── ESTADOS GENERALES ─────────────────────────────────── */
   const [turnos, setTurnos] = useState([]);
@@ -69,6 +70,7 @@ export default function GestionTurnos() {
   const [page, setPage] = useState(1);
   const [totalTurnos, setTotalTurnos] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [limit, setLimit] = useState(9);
   const [search, setSearch] = useState("");
   const [order, setOrder] = useState({ column: "id_turno", direction: "ASC" });
   const [estadoFiltrado, setEstadoFiltrado] = useState("all");
@@ -460,8 +462,8 @@ export default function GestionTurnos() {
     totalTurnos === 0 ? 0 : page === totalPages ? totalTurnos : page * 9;
 
   return (
-    <div className="w-full flex-1 flex flex-col gap-4">
-      {/* ─── CABECERA PRINCIPAL ─────────────────────────────────── */}
+    <div className="w-full flex flex-col gap-4 pb-24">
+      {/* ─── CABECERA PRINCIPAL CON BOTÓN EXCLUSIVO PARA PC ───────────────── */}
       <Header
         icono={CalendarClock}
         titulo="Gestión de Turnos"
@@ -471,7 +473,7 @@ export default function GestionTurnos() {
           <button
             type="button"
             onClick={modalCreando}
-            className="flex items-center justify-center gap-2 bg-[#2eb086] hover:bg-[#259370] text-white px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 shadow-sm hover:shadow active:scale-95 shrink-0"
+            className="sm:flex items-center justify-center gap-2 bg-[#2eb086] hover:bg-[#259370] text-white px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 shadow-sm hover:shadow active:scale-95 shrink-0"
           >
             <Plus size={18} />
             <span>Agendar Turno</span>
@@ -479,7 +481,7 @@ export default function GestionTurnos() {
         }
       />
 
-      <div className="flex-1 w-full min-h-0 p-4 pt-0 flex flex-col gap-4">
+      <div className="w-full px-4 flex flex-col gap-4">
         {/* ─── CONTENEDOR UNIFICADO ───────────────────────────────── */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col overflow-hidden">
           {/* Barra superior */}
@@ -525,18 +527,18 @@ export default function GestionTurnos() {
             </div>
           </div>
 
-          {/* Tabla */}
-          <div className="overflow-x-auto flex-1">
+          {/* Tabla adaptable (ID, Avatar, Precio y Notas ocultos en móvil, visibles en PC) */}
+          <div className="overflow-x-auto w-full">
             <Tabla
               cargando={cargando}
               sinDatosText="No se encontraron turnos registrados."
               columnas={[
-                { label: "ID" },
+                { label: "ID", className: "hidden md:table-cell" },
                 { label: "Paciente" },
                 { label: "Fecha y Hora" },
-                { label: "Precio ($)" },
+                { label: "Precio ($)", className: "hidden md:table-cell" },
                 { label: "Estado" },
-                { label: "Notas de la consulta" },
+                { label: "Notas", className: "hidden md:table-cell" },
                 { label: "Acciones", align: "center" },
               ]}
             >
@@ -554,24 +556,26 @@ export default function GestionTurnos() {
                     key={turno.id_turno}
                     className="hover:bg-gray-50/60 transition-colors"
                   >
-                    <td className="px-6 py-4 font-semibold text-gray-500 w-16">
+                    {/* ID (Solo PC) */}
+                    <td className="hidden md:table-cell px-5 py-4 font-semibold text-gray-500 w-16 text-xs">
                       #{turno.id_turno}
                     </td>
 
-                    <td className="px-6 py-4">
+                    {/* Paciente (Con avatar en PC, limpio en móvil) */}
+                    <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-[#e8f7f1] text-[#2eb086] flex items-center justify-center font-bold text-sm shrink-0">
+                        <div className="hidden md:flex w-8 h-8 rounded-full bg-[#e8f7f1] text-[#2eb086] items-center justify-center font-bold text-xs shrink-0">
                           {turno.Paciente?.nombre?.charAt(0) || "P"}
                           {turno.Paciente?.apellido?.charAt(0) || ""}
                         </div>
                         <div className="flex flex-col">
-                          <span className="font-semibold text-gray-800">
+                          <span className="font-semibold text-gray-800 text-sm">
                             {turno.Paciente
                               ? `${turno.Paciente.nombre} ${turno.Paciente.apellido}`
                               : `Paciente #${turno.id_paciente}`}
                           </span>
                           {turno.Paciente?.dni && (
-                            <span className="text-xs text-gray-400">
+                            <span className="text-xs text-gray-400 mt-0.5">
                               DNI: {turno.Paciente.dni}
                             </span>
                           )}
@@ -579,41 +583,30 @@ export default function GestionTurnos() {
                       </div>
                     </td>
 
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    {/* Fecha y Hora */}
+                    <td className="px-5 py-4 whitespace-nowrap">
                       <div className="flex flex-col space-y-0.5">
-                        {/* Fecha principal */}
                         <span className="text-sm font-semibold text-gray-900">
                           {formatFechaTabla(turno.fecha_hora_inicio)}
                         </span>
-                        {/* Rango de horas en una sola línea */}
-                        <span className="text-xs font-medium text-gray-500 flex items-center gap-1.5">
-                          <svg
-                            className="w-3.5 h-3.5 text-gray-400"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                          </svg>
+                        <span className="text-xs font-medium text-gray-500 flex items-center gap-1">
+                          <Clock size={12} className="text-gray-400" />
                           {formatSoloHora(turno.fecha_hora_inicio)} -{" "}
                           {formatSoloHora(turno.fecha_hora_fin)} hs
                         </span>
                       </div>
                     </td>
 
-                    <td className="px-6 py-4 font-semibold text-gray-800">
+                    {/* Precio (Solo PC) */}
+                    <td className="hidden md:table-cell px-5 py-4 font-semibold text-gray-800 text-sm">
                       $
                       {Number(turno.precio_final).toLocaleString("es-AR", {
                         minimumFractionDigits: 2,
                       })}
                     </td>
 
-                    <td className="px-6 py-4">
+                    {/* Estado */}
+                    <td className="px-5 py-4">
                       <span
                         className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${estadoInfo.color}`}
                       >
@@ -622,15 +615,16 @@ export default function GestionTurnos() {
                       </span>
                     </td>
 
-                    <td className="px-6 py-4 text-gray-500 max-w-xs truncate">
+                    {/* Notas (Solo PC) */}
+                    <td className="hidden md:table-cell px-5 py-4 text-gray-500 text-xs max-w-[200px] truncate">
                       {turno.notas_consulta || (
                         <span className="text-gray-300 italic">Sin notas</span>
                       )}
                     </td>
 
                     {/* Acciones compactas + Menú desplegable */}
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-center gap-1.5 relative">
+                    <td className="px-5 py-4 text-right">
+                      <div className="flex items-center justify-end gap-1.5 relative">
                         {/* Botón Ver */}
                         <button
                           type="button"
@@ -661,7 +655,7 @@ export default function GestionTurnos() {
                           <Trash2 size={18} />
                         </button>
 
-                        {/* Menú Desplegable (Dropdown) para acciones secundarias si está Programado */}
+                        {/* Menú Desplegable (Dropdown) para acciones secundarias */}
                         {turno.EstadoTurno.estado === "Programado" && (
                           <div className="relative menu-acciones-container">
                             <button
@@ -677,12 +671,14 @@ export default function GestionTurnos() {
                               <MoreVertical size={18} />
                             </button>
 
-                            {/* Contenido del menú flotante */}
                             {menuEstaAbierto && (
                               <div
-                                className={`absolute right-0 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1.5 z-50 flex flex-col`}
+                                className={`absolute right-0 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1.5 z-50 flex flex-col ${
+                                  esUltimasFilas
+                                    ? "bottom-full mb-2"
+                                    : "top-full mt-2"
+                                }`}
                               >
-                                {" "}
                                 <button
                                   type="button"
                                   onClick={() => {
@@ -691,7 +687,7 @@ export default function GestionTurnos() {
                                   }}
                                   className="flex items-center gap-2 px-4 py-2 text-xs font-medium text-emerald-700 hover:bg-emerald-50 transition-colors text-left"
                                 >
-                                  <CheckSquare size={15} />
+                                  <CheckSquare size={16} />
                                   <span>Atender Turno</span>
                                 </button>
                                 <button
@@ -702,7 +698,7 @@ export default function GestionTurnos() {
                                   }}
                                   className="flex items-center gap-2 px-4 py-2 text-xs font-medium text-red-600 hover:bg-red-50 transition-colors text-left"
                                 >
-                                  <X size={15} />
+                                  <X size={16} />
                                   <span>Cancelar Turno</span>
                                 </button>
                                 <button
@@ -713,14 +709,14 @@ export default function GestionTurnos() {
                                   }}
                                   className="flex items-center gap-2 px-4 py-2 text-xs font-medium hover:bg-[#f0f6f9] text-[#2b5d73] transition-colors text-left"
                                 >
-                                  <UserRoundX size={15} />
-                                  <span>Turno Inasistido</span>
+                                  <UserRoundX size={16} />
+                                  <span>Inasistente</span>
                                 </button>
                               </div>
                             )}
                           </div>
                         )}
-                        {/* Menú Desplegable (Dropdown) para acciones secundarias si está Atendido */}
+
                         {turno.EstadoTurno.estado === "Atendido" && (
                           <div className="relative menu-acciones-container">
                             <button
@@ -736,10 +732,13 @@ export default function GestionTurnos() {
                               <MoreVertical size={18} />
                             </button>
 
-                            {/* Contenido del menú flotante */}
                             {menuEstaAbierto && (
                               <div
-                                className={`absolute right-0 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1.5 z-50 flex flex-col `}
+                                className={`absolute right-0 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1.5 z-50 flex flex-col ${
+                                  esUltimasFilas
+                                    ? "bottom-full mb-2"
+                                    : "top-full mt-2"
+                                }`}
                               >
                                 <button
                                   type="button"
@@ -748,7 +747,7 @@ export default function GestionTurnos() {
                                   }}
                                   className="flex items-center gap-2 px-4 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors text-left"
                                 >
-                                  <BanknoteArrowDown size={15} />
+                                  <BanknoteArrowDown size={16} />
                                   <span>Cobrar</span>
                                 </button>
                               </div>
@@ -804,6 +803,19 @@ export default function GestionTurnos() {
           </div>
         </div>
       </div>
+
+      {/* ─── BOTÓN FLOTANTE INFERIOR DERECHO (EXCLUSIVO PARA MÓVIL, SEPARADO DEL BOTTOMBAR) ─── */}
+      <button
+        type="button"
+        onClick={modalCreando}
+        className="fixed bottom-20 right-4 z-40 flex md:hidden items-center justify-center gap-2 bg-[#2eb086] hover:bg-[#259370] text-white px-3 py-3 rounded-full font-semibold text-sm shadow-2xl transition-all duration-300 active:scale-95 group"
+        title="Agendar Turno"
+      >
+        <Plus
+          size={20}
+          className="transition-transform group-hover:rotate-90 duration-300"
+        />
+      </button>
 
       {/* Modales */}
       <VistaTurno

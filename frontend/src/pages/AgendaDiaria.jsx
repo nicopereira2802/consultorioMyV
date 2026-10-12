@@ -393,28 +393,18 @@ export default function AgendaDiaria() {
 
   /* ─── RETORNO DE LA PAGINA ─────────────────────────────────── */
   return (
-    <div className="w-full h-[calc(110vh-6rem)] flex flex-col gap-4">
+    <div className="w-full h-screen flex flex-col pb-20 md:pb-0">
       {/* ─── CABECERA PRINCIPAL ─────────────────────────────────── */}
       <Header
         icono={Calendar}
         titulo="Agenda de Turnos"
         subtitulo="Gestión horaria y turnos del consultorio odontológico"
         badge={formatFechaCortaTexto(new Date())}
-        botonAccion={
-          <button
-            type="button"
-            onClick={modalCreando}
-            className="flex items-center justify-center gap-2 bg-[#2eb086] hover:bg-[#259370] text-white px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 shadow-sm hover:shadow active:scale-95 shrink-0"
-          >
-            <Plus size={18} />
-            <span>Nuevo Turno</span>
-          </button>
-        }
       />
 
       {/* ─── ADVERTENCIA DINÁMICA DE PACIENTES INCOMPLETOS ──────── */}
       {advertenciaVisible && pacientesIncompletos.length > 0 && (
-        <div className="mx-4 px-4 py-3 bg-amber-50 border border-amber-200 rounded-xl flex flex-col gap-2 text-amber-800 shadow-sm transition-all duration-200">
+        <div className="mx-4 mt-2 px-4 py-3 bg-amber-50 border border-amber-200 rounded-xl flex flex-col gap-2 text-amber-800 shadow-sm transition-all duration-200 shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
@@ -467,9 +457,9 @@ export default function AgendaDiaria() {
         </div>
       )}
 
-      {/* ─── CONTENEDOR DEL CALENDARIO ─────────────────────────── */}
-      <div className="flex-1 w-full min-h-0 p-4 pt-0 text-black">
-        <div className="w-full h-full bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden p-4">
+      {/* ─── CONTENEDOR DEL CALENDARIO (OCUPA TODO EL ESPACIO RESTANTE) ─── */}
+      <div className="flex-1 w-full min-h-0 p-2 md:p-4 text-black flex flex-col">
+        <div className="w-full h-full bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden p-2 md:p-4 flex flex-col">
           <AgendaCalendario
             turnos={turnos}
             onDateSelect={modalCreando}
@@ -478,7 +468,7 @@ export default function AgendaDiaria() {
         </div>
       </div>
 
-      {/* ─── MODAL CREAR / EDITAR TURNO ─────────────────────────── */}
+      {/* ─── MODALES ─────────────────────────────────────────── */}
       {modalAbierto && (
         <FormularioCrearEditar
           modalAbierto={modalAbierto}
@@ -496,7 +486,6 @@ export default function AgendaDiaria() {
         />
       )}
 
-      {/* ─── MODAL: MARCAR COMO ATENDIDO Y REGISTRAR PRÁCTICAS ──── */}
       {modalAtenderAbierto && (
         <FormularioAtender
           modalAtenderAbierto={modalAtenderAbierto}
@@ -513,7 +502,6 @@ export default function AgendaDiaria() {
         />
       )}
 
-      {/* ─── MODAL: MARCAR COMO CANCELADO O INASISTENTE ──── */}
       {modalCancelarAbierto && (
         <FormularioCancelar
           modalCancelarAbierto={modalCancelarAbierto}

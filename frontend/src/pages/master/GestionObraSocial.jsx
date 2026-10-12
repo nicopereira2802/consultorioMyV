@@ -156,14 +156,17 @@ export default function GestionObrasSociales() {
     }
   };
 
-  // Cálculos dinámicos para los índices del texto de paginación
   const inicioRegistro = totalObrasSociales === 0 ? 0 : (page - 1) * 9 + 1;
   const finRegistro =
-    totalObrasSociales === 0 ? 0 : page === totalPages ? totalObrasSociales : page * 9;
+    totalObrasSociales === 0
+      ? 0
+      : page === totalPages
+        ? totalObrasSociales
+        : page * 9;
 
   return (
-    <div className="w-full flex-1 flex flex-col gap-4">
-      {/* ─── CABECERA PRINCIPAL ─────────────────────────────────── */}
+    <div className="w-full flex-1 flex flex-col gap-4 pb-24">
+      {/* ─── CABECERA PRINCIPAL CON BOTÓN EXCLUSIVO PARA PC ───────────────── */}
       <Header
         icono={Shield}
         titulo="Catálogo de Obras Sociales"
@@ -173,7 +176,7 @@ export default function GestionObrasSociales() {
           <button
             type="button"
             onClick={modalCreando}
-            className="flex items-center justify-center gap-2 bg-[#2eb086] hover:bg-[#259370] text-white px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 shadow-sm hover:shadow active:scale-95 shrink-0"
+            className="hidden sm:flex items-center justify-center gap-2 bg-[#2eb086] hover:bg-[#259370] text-white px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 shadow-sm hover:shadow active:scale-95 shrink-0"
           >
             <Plus size={18} />
             <span>Nueva Obra Social</span>
@@ -182,9 +185,9 @@ export default function GestionObrasSociales() {
       />
 
       <div className="flex-1 w-full min-h-0 p-4 pt-0 flex flex-col gap-4">
-        {/* ─── CONTENEDOR UNIFICADO (BÚSQUEDA, TABLA Y PAGINACIÓN) ─── */}
+        {/* ─── CONTENEDOR UNIFICADO ───────────────────────────────── */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col overflow-hidden">
-          {/* 1. Barra superior interna: Contador y Buscador */}
+          {/* Barra superior */}
           <div className="p-4 border-b border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="text-sm font-medium text-gray-500">
               Mostrando {inicioRegistro} a {finRegistro} de {totalObrasSociales}{" "}
@@ -192,7 +195,6 @@ export default function GestionObrasSociales() {
             </div>
 
             <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
-              {/* Buscador conectado a la API */}
               <div className="relative flex-1 sm:w-80">
                 <Search
                   size={18}
@@ -204,7 +206,7 @@ export default function GestionObrasSociales() {
                   value={search}
                   onChange={(e) => {
                     setSearch(e.target.value);
-                    setPage(1); // Resetear a la página 1 al buscar
+                    setPage(1);
                   }}
                   className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2eb086]/50 focus:border-[#2eb086] transition-all"
                 />
@@ -212,14 +214,14 @@ export default function GestionObrasSociales() {
             </div>
           </div>
 
-          {/* 2. Cuerpo de la Tabla */}
+          {/* Tabla adaptada */}
           <div className="overflow-x-auto flex-1">
             <Tabla
               cargando={cargando}
               sinDatosText="No se encontraron obras sociales registradas."
               columnas={[
-                { label: "ID" },
-                { label: "Obra Social / Prepaga" },
+                { label: "ID", className: "hidden md:table-cell" },
+                { label: "Obra Social" },
                 { label: "Estado" },
                 { label: "Acciones", align: "center" },
               ]}
@@ -229,24 +231,21 @@ export default function GestionObrasSociales() {
                   key={os.id_obra_social}
                   className="hover:bg-gray-50/60 transition-colors"
                 >
-                  {/* ID */}
-                  <td className="px-6 py-4 font-semibold text-gray-500 w-24">
+                  <td className="hidden md:table-cell px-6 py-4 font-semibold text-gray-500 w-24 text-xs">
                     #{os.id_obra_social}
                   </td>
 
-                  {/* Nombre */}
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-[#e8f7f1] text-[#2eb086] flex items-center justify-center font-bold text-sm shrink-0">
+                      <div className="hidden md:flex w-9 h-9 rounded-full bg-[#e8f7f1] text-[#2eb086] items-center justify-center font-bold text-sm shrink-0">
                         {os.nombre?.charAt(0)}
                       </div>
-                      <span className="font-semibold text-gray-800">
+                      <span className="font-semibold text-gray-800 text-sm">
                         {os.nombre}
                       </span>
                     </div>
                   </td>
 
-                  {/* Estado */}
                   <td className="px-6 py-4">
                     {os.activo ? (
                       <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/60">
@@ -261,7 +260,6 @@ export default function GestionObrasSociales() {
                     )}
                   </td>
 
-                  {/* Acciones */}
                   <td className="px-6 py-4">
                     <div className="flex items-center justify-center gap-2">
                       <button
@@ -299,7 +297,7 @@ export default function GestionObrasSociales() {
             </Tabla>
           </div>
 
-          {/* 3. Paginación Inferior integrada con selector directo */}
+          {/* Paginación */}
           <div className="flex items-center justify-between p-4 border-t border-gray-100 bg-white">
             <div className="text-xs text-gray-500">
               Página {page} de {totalPages || 1}
@@ -341,7 +339,20 @@ export default function GestionObrasSociales() {
         </div>
       </div>
 
-      {/* ─── MODAL CREAR / EDITAR OBRA SOCIAL ─────────────────────── */}
+      {/* ─── BOTÓN FLOTANTE INFERIOR DERECHO (EXCLUSIVO PARA MÓVIL) ─── */}
+      <button
+        type="button"
+        onClick={modalCreando}
+        className="fixed bottom-20 right-4 z-40 flex md:hidden items-center justify-center gap-2 bg-[#2eb086] hover:bg-[#259370] text-white px-3 py-3 rounded-full font-semibold text-sm shadow-2xl transition-all duration-300 active:scale-95 group"
+        title="Nueva Obra Social"
+      >
+        <Plus
+          size={20}
+          className="transition-transform group-hover:rotate-90 duration-300"
+        />
+      </button>
+
+      {/* MODAL CREAR / EDITAR OBRA SOCIAL */}
       {modalAbierto && (
         <form onSubmit={procesarFormulario}>
           <Modal
@@ -388,7 +399,7 @@ export default function GestionObrasSociales() {
         </form>
       )}
 
-      {/* ─── MODAL CONFIRMAR CAMBIO DE ESTADO ────────────────────── */}
+      {/* MODAL CONFIRMAR CAMBIO DE ESTADO */}
       {modalEliminar && (
         <Modal
           isOpen={modalEliminar}

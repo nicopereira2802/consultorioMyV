@@ -127,7 +127,7 @@ export default function GestionCobros() {
     setModalEliminar(false);
     setModalCuotas(false);
     setCobroSeleccionado(null);
-    buscarCobros(); // Refrescar la tabla al cerrar cualquier modal
+    buscarCobros();
   };
 
   const actualizarDatos = (e) => {
@@ -192,7 +192,6 @@ export default function GestionCobros() {
     }
   };
 
-  // Función para calcular saldo y estado basado en las cuotas devueltas por el backend
   const calcularEstadoYSaldo = (cobro) => {
     const total = Number(cobro.monto_a_cobrar) || 0;
     const pagado = (cobro.Cuota || []).reduce(
@@ -216,7 +215,7 @@ export default function GestionCobros() {
   const finRegistro = Math.min(page * 10, totalCobros);
 
   return (
-    <div className="w-full flex-1 flex flex-col gap-4">
+    <div className="w-full flex-1 flex flex-col gap-4 pb-24">
       <Header
         icono={DollarSign}
         titulo="Gestión de Cobros"
@@ -226,7 +225,7 @@ export default function GestionCobros() {
           <button
             type="button"
             onClick={modalCreando}
-            className="flex items-center justify-center gap-2 bg-[#2eb086] hover:bg-[#259370] text-white px-4 py-2.5 rounded-xl font-semibold text-sm transition-all shadow-sm shrink-0"
+            className="hidden sm:flex items-center justify-center gap-2 bg-[#2eb086] hover:bg-[#259370] text-white px-4 py-2.5 rounded-xl font-semibold text-sm transition-all shadow-sm shrink-0"
           >
             <Plus size={18} />
             <span>Registrar Cobro</span>
@@ -286,12 +285,12 @@ export default function GestionCobros() {
                     {/* Paciente */}
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-[#e8f7f1] text-[#2eb086] flex items-center justify-center font-bold text-sm shrink-0">
+                        <div className="hidden md:flex w-9 h-9 rounded-full bg-[#e8f7f1] text-[#2eb086] items-center justify-center font-bold text-sm shrink-0">
                           {cobro.Paciente?.nombre?.charAt(0) || "P"}
                           {cobro.Paciente?.apellido?.charAt(0) || ""}
                         </div>
                         <div className="flex flex-col">
-                          <span className="font-semibold text-gray-800">
+                          <span className="font-semibold text-gray-800 text-sm">
                             {cobro.Paciente
                               ? `${cobro.Paciente.nombre} ${cobro.Paciente.apellido}`
                               : `Paciente #${cobro.id_paciente}`}
@@ -337,7 +336,7 @@ export default function GestionCobros() {
                     </td>
 
                     {/* Monto Acordado */}
-                    <td className="px-6 py-4 font-bold text-gray-800">
+                    <td className="px-6 py-4 font-bold text-gray-800 text-sm">
                       $
                       {Number(cobro.monto_a_cobrar).toLocaleString("es-AR", {
                         minimumFractionDigits: 2,
@@ -345,7 +344,7 @@ export default function GestionCobros() {
                     </td>
 
                     {/* Saldo Pendiente */}
-                    <td className="px-6 py-4 font-bold">
+                    <td className="px-6 py-4 font-bold text-sm">
                       <span
                         className={
                           saldo > 0 ? "text-rose-600" : "text-emerald-600"
@@ -454,6 +453,19 @@ export default function GestionCobros() {
           </div>
         </div>
       </div>
+
+      {/* ─── BOTÓN FLOTANTE INFERIOR DERECHO (EXCLUSIVO PARA MÓVIL) ─── */}
+      <button
+        type="button"
+        onClick={modalCreando}
+        className="fixed bottom-20 right-4 z-40 flex md:hidden items-center justify-center gap-2 bg-[#2eb086] hover:bg-[#259370] text-white px-3 py-3 rounded-full font-semibold text-sm shadow-2xl transition-all duration-300 active:scale-95 group"
+        title="Registrar Cobro"
+      >
+        <Plus
+          size={20}
+          className="transition-transform group-hover:rotate-90 duration-300"
+        />
+      </button>
 
       {modalAbierto && (
         <FormularioCrearEditarCobro

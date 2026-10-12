@@ -11,7 +11,6 @@ import {
   ShieldCheck,
   CreditCard,
   Banknote,
-  Building,
 } from "lucide-react";
 
 export function FormularioCrearEditarCobro({
@@ -86,14 +85,14 @@ export function FormularioCrearEditarCobro({
         width="max-w-2xl"
         title={editando ? "Editar Registro de Cobro" : "Registrar Cobro"}
       >
-        <div className="text-xs text-gray-400 mb-4 -mt-2">
+        <div className="text-xs text-gray-500 mb-4 -mt-2 font-medium">
           Módulo administrativo y contable de cobros
         </div>
 
-        <div className="flex flex-col gap-5">
+        <div className="flex flex-col gap-4 text-sm">
           {/* ─── 1. SELECCIÓN DE TURNO Y DATOS DEL PACIENTE ─── */}
-          <div className="bg-gray-50/70 p-4 rounded-2xl border border-gray-200/80">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-gray-600 mb-3 flex items-center gap-1.5">
+          <div className="bg-gray-50/70 p-3.5 rounded-2xl border border-gray-200/80">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-gray-600 mb-2.5 flex items-center gap-1.5">
               <User size={15} className="text-[#2eb086]" />
               1. Selección de Turno y Datos del Paciente
             </h4>
@@ -108,7 +107,7 @@ export function FormularioCrearEditarCobro({
                   value={datosFormulario.id_turno}
                   onChange={manejarSeleccionTurno}
                   required
-                  className="w-full border border-emerald-300 p-2.5 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#2eb086]/50 transition-all font-medium"
+                  className="w-full border border-emerald-300 p-2.5 rounded-xl text-xs sm:text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#2eb086]/50 transition-all font-medium text-gray-800"
                 >
                   <option value="">-- Seleccionar Turno --</option>
                   {turnosAtendidos.map((t) => (
@@ -122,18 +121,18 @@ export function FormularioCrearEditarCobro({
 
               {/* Tarjeta dinámica de información del paciente y prácticas */}
               {turnoSeleccionado && (
-                <div className="bg-white p-3.5 rounded-xl border border-gray-200 mt-1 space-y-3">
-                  <div className="flex justify-between items-start border-b border-gray-100 pb-2">
+                <div className="bg-white p-3 rounded-xl border border-gray-200 mt-1 space-y-2.5 text-xs">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-gray-100 pb-2 gap-1">
                     <div>
                       <span className="text-[10px] uppercase font-bold text-gray-400 block tracking-wider">
                         Paciente Asociado
                       </span>
-                      <span className="text-sm font-bold text-gray-800">
+                      <span className="text-xs sm:text-sm font-bold text-gray-800">
                         {turnoSeleccionado.Paciente?.nombre}{" "}
                         {turnoSeleccionado.Paciente?.apellido}
                       </span>
                     </div>
-                    <div className="text-right">
+                    <div className="text-left sm:text-right">
                       <span className="text-[10px] uppercase font-bold text-gray-400 block tracking-wider">
                         DNI / Teléfono
                       </span>
@@ -159,15 +158,15 @@ export function FormularioCrearEditarCobro({
                         {practicasTurno.map((pt, idx) => (
                           <div
                             key={idx}
-                            className="flex items-center justify-between bg-gray-50 p-2 rounded-lg text-xs"
+                            className="flex flex-col sm:flex-row sm:items-center justify-between bg-gray-50 p-2 rounded-lg gap-1"
                           >
-                            <span className="font-semibold text-gray-700">
+                            <span className="font-semibold text-gray-700 text-xs">
                               {pt.Practica?.nombre_referencia ||
                                 pt.Practica?.nombre_nomenclador ||
                                 `Práctica #${pt.id_practica}`}
                             </span>
                             <span
-                              className={`px-2 py-0.5 rounded-md text-[11px] font-bold ${
+                              className={`px-2 py-0.5 rounded-md text-[10px] font-bold w-fit ${
                                 pt.ObraSocial
                                   ? "bg-blue-50 text-blue-600 border border-blue-200"
                                   : "bg-emerald-50 text-emerald-600 border border-emerald-200"
@@ -180,11 +179,11 @@ export function FormularioCrearEditarCobro({
                         ))}
                       </div>
                     ) : (
-                      <div className="flex justify-between items-center bg-gray-50 p-2 rounded-lg text-xs">
-                        <span className="text-gray-500 font-medium">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between bg-gray-50 p-2 rounded-lg gap-1">
+                        <span className="text-gray-500 font-medium text-xs">
                           Consulta Odontológica General
                         </span>
-                        <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200">
+                        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200 w-fit">
                           Particular / Sin Obra Social
                         </span>
                       </div>
@@ -205,7 +204,7 @@ export function FormularioCrearEditarCobro({
               {/* Botón Pago Total */}
               <div
                 onClick={() => seleccionarModalidad("inmediato")}
-                className={`cursor-pointer p-3.5 rounded-2xl border transition-all ${
+                className={`cursor-pointer p-3 rounded-2xl border transition-all ${
                   datosFormulario.modalidad === "inmediato"
                     ? "border-[#2eb086] bg-[#e8f7f1]/40 ring-1 ring-[#2eb086] shadow-sm"
                     : "border-gray-200 bg-white hover:bg-gray-50"
@@ -223,7 +222,7 @@ export function FormularioCrearEditarCobro({
               {/* Botón Plan Cuotas */}
               <div
                 onClick={() => seleccionarModalidad("cuotas")}
-                className={`cursor-pointer p-3.5 rounded-2xl border transition-all ${
+                className={`cursor-pointer p-3 rounded-2xl border transition-all ${
                   datosFormulario.modalidad === "cuotas"
                     ? "border-[#2eb086] bg-[#e8f7f1]/40 ring-1 ring-[#2eb086] shadow-sm"
                     : "border-gray-200 bg-white hover:bg-gray-50"
@@ -241,7 +240,7 @@ export function FormularioCrearEditarCobro({
               {/* Botón Acuerdo Informal */}
               <div
                 onClick={() => seleccionarModalidad("informal")}
-                className={`cursor-pointer p-3.5 rounded-2xl border transition-all ${
+                className={`cursor-pointer p-3 rounded-2xl border transition-all ${
                   datosFormulario.modalidad === "informal"
                     ? "border-amber-500 bg-amber-50/40 ring-1 ring-amber-500 shadow-sm"
                     : "border-gray-200 bg-white hover:bg-gray-50"
@@ -263,13 +262,13 @@ export function FormularioCrearEditarCobro({
 
           {/* OPCIÓN A: PAGO TOTAL INMEDIATO */}
           {datosFormulario.modalidad === "inmediato" && (
-            <div className="bg-gray-50/70 p-4 rounded-2xl border border-gray-200/80 space-y-3">
-              <div className="flex items-center justify-between">
+            <div className="bg-gray-50/70 p-3.5 rounded-2xl border border-gray-200/80 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-gray-600 flex items-center gap-1.5">
                   <CreditCard size={15} className="text-[#2eb086]" />
                   3. Detalle del Pago Inmediato
                 </h4>
-                <span className="text-xs font-bold bg-[#e8f7f1] text-[#2eb086] px-3 py-1 rounded-full border border-[#2eb086]/30">
+                <span className="text-xs font-bold bg-[#e8f7f1] text-[#2eb086] px-3 py-1 rounded-full border border-[#2eb086]/30 w-fit">
                   Monto a cancelar: ${costoTotal.toFixed(2)}
                 </span>
               </div>
@@ -287,7 +286,7 @@ export function FormularioCrearEditarCobro({
                     onChange={actualizarDatos}
                     placeholder="0.00"
                     required
-                    className="w-full border border-gray-300 p-2.5 rounded-xl text-sm bg-white focus:ring-2 focus:ring-[#2eb086]/50"
+                    className="w-full border border-gray-300 p-2.5 rounded-xl text-xs sm:text-sm bg-white focus:ring-2 focus:ring-[#2eb086]/50"
                   />
                 </div>
 
@@ -299,7 +298,7 @@ export function FormularioCrearEditarCobro({
                     name="metodo_pago"
                     value={datosFormulario.metodo_pago}
                     onChange={actualizarDatos}
-                    className="w-full border border-gray-300 p-2.5 rounded-xl text-sm bg-white focus:ring-2 focus:ring-[#2eb086]/50 font-medium"
+                    className="w-full border border-gray-300 p-2.5 rounded-xl text-xs sm:text-sm bg-white focus:ring-2 focus:ring-[#2eb086]/50 font-medium text-gray-800"
                   >
                     <option value="Efectivo">Efectivo</option>
                     <option value="Transferencia">Transferencia</option>
@@ -321,13 +320,13 @@ export function FormularioCrearEditarCobro({
 
           {/* OPCIÓN B: PLAN DE CUOTAS FIJAS */}
           {datosFormulario.modalidad === "cuotas" && (
-            <div className="bg-gray-50/70 p-4 rounded-2xl border border-gray-200/80 space-y-3">
-              <div className="flex items-center justify-between">
+            <div className="bg-gray-50/70 p-3.5 rounded-2xl border border-gray-200/80 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-gray-600 flex items-center gap-1.5">
                   <Layers size={15} className="text-[#2eb086]" />
                   3. Configuración de Cuotas Fijas
                 </h4>
-                <span className="text-xs font-bold bg-[#e8f7f1] text-[#2eb086] px-3 py-1 rounded-full border border-[#2eb086]/30">
+                <span className="text-xs font-bold bg-[#e8f7f1] text-[#2eb086] px-3 py-1 rounded-full border border-[#2eb086]/30 w-fit">
                   Total a financiar: ${costoTotal.toFixed(2)}
                 </span>
               </div>
@@ -345,7 +344,7 @@ export function FormularioCrearEditarCobro({
                     onChange={actualizarDatos}
                     placeholder="0.00"
                     required
-                    className="w-full border border-gray-300 p-2.5 rounded-xl text-sm bg-white focus:ring-2 focus:ring-[#2eb086]/50"
+                    className="w-full border border-gray-300 p-2.5 rounded-xl text-xs sm:text-sm bg-white focus:ring-2 focus:ring-[#2eb086]/50"
                   />
                 </div>
 
@@ -357,7 +356,7 @@ export function FormularioCrearEditarCobro({
                     name="cant_cuotas"
                     value={datosFormulario.cant_cuotas}
                     onChange={actualizarDatos}
-                    className="w-full border border-gray-300 p-2.5 rounded-xl text-sm bg-white focus:ring-2 focus:ring-[#2eb086]/50"
+                    className="w-full border border-gray-300 p-2.5 rounded-xl text-xs sm:text-sm bg-white focus:ring-2 focus:ring-[#2eb086]/50 text-gray-800"
                   >
                     {[2, 3, 4, 5, 6, 9, 12].map((num) => (
                       <option key={num} value={num}>
@@ -377,7 +376,7 @@ export function FormularioCrearEditarCobro({
                     value={datosFormulario.fecha_primer_vencimiento}
                     onChange={actualizarDatos}
                     required
-                    className="w-full border border-gray-300 p-2.5 rounded-xl text-sm bg-white focus:ring-2 focus:ring-[#2eb086]/50"
+                    className="w-full border border-gray-300 p-2.5 rounded-xl text-xs sm:text-sm bg-white focus:ring-2 focus:ring-[#2eb086]/50 text-gray-800"
                   />
                 </div>
               </div>
@@ -386,7 +385,7 @@ export function FormularioCrearEditarCobro({
 
           {/* OPCIÓN C: ACUERDO INFORMAL / LIBRE */}
           {datosFormulario.modalidad === "informal" && (
-            <div className="bg-gray-50/70 p-4 rounded-2xl border border-gray-200/80 space-y-3">
+            <div className="bg-gray-50/70 p-3.5 rounded-2xl border border-gray-200/80 space-y-3">
               <h4 className="text-xs font-bold uppercase tracking-wider text-gray-600 flex items-center gap-1.5">
                 <FileText size={15} className="text-amber-600" />
                 3. Costo Acordado y Entrega Inicial
@@ -405,7 +404,7 @@ export function FormularioCrearEditarCobro({
                     onChange={actualizarDatos}
                     placeholder="0.00"
                     required
-                    className="w-full border border-gray-300 p-2.5 rounded-xl text-sm bg-white focus:ring-2 focus:ring-amber-500/50"
+                    className="w-full border border-gray-300 p-2.5 rounded-xl text-xs sm:text-sm bg-white focus:ring-2 focus:ring-amber-500/50"
                   />
                 </div>
 
@@ -420,7 +419,7 @@ export function FormularioCrearEditarCobro({
                     value={datosFormulario.entrega_inicial}
                     onChange={actualizarDatos}
                     placeholder="0.00"
-                    className="w-full border border-gray-300 p-2.5 rounded-xl text-sm bg-white focus:ring-2 focus:ring-amber-500/50"
+                    className="w-full border border-gray-300 p-2.5 rounded-xl text-xs sm:text-sm bg-white focus:ring-2 focus:ring-amber-500/50"
                   />
                 </div>
               </div>
@@ -431,7 +430,7 @@ export function FormularioCrearEditarCobro({
                   <span className="text-[10px] text-gray-400 font-bold uppercase block">
                     Costo Total
                   </span>
-                  <span className="text-sm font-bold text-gray-800">
+                  <span className="text-xs sm:text-sm font-bold text-gray-800">
                     ${costoTotal.toFixed(2)}
                   </span>
                 </div>
@@ -439,7 +438,7 @@ export function FormularioCrearEditarCobro({
                   <span className="text-[10px] text-gray-400 font-bold uppercase block">
                     Entrega Inicial
                   </span>
-                  <span className="text-sm font-bold text-emerald-600">
+                  <span className="text-xs sm:text-sm font-bold text-emerald-600">
                     ${entregaInicial.toFixed(2)}
                   </span>
                 </div>
@@ -447,7 +446,7 @@ export function FormularioCrearEditarCobro({
                   <span className="text-[10px] text-gray-400 font-bold uppercase block">
                     Saldo Pendiente
                   </span>
-                  <span className="text-sm font-bold text-amber-600">
+                  <span className="text-xs sm:text-sm font-bold text-amber-600">
                     ${saldoPendiente.toFixed(2)}
                   </span>
                 </div>
@@ -468,13 +467,13 @@ export function FormularioCrearEditarCobro({
           <button
             type="button"
             onClick={cerrarModal}
-            className="px-4 py-2.5 rounded-xl text-gray-600 bg-gray-100 hover:bg-gray-200 font-medium text-sm transition-colors"
+            className="px-4 py-2.5 rounded-xl text-gray-600 bg-gray-100 hover:bg-gray-200 font-medium text-xs sm:text-sm transition-colors"
           >
             Cancelar
           </button>
           <button
             type="submit"
-            className="px-5 py-2.5 rounded-xl text-white bg-[#2eb086] hover:bg-[#259370] font-semibold text-sm transition-all shadow-sm"
+            className="px-5 py-2.5 rounded-xl text-white bg-[#2eb086] hover:bg-[#259370] font-semibold text-xs sm:text-sm transition-all shadow-sm"
           >
             {editando ? "Guardar Cambios" : "Confirmar Registro"}
           </button>
@@ -498,7 +497,7 @@ export function FormularioEliminarCobro({
       title="Desactivar Registro de Cobro"
     >
       <div className="flex flex-col gap-3">
-        <p className="text-sm text-gray-600">
+        <p className="text-xs sm:text-sm text-gray-600">
           ¿Estás seguro de que deseas desactivar el cobro con ID{" "}
           <strong className="text-gray-800">
             #{cobroSeleccionado?.id_cobro}
@@ -513,14 +512,14 @@ export function FormularioEliminarCobro({
         <button
           type="button"
           onClick={cerrarModal}
-          className="px-4 py-2 rounded-xl text-gray-600 bg-gray-100 hover:bg-gray-200 font-medium text-sm"
+          className="px-4 py-2 rounded-xl text-gray-600 bg-gray-100 hover:bg-gray-200 font-medium text-xs sm:text-sm"
         >
           Cancelar
         </button>
         <button
           type="button"
           onClick={ejecutarEliminacion}
-          className="px-4 py-2 rounded-xl text-white bg-red-500 hover:bg-red-600 font-semibold text-sm transition-colors shadow-sm"
+          className="px-4 py-2 rounded-xl text-white bg-red-500 hover:bg-red-600 font-semibold text-xs sm:text-sm transition-colors shadow-sm"
         >
           Sí, Desactivar
         </button>

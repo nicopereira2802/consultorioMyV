@@ -14,7 +14,7 @@ export const getAllPracticaTurno = async (req, res) => {
       include: [
         {
           model: Practica,
-          attributes: ["codigo_nomenclador"],
+          attributes: ["codigo_nomenclador", "nombre_nomenclador"],
         },
         {
           model: ObraSocial,
