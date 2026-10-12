@@ -152,12 +152,12 @@ export const formatearTurnoResponse = (turnoInstance) => {
     }
   }
 
-  // Si no está en las prácticas, revisar si vino registrado directamente en el objeto del turno
+  // Si no está en las prácticas, revisar si vino registrado directamente en el turno
   if (ptIdOS === null && json.id_obra_social !== undefined && json.id_obra_social !== null) {
     ptIdOS = Number(json.id_obra_social);
   }
 
-  // Identificar exclusivamente la obra social utilizada en la atención (si es > 1 y no es Particular)
+  // Identificar obra social utilizada (si es > 1 y no Particular)
   let obraSocialUsada = null;
   if (ptIdOS && ptIdOS > 1) {
     const osPaciente = json.Paciente?.ObraSocials?.find(
@@ -186,21 +186,44 @@ export const formatearTurnoResponse = (turnoInstance) => {
   json.precio_final = Number(json.precio_final) || 0;
   json.total = json.precio_final;
 
-  // Historial de estados (bitácora de auditoría) ordenado cronológicamente
+  // Historial de estados ordenado cronológicamente
   const rawHistorial = json.historial || json.HistorialEstadoTurnos || [];
   json.historial = Array.isArray(rawHistorial)
     ? [...rawHistorial].sort((a, b) => new Date(a.fecha_hora_cambio) - new Date(b.fecha_hora_cambio))
     : [];
 
-  // Extraer la nota de atención médica (la más reciente del historial en estado Atendido)
+  // Extraer última nota de atención médica (Atendido)
   const registroAtendido = [...json.historial].reverse().find(
-    (h) => h.id_estado === 3 || h.id_estado === 4 || h.EstadoTurno?.estado === "Atendido" || h.estado === "Atendido"
+    (h) => h.id_estado === 3 || h.EstadoTurno?.estado === "Atendido" || h.estado === "Atendido"
   );
   const evolucionHistorial = registroAtendido ? registroAtendido.descripcion : null;
   json.descripcion_atencion = evolucionHistorial;
 
-  // En turnos atendidos, exponer observaciones como la nota de atención del historial; si no, la nota de consulta inicial
-  json.observaciones = (json.id_estado === 3 || json.id_estado === 4) ? (evolucionHistorial || json.notas_consulta || "") : (json.notas_consulta || "");
+  // Extraer última nota de cancelación (Cancelado)
+  const registroCancelado = [...json.historial].reverse().find(
+    (h) => h.id_estado === 2 || h.EstadoTurno?.estado === "Cancelado" || h.estado === "Cancelado"
+  );
+  const motivoCancelacion = registroCancelado ? registroCancelado.descripcion : null;
+  json.motivo_cancelacion = motivoCancelacion;
+
+  // Extraer última nota de inasistencia (Inasistente)
+  const registroInasistente = [...json.historial].reverse().find(
+    (h) => h.id_estado === 4 || h.EstadoTurno?.estado === "Inasistente" || h.estado === "Inasistente"
+  );
+  const motivoInasistencia = registroInasistente ? registroInasistente.descripcion : null;
+  json.motivo_inasistencia = motivoInasistencia;
+
+  // Resolver el campo genérico observaciones según el estado actual
+  const estadoStr = json.EstadoTurno?.estado;
+  if (json.id_estado === 2 || estadoStr === "Cancelado") {
+    json.observaciones = motivoCancelacion || json.notas_consulta || "";
+  } else if (json.id_estado === 3 || estadoStr === "Atendido") {
+    json.observaciones = evolucionHistorial || json.notas_consulta || "";
+  } else if (json.id_estado === 4 || estadoStr === "Inasistente") {
+    json.observaciones = motivoInasistencia || json.notas_consulta || "";
+  } else {
+    json.observaciones = json.notas_consulta || "";
+  }
 
   return json;
 };
@@ -380,12 +403,16 @@ export const createTurno = async (req, res) => {
         { transaction: t },
       );
 
+            const descHistorial = notasTexto
+        ? `Turno programado: ${notasTexto}`
+        : "Turno programado";
+
       await HistorialEstadoTurno.create(
         {
           id_turno: nuevoTurno.id_turno,
           id_estado: estado.id_estado,
           fecha_hora_cambio: new Date(),
-          descripcion: "Turno programado",
+          descripcion: descHistorial.slice(0, 255),
         },
         { transaction: t },
       );
@@ -788,22 +815,20 @@ export const turnoCancelado = async (req, res) => {
   try {
     const id = req.params.id;
     const turno = req.turno || (id ? await Turno.findByPk(id) : null);
+    if (!turno) return res.status(404).json({ error: "Turno no encontrado" });
 
-    if (!turno) {
-      return res.status(404).json({ error: "Turno no encontrado" });
-    }
-
-    const motivo =
-      req.body.notas_consulta !== undefined && req.body.notas_consulta !== null
-        ? String(req.body.notas_consulta).trim()
-        : req.body.motivo !== undefined && req.body.motivo !== null
-        ? String(req.body.motivo).trim()
-        : "Turno cancelado";
+    // Capturar cualquier variante de clave
+    const descripcion =
+      req.body.motivo ||
+      req.body.descripcion ||
+      req.body.observaciones ||
+      req.body.motivo_cancelacion ||
+      req.body.notas_consulta ||
+      "Turno cancelado";
 
     const turnoActualizado = await sequelize.transaction(async (t) => {
-      // Delegar la transición a la máquina de estados GoF
       const estadoActual = await obtenerEstadoTurno(turno.id_estado, t);
-      await estadoActual.cancelar(turno, motivo, t);
+      await estadoActual.cancelar(turno, String(descripcion).trim().slice(0, 255), t);
 
       return await Turno.findByPk(turno.id_turno, {
         include: defaultTurnoIncludes,
@@ -816,12 +841,7 @@ export const turnoCancelado = async (req, res) => {
       data: formatearTurnoResponse(turnoActualizado),
     });
   } catch (error) {
-    console.error("Error al cancelar turno:", error);
-    res.status(400).json({
-      status: "error",
-      error: error.message,
-      message: error.message,
-    });
+    res.status(400).json({ error: error.message });
   }
 };
 

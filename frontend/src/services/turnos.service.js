@@ -129,9 +129,9 @@ export const normalizarTurno = (t) => {
         : (t.ObraSocial ? [t.ObraSocial] : (t.obra_social ? [t.obra_social] : (Array.isArray(t.ObraSocials) && t.ObraSocials.length > 0 ? t.ObraSocials : [])))),
     notas_consulta: t.notas_consulta ? String(t.notas_consulta).trim() : '',
     descripcion_atencion: t.descripcion_atencion ? String(t.descripcion_atencion).trim() : '',
-    observaciones: t.descripcion_atencion
-      ? String(t.descripcion_atencion).trim()
-      : (t.observaciones ? String(t.observaciones).trim() : (t.notas_consulta ? String(t.notas_consulta).trim() : ''))
+    motivo_cancelacion: t.motivo_cancelacion ? String(t.motivo_cancelacion).trim() : '',
+    motivo_inasistencia: t.motivo_inasistencia ? String(t.motivo_inasistencia).trim() : '',
+    observaciones: t.observaciones ? String(t.observaciones).trim() : (t.notas_consulta ? String(t.notas_consulta).trim() : '')
   };
 };
 
@@ -746,22 +746,19 @@ export const liberarTurno = async (idTurno) => {
  */
 export const getHistorialPorPaciente = async (idPaciente) => {
   try {
-    const data = await api.get(`/pacientes/${idPaciente}/historial`);
-    const rawList = unpackArray(data);
-    if (rawList.length > 0) return rawList.map(normalizarTurno);
-  } catch {
-    // Si no existe la ruta de historial por paciente, consultar turnos
-  }
-
-  try {
+    // Consulta directa a la ruta que ya tiene todos los includes de auditoría
     const dataTurnos = await api.get('/turnos', { params: { id_paciente: idPaciente } });
     const rawList = unpackArray(dataTurnos);
-    return rawList
-      .map(normalizarTurno)
-      .filter((t) => String(t.id_paciente) === String(idPaciente));
-  } catch {
-    return [];
+    if (rawList.length > 0) {
+      return rawList
+        .map(normalizarTurno)
+        .filter((t) => String(t.id_paciente) === String(idPaciente));
+    }
+  } catch (err) {
+    console.warn('Error al obtener turnos por paciente:', err);
   }
+
+  return [];
 };
 
 export const getTurnosAtendidosPorPaciente = getHistorialPorPaciente;
@@ -790,17 +787,39 @@ export const actualizarTurno = async (idTurno, camposActualizados = {}) => {
  * @param {string|number} nuevoEstado
  * @returns {Promise<Object>}
  */
-export const cambiarEstadoTurno = async (id_turno, nuevoEstado) => {
+export const cancelarTurno = async (id_turno, motivo = '') => {
+  const payload = {
+    motivo: String(motivo || 'Turno cancelado').trim().slice(0, 255),
+    descripcion: String(motivo || 'Turno cancelado').trim().slice(0, 255)
+  };
+  try {
+    const res = await api.post(`/turnos/${id_turno}/cancelar`, payload);
+    return normalizarTurno(unpackObject(res));
+  } catch {
+    const res = await api.patch(`/turnos/${id_turno}/cancelar`, payload);
+    return normalizarTurno(unpackObject(res));
+  }
+};
+
+export const cambiarEstadoTurno = async (id_turno, nuevoEstado, motivo = '') => {
   const estadoInfo = getEstadoInfo(nuevoEstado);
   const nombreLower = estadoInfo.nombre.toLowerCase();
 
   try {
     if (nombreLower === 'cancelado') {
-      const res = await api.patch(`/turnos/${id_turno}/cancelar`, { descripcion: '' });
-      return normalizarTurno(unpackObject(res));
+      return await cancelarTurno(id_turno, motivo);
     } else if (nombreLower === 'inasistente') {
-      const res = await api.patch(`/turnos/${id_turno}/inasistente`, {});
-      return normalizarTurno(unpackObject(res));
+      const payload = {
+        motivo: String(motivo || 'El paciente no asistió').trim().slice(0, 255),
+        notas_consulta: String(motivo || '').trim().slice(0, 255)
+      };
+      try {
+        const res = await api.post(`/turnos/${id_turno}/inasistente`, payload);
+        return normalizarTurno(unpackObject(res));
+      } catch {
+        const res = await api.patch(`/turnos/${id_turno}/inasistente`, payload);
+        return normalizarTurno(unpackObject(res));
+      }
     }
   } catch (err) {
     if (err.response && err.response.status !== 404) {
@@ -857,6 +876,7 @@ export default {
   getTurnosAtendidosPorPaciente,
   getTurnosPorPaciente,
   actualizarTurno,
+  cancelarTurno,
   cambiarEstadoTurno,
   actualizarNotasConsulta
 };

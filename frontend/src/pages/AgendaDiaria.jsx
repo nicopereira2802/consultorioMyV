@@ -14,6 +14,7 @@ import {
   crearTurno,
   liberarTurno,
   reprogramarTurno,
+  actualizarTurno,
   actualizarNotasConsulta,
   construirFilasAgendaConBaches
 } from '../services/turnos.service';
@@ -296,9 +297,10 @@ export const AgendaDiaria = () => {
         tipo: 'peligro',
         textoConfirmar: 'Sí, cancelar turno',
         textoCancelar: 'Volver',
-        onConfirm: async () => {
+        // 👇 AQUÍ: Recibimos el motivo que escribió el odontólogo en el modal
+        onConfirm: async (motivoEscrito) => {
           try {
-            await cambiarEstadoTurno(turno.id_turno, 'Cancelado', fechaSeleccionada);
+            await cambiarEstadoTurno(turno.id_turno, 'Cancelado', motivoEscrito);
             const turnosActualizados = await getTurnosDia(fechaSeleccionada);
             setTurnos(turnosActualizados);
             mostrarToast(`Turno de las ${turno.hora} hs cancelado correctamente.`);
@@ -419,7 +421,11 @@ export const AgendaDiaria = () => {
 
   const handleGuardarNotasConsulta = async (idTurno, nuevasNotas) => {
     try {
-      await actualizarNotasConsulta(idTurno, nuevasNotas, fechaSeleccionada);
+      // Guarda en la bitácora de auditoría del historial
+      await actualizarTurno(idTurno, {
+        descripcion: nuevasNotas,
+        observaciones: nuevasNotas
+      });
       await cargarTurnos();
       mostrarToast('Observaciones clínicas guardadas con éxito.');
       setModalDetalle({ isOpen: false, turno: null });

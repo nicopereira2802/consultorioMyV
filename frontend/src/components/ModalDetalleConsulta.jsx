@@ -21,41 +21,40 @@ export const ModalDetalleConsulta = ({
   onGuardar
 }) => {
   const extraerEvolucionClinica = (t) => {
-    if (!t) return '';
-    // 1. Si viene explicitamente descripcion_atencion
-    if (t.descripcion_atencion) return t.descripcion_atencion;
+  if (!t) return '';
+  // 1. Si viene explícitamente descripción médica de atención
+  if (t.descripcion_atencion) return t.descripcion_atencion;
 
-    // 2. Buscar en el historial de estados la entrada de atención médica (la más reciente con id_estado = 3: Atendido)
+  // 2. Si es inasistente (id_estado = 4)
+  if (t.id_estado === 4 || t.estado_nombre?.toLowerCase() === 'inasistente') {
+    if (t.motivo_inasistencia) return t.motivo_inasistencia;
+    if (Array.isArray(t.historial)) {
+      const regInasistente = [...t.historial].reverse().find(
+        (h) => h.id_estado === 4 || h.EstadoTurno?.estado === 'Inasistente' || h.estado === 'Inasistente'
+      );
+      if (regInasistente?.descripcion) return regInasistente.descripcion;
+    }
+    return t.observaciones || '';
+  }
+
+  // 3. Si es cancelado (id_estado = 2)
+  if (t.id_estado === 2 || t.estado_nombre?.toLowerCase() === 'cancelado') {
+    return t.motivo_cancelacion || t.observaciones || '';
+  }
+
+  // 4. Si es atendido (id_estado = 3)
+  if (t.id_estado === 3 || t.estado_nombre?.toLowerCase() === 'atendido') {
     if (Array.isArray(t.historial)) {
       const regAtendido = [...t.historial].reverse().find(
         (h) => h.id_estado === 3 || h.EstadoTurno?.estado === 'Atendido' || h.estado === 'Atendido'
       );
-      if (regAtendido && regAtendido.descripcion) {
-        return regAtendido.descripcion;
-      }
-      if (t.id_estado === 4 || t.id_estado === 5) {
-        const regInasistente = [...t.historial].reverse().find(
-          (h) => h.id_estado === 4 || h.id_estado === 5 || h.EstadoTurno?.estado === 'Inasistente' || h.estado === 'Inasistente'
-        );
-        if (regInasistente && regInasistente.descripcion) {
-          return regInasistente.descripcion;
-        }
-      }
+      if (regAtendido?.descripcion) return regAtendido.descripcion;
     }
-    // 3. Si el turno está atendido y contiene observaciones o notas de atención
-    if (t.id_estado === 3) {
-      if (t.observaciones) return t.observaciones;
-      if (t.notas_atencion) return t.notas_atencion;
-      return '';
-    }
+    return t.observaciones || t.notas_atencion || '';
+  }
 
-    // 4. Si es inasistente o cancelado
-    if (t.id_estado === 5 || t.id_estado === 2) {
-      return t.motivo_cancelacion || t.observacion_inasistencia || '';
-    }
-
-    return '';
-  };
+  return t.observaciones || t.notas_consulta || '';
+};
 
   const [notas, setNotas] = useState(extraerEvolucionClinica(turno));
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -186,7 +185,7 @@ export const ModalDetalleConsulta = ({
     }
   };
 
-  const esInasistente = turno?.id_estado === 5;
+  const esInasistente = turno?.id_estado === 4 || turno?.estado_nombre?.toLowerCase() === 'inasistente';
 
   return (
     <div
