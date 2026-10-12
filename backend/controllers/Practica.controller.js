@@ -9,7 +9,7 @@ export const getAllPracticas = async (req, res) => {
     const limit = parseInt(req.query.limit) || 9;
     const offset = (page - 1) * limit;
     const search = req.query.search || "";
-    const sortField = req.query.sortField || "apellido";
+    const sortField = req.query.sortField || "codigo_nomenclador";
     const sortOrder = req.query.sortOrder || "ASC";
     const where = {
       activo: true,
@@ -18,10 +18,10 @@ export const getAllPracticas = async (req, res) => {
     // Busqueda por nombre apellido dni telefono
     if (search.trim() !== "") {
       where[Op.or] = [
-        { nombre: { [Op.like]: `%${search}%` } },
-        { apellido: { [Op.like]: `%${search}%` } },
-        { dni: { [Op.like]: `%${search}%` } },
-        { telefono: { [Op.like]: `%${search}%` } },
+        { codigo_nomenclador: { [Op.like]: `%${search}%` } },
+        { nombre_nomenclador: { [Op.like]: `%${search}%` } },
+        { nombre_referencia: { [Op.like]: `%${search}%` } },
+        { especialidad: { [Op.like]: `%${search}%` } },
       ];
     }
 

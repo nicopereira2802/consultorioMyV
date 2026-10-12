@@ -1,17 +1,71 @@
 /** @format */
 
-import { Cobro, Paciente, Turno } from "../models/index.model.js";
+import { Cobro, Paciente, Turno, Cuota } from "../models/index.model.js";
 
 // Obtener una cobro por turno ID
-export const getCobroByTurnoId = async (req, res) => {
+export const getAllCobros = async (req, res) => {
   try {
-    const id_turno = req.turno.id_turno;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 9;
+    const offset = (page - 1) * limit;
+    const search = req.query.search || "";
+    const sortField = req.query.sortField || "codigo_nomenclador";
+    const sortOrder = req.query.sortOrder || "ASC";
+    const where = {
+      activo: true,
+    };
 
-    const cobro = await Cobro.findAll({ where: { id_turno: id_turno } });
+    // Busqueda por nombre apellido dni telefono
+    if (search.trim() !== "") {
+      where[Op.or] = [
+        { "$Paciente.nombre$": { [Op.like]: `%${search}%` } },
+        { "$Paciente.apellido$": { [Op.like]: `%${search}%` } },
+        { "$Paciente.dni$": { [Op.like]: `%${search}%` } },
+        { "$Paciente.telefono$": { [Op.like]: `%${search}%` } },
+      ];
+    }
+
+    const { count, rows: cobros } = await Cobro.findAndCountAll({
+      where,
+      limit,
+      offset,
+      order: [[sortField, sortOrder]],
+      include: [
+        {
+          model: Turno,
+          attributes: ["fecha_hora_inicio", "fecha_hora_fin"],
+        },
+        {
+          model: Paciente,
+          attributes: ["nombre", "apellido", "dni", "telefono"],
+        },
+        {
+          model: Cuota,
+          attributes: [
+            "id_cuota",
+            "monto_cuota",
+            "monto_cobrado",
+            "estado",
+            "fecha_cobro",
+          ],
+          where: { activo: true },
+        },
+      ],
+    });
+
+    const totalPages = Math.ceil(count / limit);
 
     res.status(200).json({
       status: "success",
-      data: cobro,
+      data: cobros,
+      meta: {
+        total: count,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
     });
   } catch (error) {
     console.error("Error al obtener el cobro del turno:", error);
@@ -41,6 +95,14 @@ export const createCobro = async (req, res) => {
 
     const id_turno = req.turno.id_turno;
     const id_paciente = req.paciente.id_paciente;
+
+    const turnoExiste = await Cobro.findOne({ where: { id_turno: id_turno } });
+    if (turnoExiste) {
+      res.status(409).json({
+        status: "error",
+        message: "Este turno ya tiene un cobro",
+      });
+    }
 
     const newCobro = await Cobro.create({
       id_turno: id_turno,

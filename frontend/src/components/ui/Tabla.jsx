@@ -5,8 +5,8 @@ export default function Tabla({ columnas, cargando, sinDatosText = "No hay regis
     <div className="bg-white border border-gray-100 shadow-sm overflow-hidden flex-1">
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-gray-50/80 border-b border-gray-100 text-xs font-bold text-gray-500 uppercase tracking-wider">
+          <thead className="bg-[#caecce]">
+            <tr className="bg-[#e8f7f1 border-b border-gray-100 text-xs font-bold text-gray-500 uppercase tracking-wider">
               {columnas.map((col, index) => (
                 <th
                   key={index}

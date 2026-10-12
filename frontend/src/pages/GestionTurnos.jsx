@@ -2,7 +2,11 @@
 
 import { useState, useEffect } from "react";
 import api from "../services/api";
-import { formatFechaHoraTabla, formatDateTimeInput } from "../utils/index";
+import {
+  formatFechaTabla,
+  formatDateTimeInput,
+  formatSoloHora,
+} from "../utils/index";
 import {
   Plus,
   Edit,
@@ -17,6 +21,8 @@ import {
   X,
   UserRoundX,
   Eye,
+  BanknoteArrowDown,
+  MoreVertical,
 } from "lucide-react";
 import Header from "../components/ui/Header";
 import Tabla from "../components/ui/Tabla";
@@ -47,11 +53,10 @@ const estadosMap = {
   },
   Inasistente: {
     id_estado: 4,
-    color: "bg-yellow-50 text-yellow-700 border-yellow-200/60",
+    color: "bg-[#f0f6f9] text-[#2b5d73] border-[#93BBCF]",
     icon: UserRoundX,
   },
 };
-
 export default function GestionTurnos() {
   /* ─── ESTADOS GENERALES ─────────────────────────────────── */
   const [turnos, setTurnos] = useState([]);
@@ -66,7 +71,10 @@ export default function GestionTurnos() {
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState("");
   const [order, setOrder] = useState({ column: "id_turno", direction: "ASC" });
-  const [estadoFiltrado, setEstadoFiltrado] = useState("Programado");
+  const [estadoFiltrado, setEstadoFiltrado] = useState("all");
+
+  /* ─── ESTADO PARA MENÚ DESPLEGABLE DE ACCIONES ───────────── */
+  const [menuAbiertoId, setMenuAbiertoId] = useState(null);
 
   /* ─── ESTADOS DE LOS MODALES Y FORMULARIOS ───────────────── */
   const [modalAbierto, setModalAbierto] = useState(false);
@@ -87,20 +95,17 @@ export default function GestionTurnos() {
     notas_consulta: "",
   });
 
-  // Estado específico para el modal de Atender Turno
   const [datosAtencion, setDatosAtencion] = useState({
     notas_consulta: "",
     precio_final: 0,
     practicas: [],
   });
 
-  // Estado específico para el modal de Cancelar e Inasistente
   const [inasistente, setInasistente] = useState(false);
-  const [notasCancelarInasistente, setNotasCancelarInasistente] = useState({
+  const [notasCanceladoInasistente, setNotasCanceladoInasistente] = useState({
     notas_consulta: "",
   });
 
-  // Estados espefíficos para vista de turno
   const [modalVerAbierto, setModalVerAbierto] = useState(false);
   const [turnoParaVer, setTurnoParaVer] = useState(null);
 
@@ -114,7 +119,6 @@ export default function GestionTurnos() {
     buscarTurnos();
   }, [page, search, order, estadoFiltrado]);
 
-  // Cálculo automático de fecha_hora_fin en el modal principal
   useEffect(() => {
     if (datosFormulario.fecha_hora_inicio && datosFormulario.duracion_minutos) {
       calcularHoraFin(
@@ -124,7 +128,6 @@ export default function GestionTurnos() {
     }
   }, [datosFormulario.fecha_hora_inicio, datosFormulario.duracion_minutos]);
 
-  // Recalcular precio base automáticamente en el modal de atención según las prácticas seleccionadas
   useEffect(() => {
     let total = 0;
     datosAtencion.practicas.forEach((item) => {
@@ -139,6 +142,19 @@ export default function GestionTurnos() {
     });
     setDatosAtencion((prev) => ({ ...prev, precio_final: total }));
   }, [datosAtencion.practicas, practicasLista]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        menuAbiertoId !== null &&
+        !event.target.closest(".menu-acciones-container")
+      ) {
+        setMenuAbiertoId(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [menuAbiertoId]);
 
   /* ─── PETICIONES API ─────────────────────────────────── */
   const buscarTurnos = async () => {
@@ -193,7 +209,6 @@ export default function GestionTurnos() {
     }
   };
 
-  /* ─── CÁLCULO DE FECHA FIN ───────────────────────────────── */
   const calcularHoraFin = (fecha_inicio, duracion_minutos) => {
     const inicio = new Date(fecha_inicio);
     const minutos = parseInt(duracion_minutos, 10);
@@ -211,7 +226,6 @@ export default function GestionTurnos() {
     }
   };
 
-  /* ─── MANEJO DE MODALES ─────────────────────────────────── */
   const abrirVistaTurno = (turno) => {
     setTurnoParaVer(turno);
     setModalVerAbierto(true);
@@ -279,6 +293,7 @@ export default function GestionTurnos() {
     setModalAtenderAbierto(false);
     setModalCancelarAbierto(false);
     setTurnoSeleccionado(null);
+    setMenuAbiertoId(null);
     setDatosFormulario({
       id_paciente: "",
       id_estado: 1,
@@ -294,7 +309,7 @@ export default function GestionTurnos() {
       practicas: [],
     });
     setInasistente(false);
-    setNotasCancelarInasistente({ notas_consulta: "" });
+    setNotasCanceladoInasistente({ notas_consulta: "" });
   };
 
   const actualizarDatos = (e) => {
@@ -402,7 +417,7 @@ export default function GestionTurnos() {
 
     try {
       const payloadAtencion = {
-        notas_consulta: notasCancelarInasistente.notas_consulta.trim(),
+        notas_consulta: notasCanceladoInasistente.notas_consulta.trim(),
       };
 
       if (inasistente) {
@@ -440,9 +455,9 @@ export default function GestionTurnos() {
     }
   };
 
-  // Cálculos dinámicos para el texto de paginación
-  const inicioRegistro = totalTurnos === 0 ? 0 : (page - 1) * 10 + 1;
-  const finRegistro = Math.min(page * 10, totalTurnos);
+  const inicioRegistro = totalTurnos === 0 ? 0 : (page - 1) * 9 + 1;
+  const finRegistro =
+    totalTurnos === 0 ? 0 : page === totalPages ? totalTurnos : page * 9;
 
   return (
     <div className="w-full flex-1 flex flex-col gap-4">
@@ -465,9 +480,9 @@ export default function GestionTurnos() {
       />
 
       <div className="flex-1 w-full min-h-0 p-4 pt-0 flex flex-col gap-4">
-        {/* ─── CONTENEDOR UNIFICADO (BÚSQUEDA, TABLA Y PAGINACIÓN) ─── */}
+        {/* ─── CONTENEDOR UNIFICADO ───────────────────────────────── */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col overflow-hidden">
-          {/* 1. Barra superior interna: Contador y Filtros */}
+          {/* Barra superior */}
           <div className="p-4 border-b border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="text-sm font-medium text-gray-500">
               Mostrando {inicioRegistro} a {finRegistro} de {totalTurnos}{" "}
@@ -475,13 +490,12 @@ export default function GestionTurnos() {
             </div>
 
             <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
-              {/* Selector de Estado */}
               <select
                 className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#2eb086]/50"
                 value={estadoFiltrado}
                 onChange={(e) => {
                   setEstadoFiltrado(e.target.value);
-                  setPage(1); // Resetear a página 1 al cambiar filtro
+                  setPage(1);
                 }}
               >
                 <option value="all">Todos</option>
@@ -492,7 +506,6 @@ export default function GestionTurnos() {
                 ))}
               </select>
 
-              {/* Buscador */}
               <div className="relative flex-1 sm:w-80">
                 <Search
                   size={18}
@@ -504,7 +517,7 @@ export default function GestionTurnos() {
                   value={search}
                   onChange={(e) => {
                     setSearch(e.target.value);
-                    setPage(1); // Resetear a página 1 al buscar
+                    setPage(1);
                   }}
                   className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2eb086]/50 focus:border-[#2eb086] transition-all"
                 />
@@ -512,7 +525,7 @@ export default function GestionTurnos() {
             </div>
           </div>
 
-          {/* 2. Cuerpo de la Tabla */}
+          {/* Tabla */}
           <div className="overflow-x-auto flex-1">
             <Tabla
               cargando={cargando}
@@ -527,25 +540,24 @@ export default function GestionTurnos() {
                 { label: "Acciones", align: "center" },
               ]}
             >
-              {turnos.map((turno) => {
+              {turnos.map((turno, index) => {
                 const estadoInfo = estadosMap[turno.EstadoTurno.estado] || {
                   nombre: "Desconocido",
                   color: "bg-gray-100 text-gray-600 border-gray-200",
                   icon: AlertCircle,
                 };
                 const IconoEstado = estadoInfo.icon;
-
+                const menuEstaAbierto = menuAbiertoId === turno.id_turno;
+                const esUltimasFilas = index >= turnos.length - 2;
                 return (
                   <tr
                     key={turno.id_turno}
                     className="hover:bg-gray-50/60 transition-colors"
                   >
-                    {/* ID */}
                     <td className="px-6 py-4 font-semibold text-gray-500 w-16">
                       #{turno.id_turno}
                     </td>
 
-                    {/* Paciente */}
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-full bg-[#e8f7f1] text-[#2eb086] flex items-center justify-center font-bold text-sm shrink-0">
@@ -567,12 +579,33 @@ export default function GestionTurnos() {
                       </div>
                     </td>
 
-                    {/* Fecha y Hora */}
-                    <td className="px-6 py-4 font-medium text-gray-700">
-                      {formatFechaHoraTabla(turno.fecha_hora_inicio)}
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex flex-col space-y-0.5">
+                        {/* Fecha principal */}
+                        <span className="text-sm font-semibold text-gray-900">
+                          {formatFechaTabla(turno.fecha_hora_inicio)}
+                        </span>
+                        {/* Rango de horas en una sola línea */}
+                        <span className="text-xs font-medium text-gray-500 flex items-center gap-1.5">
+                          <svg
+                            className="w-3.5 h-3.5 text-gray-400"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                          {formatSoloHora(turno.fecha_hora_inicio)} -{" "}
+                          {formatSoloHora(turno.fecha_hora_fin)} hs
+                        </span>
+                      </div>
                     </td>
 
-                    {/* Precio */}
                     <td className="px-6 py-4 font-semibold text-gray-800">
                       $
                       {Number(turno.precio_final).toLocaleString("es-AR", {
@@ -580,7 +613,6 @@ export default function GestionTurnos() {
                       })}
                     </td>
 
-                    {/* Estado */}
                     <td className="px-6 py-4">
                       <span
                         className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${estadoInfo.color}`}
@@ -590,52 +622,26 @@ export default function GestionTurnos() {
                       </span>
                     </td>
 
-                    {/* Notas */}
                     <td className="px-6 py-4 text-gray-500 max-w-xs truncate">
                       {turno.notas_consulta || (
                         <span className="text-gray-300 italic">Sin notas</span>
                       )}
                     </td>
 
-                    {/* Acciones */}
+                    {/* Acciones compactas + Menú desplegable */}
                     <td className="px-6 py-4">
-                      <div className="flex items-center justify-center gap-2">
+                      <div className="flex items-center justify-center gap-1.5 relative">
+                        {/* Botón Ver */}
                         <button
                           type="button"
                           onClick={() => abrirVistaTurno(turno)}
                           className="p-2 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors"
-                          title="Ver detalle del turno"
+                          title="Ver detalle"
                         >
                           <Eye size={18} />
                         </button>
-                        {turno.EstadoTurno.estado === "Programado" && (
-                          <div className="flex items-center gap-1">
-                            <button
-                              type="button"
-                              onClick={() => abrirModalAtender(turno)}
-                              className="p-2 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors"
-                              title="Marcar como Atendido y Registrar Prácticas"
-                            >
-                              <CheckSquare size={18} />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => abrirModalCancelar(turno)}
-                              className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
-                              title="Marcar como Cancelado"
-                            >
-                              <X size={18} />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => abrirModalInasistente(turno)}
-                              className="p-2 rounded-lg text-yellow-600 hover:bg-yellow-50 transition-colors"
-                              title="Marcar como Inasistente"
-                            >
-                              <UserRoundX size={18} />
-                            </button>
-                          </div>
-                        )}
+
+                        {/* Botón Editar */}
                         <button
                           type="button"
                           onClick={() => modalEditando(turno)}
@@ -644,6 +650,8 @@ export default function GestionTurnos() {
                         >
                           <Edit size={18} />
                         </button>
+
+                        {/* Botón Eliminar */}
                         <button
                           type="button"
                           onClick={() => confirmarEliminar(turno)}
@@ -652,6 +660,101 @@ export default function GestionTurnos() {
                         >
                           <Trash2 size={18} />
                         </button>
+
+                        {/* Menú Desplegable (Dropdown) para acciones secundarias si está Programado */}
+                        {turno.EstadoTurno.estado === "Programado" && (
+                          <div className="relative menu-acciones-container">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setMenuAbiertoId(
+                                  menuEstaAbierto ? null : turno.id_turno,
+                                )
+                              }
+                              className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
+                              title="Más opciones"
+                            >
+                              <MoreVertical size={18} />
+                            </button>
+
+                            {/* Contenido del menú flotante */}
+                            {menuEstaAbierto && (
+                              <div
+                                className={`absolute right-0 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1.5 z-50 flex flex-col`}
+                              >
+                                {" "}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setMenuAbiertoId(null);
+                                    abrirModalAtender(turno);
+                                  }}
+                                  className="flex items-center gap-2 px-4 py-2 text-xs font-medium text-emerald-700 hover:bg-emerald-50 transition-colors text-left"
+                                >
+                                  <CheckSquare size={15} />
+                                  <span>Atender Turno</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setMenuAbiertoId(null);
+                                    abrirModalCancelar(turno);
+                                  }}
+                                  className="flex items-center gap-2 px-4 py-2 text-xs font-medium text-red-600 hover:bg-red-50 transition-colors text-left"
+                                >
+                                  <X size={15} />
+                                  <span>Cancelar Turno</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setMenuAbiertoId(null);
+                                    abrirModalInasistente(turno);
+                                  }}
+                                  className="flex items-center gap-2 px-4 py-2 text-xs font-medium hover:bg-[#f0f6f9] text-[#2b5d73] transition-colors text-left"
+                                >
+                                  <UserRoundX size={15} />
+                                  <span>Turno Inasistido</span>
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        {/* Menú Desplegable (Dropdown) para acciones secundarias si está Atendido */}
+                        {turno.EstadoTurno.estado === "Atendido" && (
+                          <div className="relative menu-acciones-container">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setMenuAbiertoId(
+                                  menuEstaAbierto ? null : turno.id_turno,
+                                )
+                              }
+                              className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
+                              title="Más opciones"
+                            >
+                              <MoreVertical size={18} />
+                            </button>
+
+                            {/* Contenido del menú flotante */}
+                            {menuEstaAbierto && (
+                              <div
+                                className={`absolute right-0 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1.5 z-50 flex flex-col `}
+                              >
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setMenuAbiertoId(null);
+                                  }}
+                                  className="flex items-center gap-2 px-4 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors text-left"
+                                >
+                                  <BanknoteArrowDown size={15} />
+                                  <span>Cobrar</span>
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -660,7 +763,7 @@ export default function GestionTurnos() {
             </Tabla>
           </div>
 
-          {/* 3. Paginación Inferior integrada */}
+          {/* Paginación */}
           <div className="flex items-center justify-between p-4 border-t border-gray-100 bg-white">
             <div className="text-xs text-gray-500">
               Página {page} de {totalPages || 1}
@@ -674,7 +777,6 @@ export default function GestionTurnos() {
                 Anterior
               </button>
 
-              {/* Selector directo de página en lugar de un div estático */}
               <select
                 value={page}
                 onChange={(e) => setPage(Number(e.target.value))}
@@ -703,7 +805,7 @@ export default function GestionTurnos() {
         </div>
       </div>
 
-      {/* ─── MODALES ────────────────────────────────────────────── */}
+      {/* Modales */}
       <VistaTurno
         isOpen={modalVerAbierto}
         onClose={() => {
@@ -715,7 +817,6 @@ export default function GestionTurnos() {
 
       {modalAbierto && (
         <FormularioCrearEditar
-          page={"Turnos"}
           modalAbierto={modalAbierto}
           cerrarModal={cerrarModal}
           editando={editando}
@@ -748,8 +849,8 @@ export default function GestionTurnos() {
           cerrarModal={cerrarModal}
           turnoSeleccionado={turnoSeleccionado}
           inasistente={inasistente}
-          notasCanceladoInasistente={notasCancelarInasistente}
-          setNotasCanceladoInasistente={setNotasCancelarInasistente}
+          notasCanceladoInasistente={notasCanceladoInasistente}
+          setNotasCanceladoInasistente={setNotasCanceladoInasistente}
           procesarCancelacionTurno={procesarCancelacionTurno}
         />
       )}

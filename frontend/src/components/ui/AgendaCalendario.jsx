@@ -28,7 +28,7 @@ export const AgendaCalendar = ({ turnos = [], onDateSelect, onEventClick }) => {
 
     return {
       id: String(turno.id_turno),
-      title: `${nombrePaciente} ${turno.notas_consulta ? `- ${turno.notas_consulta}` : ""} `,
+      title: `${nombrePaciente} ${turno.notas_consulta ? `- ${turno.notas_consulta}` : ""} - ${turno.EstadoTurno.estado} `,
       start: turno.fecha_hora_inicio,
       end: turno.fecha_hora_fin,
       // Guardamos el objeto original dentro de 'extendedProps' para recuperarlo al hacer clic
@@ -86,6 +86,7 @@ export const AgendaCalendar = ({ turnos = [], onDateSelect, onEventClick }) => {
         allDaySlot={false}
         selectable={true}
         editable={true}
+        nowIndicator={true}
         height="100%"
         events={turnosFormateados}
         select={onDateSelect}

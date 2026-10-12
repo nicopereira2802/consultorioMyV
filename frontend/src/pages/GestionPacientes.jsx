@@ -270,8 +270,9 @@ export default function GestionPacientes() {
   };
 
   // Cálculos dinámicos para los índices del texto de paginación
-  const inicioRegistro = totalPacientes === 0 ? 0 : (page - 1) * 10 + 1;
-  const finRegistro = Math.min(page * 10, totalPacientes);
+  const inicioRegistro = totalPacientes === 0 ? 0 : (page - 1) * 9 + 1;
+  const finRegistro =
+    totalPacientes === 0 ? 0 : page === totalPages ? totalPacientes : page * 9;
 
   return (
     <div className="w-full flex-1 flex flex-col gap-4">

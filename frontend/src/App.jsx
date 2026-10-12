@@ -11,6 +11,7 @@ import GestionPacientes from "./pages/GestionPacientes";
 import GestionObrasSociales from "./pages/master/GestionObraSocial";
 import GestionPracticas from "./pages/master/GestionPracticas";
 import GestionTurnos from "./pages/GestionTurnos";
+import GestionCobros from "./pages/GestionCobro";
 
 /**
  * App - Enrutador Principal Operativo (Sprint 1)
@@ -42,6 +43,7 @@ function App() {
             { path: "", element: <AgendaDiaria /> },
             { path: "/pacientes", element: <GestionPacientes /> },
             { path: "/turnos", element: <GestionTurnos /> },
+            { path: "/cobros", element: <GestionCobros /> },
             {
               path: "/configuracion",
               children: [

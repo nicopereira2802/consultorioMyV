@@ -171,8 +171,9 @@ export default function GestionPracticas() {
   };
 
   // Cálculos dinámicos para los índices del texto de paginación
-  const inicioRegistro = totalPracticas === 0 ? 0 : (page - 1) * 10 + 1;
-  const finRegistro = Math.min(page * 10, totalPracticas);
+  const inicioRegistro = totalPracticas === 0 ? 0 : (page - 1) * 9 + 1;
+  const finRegistro =
+    totalPages === 0 ? 0 : page === totalPages ? totalPracticas : page * 9;
 
   return (
     <div className="w-full flex-1 flex flex-col gap-4">
@@ -359,7 +360,7 @@ export default function GestionPracticas() {
                     value={index + 1}
                     className="bg-white text-gray-800"
                   >
-                    Pág. {index + 1}
+                    {index + 1}
                   </option>
                 ))}
               </select>

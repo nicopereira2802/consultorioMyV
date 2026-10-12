@@ -1,0 +1,406 @@
+/**
+ * MODELO Cobro:
+ * id_cobro -> INTEGER ; PK
+ * id_turno -> INTEGER ; FK ; allowNull: false
+ * id_paciente -> INTEGER ; FK ; allowNull: false
+ * monto_a_cobrar -> DECIMAL(10, 2) ; allowNull: false
+ * cant_cuotas -> INTEGER ; allowNull: false ; default: 1
+ * fecha_emision -> DATE ; allowNull: false ; default: DataTypes.NOW
+ * activo -> BOOLEAN ; allowNull: false ; default: true
+ *
+ * router.use("/api/cobros", CobroRoutes);
+ *
+ * RUTAS:
+
+router.get("/", CobroController.getAllCobros);
+
+ * router.get(
+ *   "/:turnoId/cobros",
+ *   validarExistencia(Turno, "turnoId", "params"),
+ *   CobroController.getCobroByTurnoId,
+ * );
+ *
+ * router.get(
+ *   "/:id",
+ *   validarExistencia(Cobro, "id", "params"),
+ *   CobroController.getCobroById,
+ * );
+ *
+ * router.post(
+ *   "/",
+ *   validateSchema(createCobroSchema),
+ *   validarExistencia(Turno, "id", "body"),
+ *   validarExistencia(Paciente, "id", "body"),
+ *   CobroController.createCobro,
+ * );
+ *
+ * router.put(
+ *   "/:id",
+ *   validateSchema(updateCobroSchema),
+ *   validarExistencia(Cobro, "id", "params"),
+ *   CobroController.updateCobro,
+ * );
+ *
+ * router.patch(
+ *   "/:id/delete",
+ *   validarExistencia(Cobro, "id", "params"),
+ *   CobroController.deleteCobro,
+ * );
+
+ /**
+ * MODELO Cuota:
+ * id_cuota -> INTEGER ; PK
+ * id_cobro -> INTEGER ; FK ; allowNull: false
+ * nro_cuota -> INTEGER ; allowNull: false
+ * monto_cuota -> DECIMAL(10, 2) ; allowNull: false
+ * monto_cobrado -> DECIMAL(10, 2) ; allowNull: true
+ * fecha_vencimiento -> DATEONLY ; allowNull: false
+ * fecha_cobro -> DATE ; allowNull: true
+ * metodo_pago -> ENUM("Efectivo", "Transferencia", "Tarjeta", "Otro") ; allowNull: true
+ * estado -> ENUM("Pendiente", "Pagada", "Parcialmente pagada") ; allowNull: false ; default: "Pendiente"
+ * vencida -> VIRTUAL ; get() {
+ *         const hoy = new Date();
+ *         return (
+ *           this.estado !== "Pagada" && new Date(this.fecha_vencimiento) < hoy
+ *         );
+ *       },
+ *     },
+ * activo -> BOOLEAN ; allowNull: false ; default: true
+ *
+ * router.use("/api/cuotas", CuotaRoutes);
+ *
+ * RUTAS:
+ * router.get(
+ *   "/:cobroId/cuotas",
+ *   validarExistencia(Cobro, "cobroId", "params"),
+ *   CuotaController.getCuotaByCobroId,
+ * );
+ *
+ * router.get(
+ *   "/:id",
+ *   validarExistencia(Cuota, "id", "params"),
+ *   CuotaController.getCuotaById
+ * );
+ *
+ * router.post(
+ *   "/",
+ *   validateSchema(createCuotaSchema),
+ *   validarExistencia(Cobro, "id", "body"),
+ *   CuotaController.createCuota,
+ * );
+ *
+ * router.put(
+ *   "/:id",
+ *   validateSchema(updateCuotaSchema),
+ *   validarExistencia(Cuota, "id", "params"),
+ *   CuotaController.updateCuota,
+ * );
+ *
+ * router.patch(
+ *   "/:id/cobrar",
+ *   validarExistencia(Cuota, "id", "params"),
+ *   CuotaController.cobrarCuota,
+ * );
+ *
+ * router.patch(
+ *   "/:id/delete",
+ *   validarExistencia(Cuota, "id", "params"),
+ *   CuotaController.deleteCuota,
+ * );
+
+ /**
+ * MODELO EstadoTurno:
+ * id_estado -> INTEGER ; PK
+ * estado -> ENUM( "Programado", "Cancelado", "Atendido", "Inasistente",) ; allowNull: false ; unique: true
+ *
+ * RUTAS:
+ * NO TIENE, LAS CREO PARA TESTEAR? O NO HACE FALTA?
+ *
+
+ /**
+ * MODELO HistorialEstadoTurno:
+ * id_historial -> INTEGER ; PK
+ * id_turno -> INTEGER ; FK ; allowNull: false
+ * id_estado -> INTEGER ; FK ; allowNull: false
+ * fecha_hora_cambio -> DATE ; allowNull: false ; default: DataTypes.NOW
+ * descripcion -> STRING ; allowNull: true
+ *
+ * router.use("/api/historial-estado-turnos", HistorialEstadoTurnoRoutes);
+ *
+ * RUTAS:
+ * router.get('/:id', HistorialEstadoTurno.getHistorialTurnoByTurnoId)
+ *
+
+ /**
+ * MODELO ObraSocial:
+ * id_obra_social -> INTEGER ; PK
+ * nombre -> STRING ; allowNull: false ; activo -> BOOLEAN ; allowNull: false ; default: true
+ * activo -> BOOLEAN ; allowNull: false ; default: true
+ *
+ * router.use("/api/obras-sociales", ObraSocialRoutes);
+ *
+ * RUTAS:
+ * router.get("/", ObraSocialController.getAllObrasSociales);
+ *
+ * router.get(
+ *   "/:id",
+ *   validarExistencia(ObraSocial, "id", "params"),
+ *   ObraSocialController.getObraSocialById,
+ * );
+ *
+ * router.post(
+ *   "/",
+ *   validateSchema(createObraSocialSchema),
+ *   ObraSocialController.createObraSocial,
+ * );
+ *
+ * router.put(
+ *   "/:id",
+ *   validateSchema(updateObraSocialSchema),
+ *   validarExistencia(ObraSocial, "id", "params"),
+ *   ObraSocialController.updateObraSocial,
+ * );
+ *
+ * router.patch(
+ *   "/:id/delete",
+ *   validarExistencia(ObraSocial, "id", "params"),
+ *   ObraSocialController.deleteObraSocial,
+ * );
+ *
+
+ /**
+ * MODELO Paciente
+ * id_paciente -> INTEGER -> PK
+ * nombre -> STRING -> allowNull: false
+ * apellido -> STRING -> allowNull: false
+ * dni -> STRING -> allowNull: true ; unique: true
+ * fecha_nacimiento -> DATEONLY -> allowNull: true
+ * telefono -> STRING -> allowNull: false
+ * domicilio -> STRING -> allowNull: true
+ * activo -> BOOLEAN ; allowNull: false ; default: true
+ *
+ * router.use("/api/pacientes", PacienteRoutes);
+ *
+ * RUTAS:
+ * router.get("/", PacienteController.getAllPacientes);
+ *
+ * router.get(
+ *   "/:id",
+ *   validarExistencia(Paciente, "id", "params"),
+ *   PacienteController.getPacienteById,
+ * );
+ *
+ * router.post(
+ *   "/",
+ *   validateSchema(createPacienteSchema),
+ *   PacienteController.createPaciente,
+ * );
+ *
+ * router.put(
+ *   "/:id",
+ *   validateSchema(updatePacienteSchema),
+ *   validarExistencia(Paciente, "id", "params"),
+ *   PacienteController.updatePaciente,
+ * );
+ *
+ * router.patch(
+ *   "/:id/delete",
+ *   validarExistencia(Paciente, "id", "params"),
+ *   PacienteController.deletePaciente,
+ * );
+
+ /**
+ * MODELO PacienteObraSocial:
+ * id_paciente_obra_social -> INTEGER ; PK ; FK
+ * id_obra_social -> INTEGER ; PK ; FK
+ * id_paciente -> INTEGER ; PK ; FK
+ * nro_afiliado -> STRING ; allowNull: false
+ *
+ * router.use("/api/pacientes-por-obras-sociales", PacienteObraSocialRoutes);
+ *
+ * RUTAS:
+ * router.get("/", PacienteObraSocialController.getAllPacientesPorObraSocial);
+ *
+ * router.get(
+ *   "/:id",
+ *   validarExistencia(PacienteObraSocial, "id", "params"),
+ *   PacienteObraSocialController.getPacientePorObraSocialById,
+ * );
+ * router.post(
+ *   "/",
+ *   validateSchema(createPacienteObraSocialSchema),
+ *   validarExistencia(Paciente, "id_paciente", "body"),
+ *   validarExistencia(ObraSocial, "id_obra_social", "body"),
+ *   PacienteObraSocialController.createPacientePorObraSocial,
+ * );
+ *
+ * router.put(
+ *   "/:id",
+ *   validateSchema(updatePacienteObraSocialSchema),
+ *   validarExistencia(PacienteObraSocial, "id", "params"),
+ *   PacienteObraSocialController.updatePacientePorObraSocial,
+ * );
+ *
+ * router.delete(
+ *   "/:id",
+ *   validarExistencia(PacienteObraSocial, "id", "params"),
+ *   PacienteObraSocialController.deletePacientePorObraSocial,
+ * );
+ *
+
+ /**
+ * MODELO Practica
+ * id_practica -> INTEGER ; PK
+ * codigo_nomenclador -> STRING ; allowNull: false
+ * nombre_nomenclador -> STRING ; allowNull: false
+ * nombre_referencia -> STRING ; allowNull: false
+ * especialidad -> STRING ; allowNull: false
+ * precio_referencia -> DECIMAL(10, 2) ; allowNull: false
+ * activo -> BOOLEAN ; allowNull: false ; default: true
+ *
+ * router.use("/api/practicas", PracticaRoutes);
+ *
+ * RUTAS:
+ * router.get("/", PracticaController.getAllPracticas);
+ *
+ * router.get(
+ *   "/:id",
+ *   validarExistencia(Practica, "id", "params"),
+ *   PracticaController.getPracticaById,
+ * );
+ *
+ * router.post(
+ *   "/",
+ *   validateSchema(createPracticaSchema),
+ *   PracticaController.createPractica,
+ * );
+ *
+ * router.put(
+ *   "/:id",
+ *   validateSchema(updatePracticaSchema),
+ *   validarExistencia(Practica, "id", "params"),
+ *   PracticaController.updatePractica,
+ * );
+ *
+ * router.patch(
+ *   "/:id/delete",
+ *   validarExistencia(Practica, "id", "params"),
+ *   PracticaController.deletePractica,
+ * );
+ *
+
+ /**
+ * MODELO PracticaTurno
+ *
+ * id_practica_turno -> INTEGER ; PK
+ * id_turno -> INTEGER ; FK
+ * id_practica -> INTEGER ; FK
+ * id_obra_social -> INTEGER ; FK
+ *
+ * indexes: [
+ *       {
+ *         unique: true,
+ *         fields: ["id_turno", "id_practica", "id_obra_social"],
+ *       },
+ *
+ * router.use("/api/practicas-turnos", PracticaTurnoRoutes);
+ *
+ * RUTAS:
+ * router.get("/", PracticaTurnoController.getAllPracticaTurno);
+ * router.get(
+ *   "/:id",
+ *   validarExistencia(PracticaTurno, "id", "params"),
+ *   PracticaTurnoController.getPracticaTurnoById,
+ * );
+ router.get("/:id_turno/turno", PracticaTurnoController.getPracticasByTurnoId);
+ * router.post(
+ *   "/",
+ *   validateSchema(createPracticaTurnoSchema),
+ *   validarExistencia(Turno, "turno_id", "body"),
+ *   validarExistencia(Practica, "practica_id", "body"),
+ *   PracticaTurnoController.createPracticaTurno,
+ * );
+ * router.put(
+ *   "/:id",
+ *   validateSchema(updatePracticaTurnoSchema),
+ *   validarExistencia(PracticaTurno, "id", "params"),
+ *   PracticaTurnoController.updatePracticaTurno,
+ * );
+ * router.delete(
+ *   "/:id",
+ *   validarExistencia(PracticaTurno, "id", "params"),
+ *   PracticaTurnoController.deletePracticaTurno,
+ * );
+ *
+
+ /**
+ * MODELO Turno:
+ * id_turno -> INTEGER ; PK
+ * id_paciente -> INTEGER ; FK ; allowNull: false
+ * id_estado -> INTEGER ; FK ; allowNull: false
+ * fecha_hora_inicio -> DATE ; allowNull: false
+ * fecha_hora_fin -> DATE ; allowNull: false       IMPORTANTE: NO SE MANDA COMO DATO, SE CALCULA A PARTIR DE LA DURACION
+ * duracion_minutos -> INTEGER       IMPORTANTE: NO SE GUARDA EN LA BASE DE DATOS, SOLO SE USA PARA CALCULAR LA FECHA FIN
+ * precio_final -> DECIMAL(10, 2) ; allowNull: false
+ * notas_consulta -> STRING ; allowNull: true
+ *
+ * router.use("/api/turnos", TurnoRoutes);
+ *
+ * RUTAS:
+ * router.get("/", TurnoController.getAllTurnos);
+ *router.get("/atendidos", TurnoController.getAllTurnosAtendidos);
+ * router.get(
+ *   "/:id",
+ *   validarExistencia(Turno, "id", "params"),
+ *   TurnoController.getTurnoById,
+ * );
+ *
+ * router.post(
+ *   "/",
+ *   validateSchema(createTurnoSchema),
+ *   TurnoController.createTurno,
+ * );
+ *
+ * router.put(
+ *   "/:id",
+ *   validateSchema(updateTurnoSchema),
+ *   validarExistencia(Turno, "id", "params"),
+ *   TurnoController.updateTurno,
+ * );
+ *
+ * // Finalizar atención en consultorio y registrar prácticas
+ * router.patch(
+ *   "/:id/atender",
+ *   validateSchema(updateTurnoSchema),
+ *   validarExistencia(Turno, "id", "params"),
+ *   TurnoController.turnoAtendido,
+ * );
+ *
+ * // Cancelar turno
+ * router.patch(
+ *   "/:id/cancelar",
+ *   validateSchema(updateTurnoSchema),
+ *   validarExistencia(Turno, "id", "params"),
+ *   TurnoController.turnoCancelado,
+ * );
+ *
+ * // Marcar como inasistente
+ * router.patch(
+ *   "/:id/inasistente",
+ *   validateSchema(updateTurnoSchema),
+ *   validarExistencia(Turno, "id", "params"),
+ *   TurnoController.turnoCancelado,
+ * );
+ *
+ * // Marcar como reprogramado
+ * router.patch(
+ *   "/:id/reprogramado",
+ *   validarExistencia(Turno, "id", "params"),
+ *   TurnoController.turnoReprogramado,
+ * );
+ *
+ * router.delete(
+ *   "/:id",
+ *   validarExistencia(Turno, "id", "params"),
+ *   TurnoController.deleteTurno,
+ * );

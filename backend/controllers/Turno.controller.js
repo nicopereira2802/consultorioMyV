@@ -85,6 +85,33 @@ export const getAllTurnos = async (req, res) => {
   }
 };
 
+// Obtener todos los turnos en Atendido
+export const getAllTurnosAtendidos = async (req, res) => {
+  try {
+    const turnos = await Turno.findAll({
+      where: { activo: true, id_estado: 2 },
+      include: [
+        {
+          model: Paciente,
+          attributes: ["nombre", "apellido", "dni", "telefono"], // Atributos que quieres traer del paciente
+        },
+        {
+          model: EstadoTurno,
+          attributes: ["estado"], // Atributos que quieres traer del estado
+        },
+      ],
+    });
+
+    res.status(200).json({
+      status: "success",
+      data: turnos,
+    });
+  } catch (error) {
+    console.error("Error al obtener los turnos atendidos:", error);
+    res.status(500).json({ error: "Error al obtener los turnos atendidos" });
+  }
+};
+
 // Obtener un turno por su ID
 export const getTurnoById = async (req, res) => {
   try {

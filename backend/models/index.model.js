@@ -44,14 +44,15 @@ HistorialEstadoTurno.belongsTo(Turno, { foreignKey: "id_turno" });
 EstadoTurno.hasMany(HistorialEstadoTurno, { foreignKey: "id_estado" });
 HistorialEstadoTurno.belongsTo(EstadoTurno, { foreignKey: "id_estado" });
 
-Turno.hasMany(Cobro, { foreignKey: "id_turno" });
+Turno.hasOne(Cobro, { foreignKey: "id_turno" });
 Cobro.belongsTo(Turno, { foreignKey: "id_turno" });
 
 Paciente.hasMany(Cobro, { foreignKey: "id_paciente" });
 Cobro.belongsTo(Paciente, { foreignKey: "id_paciente" });
 
 Cobro.hasMany(Cuota, { foreignKey: "id_cobro" });
-Cuota.belongsTo(Turno, { foreignKey: "id_cobro" });
+Cuota.belongsTo(Cobro, { foreignKey: "id_cobro" });
+
 
 const sincronizarModelos = async () => {
   try {

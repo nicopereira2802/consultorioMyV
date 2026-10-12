@@ -26,7 +26,10 @@ export default function GestionObrasSociales() {
   const [totalObrasSociales, setTotalObrasSociales] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState("");
-  const [order, setOrder] = useState({ column: "id_obra_social", direction: "ASC" });
+  const [order, setOrder] = useState({
+    column: "id_obra_social",
+    direction: "ASC",
+  });
 
   /* ─── ESTADOS DEL MODAL Y FORMULARIO ─────────────────────── */
   const [modalAbierto, setModalAbierto] = useState(false);
@@ -154,8 +157,9 @@ export default function GestionObrasSociales() {
   };
 
   // Cálculos dinámicos para los índices del texto de paginación
-  const inicioRegistro = totalObrasSociales === 0 ? 0 : (page - 1) * 10 + 1;
-  const finRegistro = Math.min(page * 10, totalObrasSociales);
+  const inicioRegistro = totalObrasSociales === 0 ? 0 : (page - 1) * 9 + 1;
+  const finRegistro =
+    totalObrasSociales === 0 ? 0 : page === totalPages ? totalObrasSociales : page * 9;
 
   return (
     <div className="w-full flex-1 flex flex-col gap-4">
@@ -180,11 +184,11 @@ export default function GestionObrasSociales() {
       <div className="flex-1 w-full min-h-0 p-4 pt-0 flex flex-col gap-4">
         {/* ─── CONTENEDOR UNIFICADO (BÚSQUEDA, TABLA Y PAGINACIÓN) ─── */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col overflow-hidden">
-          
           {/* 1. Barra superior interna: Contador y Buscador */}
           <div className="p-4 border-b border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="text-sm font-medium text-gray-500">
-              Mostrando {inicioRegistro} a {finRegistro} de {totalObrasSociales} registros
+              Mostrando {inicioRegistro} a {finRegistro} de {totalObrasSociales}{" "}
+              registros
             </div>
 
             <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
@@ -315,7 +319,11 @@ export default function GestionObrasSociales() {
                 className="px-3 py-1.5 bg-[#2eb086] text-white rounded-xl text-xs font-semibold shadow-sm focus:outline-none cursor-pointer"
               >
                 {Array.from({ length: totalPages }, (_, index) => (
-                  <option key={index + 1} value={index + 1} className="bg-white text-gray-800">
+                  <option
+                    key={index + 1}
+                    value={index + 1}
+                    className="bg-white text-gray-800"
+                  >
                     {index + 1}
                   </option>
                 ))}
@@ -330,7 +338,6 @@ export default function GestionObrasSociales() {
               </button>
             </div>
           </div>
-
         </div>
       </div>
 

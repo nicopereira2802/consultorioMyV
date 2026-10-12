@@ -1,29 +1,34 @@
 /** @format */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import api from "../../../services/api";
 import Modal from "../Modal";
-import { Plus, X, CheckSquare, UserPlus } from "lucide-react";
+import {
+  Plus,
+  X,
+  CheckSquare,
+  UserPlus,
+  ChevronDown,
+  UserRoundX,
+  XCircle,
+  BanknoteArrowDown,
+} from "lucide-react";
 
 export function FormularioCrearEditar({
-  // Props de estado/control general
-  page,
   modalAbierto,
   cerrarModal,
   editando,
   pacientes,
-  setPacientes, // <- Opcional pero recomendado para actualizar la lista global al crear rápido
-
-  // Props para Crear / Editar Turno
+  setPacientes,
   datosFormulario,
   actualizarDatos,
-  setDatosFormulario, // <- Necesario para autoseleccionar el paciente recién creado
+  setDatosFormulario,
   procesarFormulario,
   abrirModalAtenderDesdeEdicion,
   abrirModalCancelarDesdeEdicion,
   abrirModalInasistenteDesdeEdicion,
+  abrirModalCobrarDesdeEdicion, // Prop opcional para cobrar
 }) {
-  /* ─── ESTADO PARA MODAL RÁPIDO DE PACIENTE ───────────────── */
   const [modalPacienteRapidoAbierto, setModalPacienteRapidoAbierto] =
     useState(false);
   const [datosPacienteRapido, setDatosPacienteRapido] = useState({
@@ -31,6 +36,22 @@ export function FormularioCrearEditar({
     apellido: "",
     telefono: "",
   });
+
+  // Estado local para el menú desplegable de acciones rápidas dentro del modal
+  const [menuAccionesAbierto, setMenuAccionesAbierto] = useState(false);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        menuAccionesAbierto !== null &&
+        !event.target.closest(".menu-acciones-container")
+      ) {
+        setMenuAccionesAbierto(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [menuAccionesAbierto]);
 
   const actualizarDatosPacienteRapido = (e) => {
     const { name, value } = e.target;
@@ -55,13 +76,11 @@ export function FormularioCrearEditar({
         setPacientes((prev) => [...prev, nuevoPaciente]);
       }
 
-      // Auto-seleccionar el paciente recién creado en el formulario del turno
       setDatosFormulario((prev) => ({
         ...prev,
         id_paciente: nuevoId,
       }));
 
-      // Limpiar y cerrar modal rápido
       setDatosPacienteRapido({ nombre: "", apellido: "", telefono: "" });
       setModalPacienteRapidoAbierto(false);
     } catch (error) {
@@ -70,6 +89,11 @@ export function FormularioCrearEditar({
     }
   };
 
+  // Identificar el estado del turno
+  const idEstadoActual = Number(datosFormulario.id_estado);
+  const esProgramado = idEstadoActual === 1 || !editando;
+  const esAtendido = idEstadoActual === 2;
+
   return (
     <>
       <form onSubmit={procesarFormulario}>
@@ -77,7 +101,11 @@ export function FormularioCrearEditar({
           isOpen={modalAbierto}
           onClose={cerrarModal}
           width="max-w-2xl"
-          title={editando ? "Editar Turno" : "Agendar Turno Nuevo"}
+          title={
+            editando
+              ? `Editar Turno #${datosFormulario.id_turno || ""}`
+              : "Agendar Turno Nuevo"
+          }
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Paciente */}
@@ -86,7 +114,6 @@ export function FormularioCrearEditar({
                 <label className="block text-sm font-semibold text-gray-700">
                   Paciente *
                 </label>
-                {/* Botón rápido para crear paciente */}
                 <button
                   type="button"
                   onClick={() => setModalPacienteRapidoAbierto(true)}
@@ -182,37 +209,94 @@ export function FormularioCrearEditar({
           {/* Separador */}
           <div className="border-t border-gray-200 my-5" />
 
-          {/* Acciones */}
+          {/* Acciones del Modal */}
           <div className="flex items-center justify-between">
-            {editando && page === "Agenda" ? (
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={abrirModalAtenderDesdeEdicion}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-white bg-emerald-600 hover:bg-emerald-700 transition-colors font-semibold text-sm shadow-sm"
-                >
-                  <CheckSquare size={16} />
-                  <span>Atender Turno</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={abrirModalInasistenteDesdeEdicion}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-white bg-yellow-600 hover:bg-yellow-700 transition-colors font-semibold text-sm shadow-sm"
-                >
-                  <span>Inasistente</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={abrirModalCancelarDesdeEdicion}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-white bg-red-600 hover:bg-red-700 transition-colors font-semibold text-sm shadow-sm"
-                >
-                  <span>Cancelar Turno</span>
-                </button>
+            {/* LÓGICA CONDICIONAL DE ACCIONES SEGÚN EL ESTADO */}
+            {editando ? (
+              <div className="relative">
+                {/* 1. SI ESTÁ PROGRAMADO / PENDIENTE */}
+                {esProgramado && (
+                  <div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setMenuAccionesAbierto(!menuAccionesAbierto)
+                      }
+                      className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm transition-all"
+                    >
+                      <span>Cambiar Estado / Atención</span>
+                      <ChevronDown
+                        size={16}
+                        className={`transition-transform duration-200 ${
+                          menuAccionesAbierto ? "rotate-180" : ""
+                        }`}
+                      />
+                    </button>
+
+                    {/* Menú Desplegable Flotante hacia arriba */}
+                    {menuAccionesAbierto && (
+                      <div className="absolute menu-acciones-container left-0 bottom-full mb-2 w-52 bg-white rounded-xl shadow-lg border border-gray-100 py-1.5 z-50 flex flex-col">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setMenuAccionesAbierto(false);
+                            if (abrirModalAtenderDesdeEdicion)
+                              abrirModalAtenderDesdeEdicion();
+                          }}
+                          className="flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 transition-colors text-left"
+                        >
+                          <CheckSquare size={16} />
+                          <span>Atender Turno</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setMenuAccionesAbierto(false);
+                            if (abrirModalInasistenteDesdeEdicion)
+                              abrirModalInasistenteDesdeEdicion();
+                          }}
+                          className="flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-[#2b5d73] hover:bg-[#f0f6f9] transition-colors text-left"
+                        >
+                          <UserRoundX size={16} />
+                          <span>Marcar Inasistente</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setMenuAccionesAbierto(false);
+                            if (abrirModalCancelarDesdeEdicion)
+                              abrirModalCancelarDesdeEdicion();
+                          }}
+                          className="flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors text-left"
+                        >
+                          <XCircle size={16} />
+                          <span>Cancelar Turno</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* 2. SI ESTÁ ATENDIDO -> MOSTRAR OPCIÓN DE COBRAR */}
+                {esAtendido && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (abrirModalCobrarDesdeEdicion)
+                        abrirModalCobrarDesdeEdicion();
+                    }}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold text-sm transition-all shadow-sm"
+                  >
+                    <BanknoteArrowDown size={16} />
+                    <span>Cobrar Turno</span>
+                  </button>
+                )}
               </div>
             ) : (
               <div />
             )}
 
+            {/* Botones Estándar de Guardado / Cancelar */}
             <div className="flex items-center gap-3">
               <button
                 type="button"
@@ -232,7 +316,7 @@ export function FormularioCrearEditar({
         </Modal>
       </form>
 
-      {/* ─── MINI-MODAL: CREAR PACIENTE RÁPIDO ─────────────────── */}
+      {/* MINI-MODAL: CREAR PACIENTE RÁPIDO */}
       {modalPacienteRapidoAbierto && (
         <Modal
           isOpen={modalPacienteRapidoAbierto}

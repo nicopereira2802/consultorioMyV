@@ -100,3 +100,15 @@ export const formatFechaCortaTexto = (fecha) => {
   const texto = d.toLocaleDateString("es-AR", opciones);
   return texto.charAt(0).toUpperCase() + texto.slice(1);
 };
+
+// Extrae solo la hora (ej: "08:30") a partir de un string de fecha/hora o un objeto Date
+export const formatSoloHora = (fechaStr) => {
+  if (!fechaStr) return "";
+  const fecha = new Date(fechaStr);
+
+  return new Intl.DateTimeFormat("es-AR", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false, // Formato 24 horas (ej: 14:30)
+  }).format(fecha);
+};

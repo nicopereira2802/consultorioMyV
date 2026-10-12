@@ -21,6 +21,9 @@ router.get(
   validarExistencia(PracticaTurno, "id", "params"),
   PracticaTurnoController.getPracticaTurnoById,
 );
+
+router.get("/:id_turno/turno", PracticaTurnoController.getPracticasByTurnoId);
+
 router.post(
   "/",
   validateSchema(createPracticaTurnoSchema),

@@ -7,7 +7,9 @@ export const getCuotaByCobroId = async (req, res) => {
   try {
     const id_cobro = req.cobro.id_cobro;
 
-    const cuotas = await Cuota.findAll({ where: { id_cobro: id_cobro } });
+    const cuotas = await Cuota.findAll({
+      where: { id_cobro: id_cobro, activo: true },
+    });
 
     res.status(200).json({
       status: "success",
@@ -134,12 +136,15 @@ export const cobrarCuota = async (req, res) => {
 
     let estado;
 
-    if (monto_cobrado === cuota.monto_cuota) {
+    const monto_cuota = parseFloat(cuota.monto_cuota);
+
+    if (monto_cobrado === monto_cuota) {
       estado = "Pagada";
-    } else if (monto_cobrado < cuota.monto_cuota) {
+    } else if (monto_cobrado < monto_cuota) {
       estado = "Parcialmente pagada";
     } else {
-      res.status(400).json({
+      // 🛑 ¡Faltaba el return acá para que frene si el monto es mayor!
+      return res.status(400).json({
         status: "error",
         message: "El monto cobrado es mayor al monto de la cuota.",
       });
@@ -152,12 +157,13 @@ export const cobrarCuota = async (req, res) => {
       estado: estado,
     });
 
-    res.status(200).json({
+    // 🛑 Buena práctica agregar return acá también
+    return res.status(200).json({
       status: "success",
       data: cuota,
     });
   } catch (error) {
     console.error("Error al cobrar la cuota:", error);
-    res.status(500).json({ error: "Error al cobrar la cuota" });
+    return res.status(500).json({ error: "Error al cobrar la cuota" });
   }
 };

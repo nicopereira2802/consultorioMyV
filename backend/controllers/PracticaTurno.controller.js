@@ -48,6 +48,34 @@ export const getPracticaTurnoById = async (req, res) => {
   }
 };
 
+export const getPracticasByTurnoId = async (req, res) => {
+  try {
+    const { id_turno } = req.params;
+
+    const practicasTurno = await PracticaTurno.findAll({
+      where: { id_turno: id_turno },
+      include: [
+        {
+          model: Practica,
+          attributes: ["codigo_nomenclador"],
+        },
+        {
+          model: ObraSocial,
+          attributes: ["nombre"],
+        },
+      ],
+    });
+
+    res.status(200).json({
+      status: "success",
+      data: practicasTurno,
+    });
+  } catch (error) {
+    console.error("Error al obtener la práctica del turno:", error);
+    res.status(500).json({ error: "Error al obtener la práctica del turno" });
+  }
+};
+
 // Crear una nueva práctica de turno
 export const createPracticaTurno = async (req, res) => {
   try {

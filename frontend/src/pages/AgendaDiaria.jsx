@@ -481,7 +481,6 @@ export default function AgendaDiaria() {
       {/* ─── MODAL CREAR / EDITAR TURNO ─────────────────────────── */}
       {modalAbierto && (
         <FormularioCrearEditar
-          page={"Agenda"}
           modalAbierto={modalAbierto}
           cerrarModal={cerrarModal}
           editando={editando}

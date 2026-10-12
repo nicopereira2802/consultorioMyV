@@ -16,7 +16,7 @@ export default function Layout() {
 
       {/* Contenido principal */}
       <main
-        className={`flex-1 w-full transition-all text-black duration-300 ${isOpen ? "md:pl-72.5" : "md:pl-20"}`}
+        className={`flex-1 w-full transition-all bg-[#E8E8E8] text-black duration-300 ${isOpen ? "md:pl-72.5" : "md:pl-20"}`}
       >
         <Outlet />
       </main>

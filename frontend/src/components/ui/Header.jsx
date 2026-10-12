@@ -1,6 +1,6 @@
 /** @format */
 
-export default function Header({ icono: Icono, titulo, subtitulo, badge, botonAccion }) {
+export default function Header({ icono: Icono, titulo, subtitulo, badge, botonAccion }) { // bg-[#89b8cd]
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 border-b border-gray-100 shadow-sm">
       <div className="flex items-center gap-4">
