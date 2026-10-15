@@ -11,9 +11,7 @@ export const getAllPracticas = async (req, res) => {
     const search = req.query.search || "";
     const sortField = req.query.sortField || "codigo_nomenclador";
     const sortOrder = req.query.sortOrder || "ASC";
-    const where = {
-      activo: true,
-    };
+    const where = {};
 
     // Busqueda por nombre apellido dni telefono
     if (search.trim() !== "") {
@@ -68,13 +66,8 @@ export const getPracticaById = async (req, res) => {
 // Crear una nueva practica
 export const createPractica = async (req, res) => {
   try {
-    const {
-      codigo_nomenclador,
-      nombre_nomenclador,
-      nombre_referencia,
-      especialidad,
-      precio_referencia,
-    } = req.body;
+    const { codigo_nomenclador, nombre_nomenclador, nombre_referencia, especialidad, precio_referencia } =
+      req.body;
 
     const newPractica = await Practica.create({
       codigo_nomenclador,
@@ -96,13 +89,8 @@ export const createPractica = async (req, res) => {
 // Actualizar una práctica existente
 export const updatePractica = async (req, res) => {
   try {
-    const {
-      codigo_nomenclador,
-      nombre_nomenclador,
-      nombre_referencia,
-      especialidad,
-      precio_referencia,
-    } = req.body;
+    const { codigo_nomenclador, nombre_nomenclador, nombre_referencia, especialidad, precio_referencia } =
+      req.body;
 
     const practica = req.practica;
 
@@ -123,14 +111,27 @@ export const updatePractica = async (req, res) => {
   }
 };
 
-// Eliminar una práctica existente
-export const deletePractica = async (req, res) => {
+// Desactiva o activa una práctica existente
+export const togglePractica = async (req, res) => {
   try {
     const practica = req.practica;
 
     await practica.update({
       activo: !practica.activo,
     });
+
+    res.json({ message: "Practica eliminada correctamente" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Eliminar una práctica existente
+export const deletePractica = async (req, res) => {
+  try {
+    const practica = req.practica;
+
+    await practica.destroy();
 
     res.json({ message: "Practica eliminada correctamente" });
   } catch (error) {

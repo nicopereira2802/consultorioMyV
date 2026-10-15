@@ -1,10 +1,7 @@
 /** @format */
 
-import { Paciente } from "../models/Paciente.model.js";
-import {
-  validarTelefono,
-  validarDni,
-} from "../validations/Paciente.validation.js";
+import { Paciente, PacienteObraSocial, ObraSocial } from "../models/index.model.js";
+import { validarTelefono, validarDni } from "../validations/Paciente.validation.js";
 import { Op, Sequelize } from "sequelize";
 
 // Obtener todos los pacientes
@@ -36,6 +33,18 @@ export const getAllPacientes = async (req, res) => {
       limit,
       offset,
       order: [[sortField, sortOrder]],
+      include: [
+        {
+          model: PacienteObraSocial,
+          attributes: ["id_paciente_obra_social", "id_paciente", "id_obra_social", "nro_afiliado"],
+          include: [
+            {
+              model: ObraSocial,
+              attributes: ["id_obra_social", "nombre"],
+            },
+          ],
+        },
+      ],
     });
 
     const totalPages = Math.ceil(count / limit);
@@ -80,8 +89,7 @@ export const getPacienteById = async (req, res) => {
 // Crear un nuevo paciente
 export const createPaciente = async (req, res) => {
   try {
-    const { nombre, apellido, fecha_nacimiento, dni, telefono, domicilio } =
-      req.body;
+    const { nombre, apellido, fecha_nacimiento, dni, telefono, domicilio } = req.body;
 
     const telefonoDuplicado = await validarTelefono(telefono);
 
@@ -124,8 +132,7 @@ export const createPaciente = async (req, res) => {
 // Actualizar un paciente existente
 export const updatePaciente = async (req, res) => {
   try {
-    const { nombre, apellido, fecha_nacimiento, dni, telefono, domicilio } =
-      req.body;
+    const { nombre, apellido, fecha_nacimiento, dni, telefono, domicilio } = req.body;
 
     const paciente = req.paciente;
 

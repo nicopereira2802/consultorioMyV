@@ -1,23 +1,26 @@
 /** @format */
 
+// * IMPORTACION DE RECURSOS DE REACT
 import { useEffect } from "react";
 import { createBrowserRouter } from "react-router-dom";
 import { RouterProvider } from "react-router-dom";
+
+// * IMPORTACION DE CONTEXTS
 import { SidebarProvider } from "./context/SidebarProvider";
+import { FloatingButtonProvider } from "./context/BotonFlotanteContext";
 
-import Layout from "./components/Layout";
-import AgendaDiaria from "./pages/AgendaDiaria";
-import GestionPacientes from "./pages/GestionPacientes";
-import GestionObrasSociales from "./pages/master/GestionObraSocial";
-import GestionPracticas from "./pages/master/GestionPracticas";
-import GestionTurnos from "./pages/GestionTurnos";
-import GestionCobros from "./pages/GestionCobro";
+// * IMPORTACION DE COMPONENTES
+import Layout from "./components/layout/Layout";
+import AgendaDiaria from "./features/turnos/AgendaDiaria";
+import GestionTurnos from "./features/turnos/GestionTurnos";
+import GestionPacientes from "./features/pacientes/GestionPacientes";
+import GestionObrasSociales from "./features/obrasSociales/GestionObraSocial";
+import GestionPracticas from "./features/practicas/GestionPracticas";
+import GestionCobros from "./features/cobros/GestionCobro";
 
-/**
- * App - Enrutador Principal Operativo (Sprint 1)
- * Conecta todas las pantallas operativas de M&V Turnos sin barreras de autenticación.
- */
+// * CREACION DEL APP
 function App() {
+  // * useEffect QUE CARGA SLPASHSCREEN
   useEffect(() => {
     const splash = document.getElementById("splash-screen");
     if (splash) {
@@ -30,9 +33,9 @@ function App() {
     }
   }, []);
 
+  // * DEFINICION DE RUTAS
   const router = createBrowserRouter([
     //{ path: "/login", element: <Login />}
-
     {
       //element: <ProtectedRoutes />,
       children: [
@@ -60,7 +63,9 @@ function App() {
   return (
     //<AuthProvider>
     <SidebarProvider>
-      <RouterProvider router={router} />
+      <FloatingButtonProvider>
+        <RouterProvider router={router} />
+      </FloatingButtonProvider>
     </SidebarProvider>
     //</AuthProvider>
   );

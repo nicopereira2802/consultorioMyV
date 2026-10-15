@@ -2,6 +2,7 @@
 
 import { where } from "sequelize";
 import { ObraSocial } from "../models/index.model.js";
+import { Op, Sequelize } from "sequelize";
 
 // Obtener todas las obras sociales
 export const getAllObrasSociales = async (req, res) => {
@@ -12,16 +13,14 @@ export const getAllObrasSociales = async (req, res) => {
     const search = req.query.search || "";
     const sortField = req.query.sortField || "nombre";
     const sortOrder = req.query.sortOrder || "ASC";
-    const where = {
-      activo: true,
-    };
+    const where = {};
 
     // Busqueda por nombre apellido dni telefono
     if (search.trim() !== "") {
       where[Op.or] = [{ nombre: { [Op.like]: `%${search}%` } }];
     }
 
-    const {count, rows: obrasSociales} = await ObraSocial.findAndCountAll({
+    const { count, rows: obrasSociales } = await ObraSocial.findAndCountAll({
       where,
       limit,
       offset,
@@ -102,13 +101,27 @@ export const updateObraSocial = async (req, res) => {
 };
 
 // Eliminar una obra social existente
-export const deleteObraSocial = async (req, res) => {
+export const toggleObraSocial = async (req, res) => {
   try {
     const obraSocial = req.obraSocial;
 
     await obraSocial.update({
       activo: !obraSocial.activo,
     });
+
+    res.status(200).json({ message: "Obra social eliminada correctamente" });
+  } catch (error) {
+    console.error("Error al eliminar la obra social:", error);
+    res.status(500).json({ error: "Error al eliminar la obra social" });
+  }
+};
+
+// Eliminar una obra social existente
+export const deleteObraSocial = async (req, res) => {
+  try {
+    const obraSocial = req.obraSocial;
+
+    await obraSocial.destroy();
 
     res.status(200).json({ message: "Obra social eliminada correctamente" });
   } catch (error) {

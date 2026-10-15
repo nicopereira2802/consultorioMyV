@@ -453,7 +453,7 @@ export const turnoReprogramado = async (req, res) => {
 
     const estado = await validarEstados(
       turno.id_estado,
-      [ESTADOS.INASISTENTE, ESTADOS.CANCELADO],
+      [ESTADOS.PROGRAMADO, ESTADOS.INASISTENTE, ESTADOS.CANCELADO],
       ESTADOS.PROGRAMADO,
     );
 

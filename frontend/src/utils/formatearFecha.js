@@ -18,10 +18,8 @@ const parsearFecha = (fecha) => {
   return new Date(fecha);
 };
 
-/**
- * Formatea una fecha para mostrar en tablas o textos.
- * Ejemplo: "10/10/2026"
- */
+// * Formatea una fecha para mostrar en tablas o textos.
+// * Ejemplo: "10/10/2026"
 export const formatFechaTabla = (fecha) => {
   const d = parsearFecha(fecha);
   if (!d || isNaN(d.getTime())) return "-";
@@ -33,10 +31,8 @@ export const formatFechaTabla = (fecha) => {
   });
 };
 
-/**
- * Formatea fecha y hora para mostrar en tablas o detalles.
- * Ejemplo: "10/10/2026 09:30 hs"
- */
+// * Formatea fecha y hora para mostrar en tablas o detalles.
+// * Ejemplo: "10/10/2026 09:30 hs"
 export const formatFechaHoraTabla = (fecha) => {
   const d = parsearFecha(fecha);
   if (!d || isNaN(d.getTime())) return "-";
@@ -56,10 +52,8 @@ export const formatFechaHoraTabla = (fecha) => {
   return `${fechaStr} ${horaStr} hs`;
 };
 
-/**
- * Formatea una fecha para el valor de un <input type="date" />.
- * Ejemplo: "2026-10-10"
- */
+// * Formatea una fecha para el valor de un <input type="date" />.
+// * Ejemplo: "2026-10-10"
 export const formatFechaInput = (fecha) => {
   const d = parsearFecha(fecha);
   if (!d || isNaN(d.getTime())) return "";
@@ -71,10 +65,8 @@ export const formatFechaInput = (fecha) => {
   return `${year}-${month}-${day}`;
 };
 
-/**
- * Formatea fecha y hora para el valor de un <input type="datetime-local" />.
- * Ejemplo: "2026-10-10T09:30"
- */
+// * Formatea fecha y hora para el valor de un <input type="datetime-local" />.
+// * Ejemplo: "2026-10-10T09:30"
 export const formatDateTimeInput = (fecha) => {
   const d = parsearFecha(fecha);
   if (!d || isNaN(d.getTime())) return "";
@@ -88,10 +80,8 @@ export const formatDateTimeInput = (fecha) => {
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 };
 
-/**
- * Formatea una fecha en texto largo para encabezados o títulos.
- * Ejemplo: "Sábado 10 de Octubre"
- */
+// * Formatea una fecha en texto largo para encabezados o títulos.
+// * Ejemplo: "Sábado 10 de Octubre"
 export const formatFechaCortaTexto = (fecha) => {
   const d = parsearFecha(fecha);
   if (!d || isNaN(d.getTime())) return "";
@@ -101,7 +91,7 @@ export const formatFechaCortaTexto = (fecha) => {
   return texto.charAt(0).toUpperCase() + texto.slice(1);
 };
 
-// Extrae solo la hora (ej: "08:30") a partir de un string de fecha/hora o un objeto Date
+// * Extrae solo la hora (ej: "08:30") a partir de un string de fecha/hora o un objeto Date
 export const formatSoloHora = (fechaStr) => {
   if (!fechaStr) return "";
   const fecha = new Date(fechaStr);
