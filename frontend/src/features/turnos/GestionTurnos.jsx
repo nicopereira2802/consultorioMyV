@@ -630,7 +630,7 @@ export default function GestionTurnos() {
                       </span>
                     </td>
 
-                    <td className="hidden md:table-cell px-5 py-4 text-gray-500 text-xs max-w-[200px] truncate">
+                    <td className="hidden md:table-cell px-5 py-4 text-gray-500 text-xs max-w-50 truncate">
                       {turno.notas_consulta || <span className="text-gray-300 italic">Sin notas</span>}
                     </td>
 

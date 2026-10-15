@@ -131,7 +131,7 @@ export function FormularioCrearEditarCobro({
                   </div>
 
                   <div>
-                    <span className="text-[10px] uppercase font-bold text-gray-400 block tracking-wider mb-1 flex items-center gap-1">
+                    <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1 flex items-center gap-1">
                       <ShieldCheck size={12} className="text-[#2eb086]" />
                       Prácticas Realizadas (Desde el turno)
                     </span>

@@ -70,7 +70,7 @@ export const Sidebar = () => {
         }`}
       >
         <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-10 h-10 min-w-10 rounded-full bg-white shadow-sm overflow-hidden flex-shrink-0">
+          <div className="flex items-center justify-center w-10 h-10 min-w-10 rounded-full bg-white shadow-sm overflow-hidden shrink-0">
             <ToothLogo size={32} />
           </div>
 
@@ -90,7 +90,7 @@ export const Sidebar = () => {
         <button
           type="button"
           onClick={toggleSidebar}
-          className="flex items-center justify-center w-9 h-9 min-w-9 rounded-full bg-white/10 text-white transition-colors duration-200 hover:bg-white/20 active:scale-95 flex-shrink-0"
+          className="flex items-center justify-center w-9 h-9 min-w-9 rounded-full bg-white/10 text-white transition-colors duration-200 hover:bg-white/20 active:scale-95 shrink-0"
           aria-label={!isOpen ? "Expandir menú" : "Colapsar menú"}
         >
           <PanelLeftClose
