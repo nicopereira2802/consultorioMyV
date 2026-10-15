@@ -14,6 +14,7 @@ import {
   BanknoteArrowDown,
   CalendarDays,
 } from "lucide-react";
+import { formatDateTimeInput } from "../../../utils";
 
 export function FormularioCrearEditar({
   modalAbierto,
@@ -25,11 +26,11 @@ export function FormularioCrearEditar({
   actualizarDatos,
   setDatosFormulario,
   procesarFormulario,
-  abrirModalAtenderDesdeEdicion,
-  abrirModalCancelarDesdeEdicion,
-  abrirModalInasistenteDesdeEdicion,
+  abrirParaAtender,
+  abrirParaCancelar,
+  abrirParaInasistente,
   abrirModalCobrarDesdeEdicion, // Prop opcional para cobrar
-  abrirModalReprogramarDesdeEdicion, // Prop opcional para reprogramar
+  abrirParaReprogramar,
 }) {
   const [modalPacienteRapidoAbierto, setModalPacienteRapidoAbierto] = useState(false);
   const [datosPacienteRapido, setDatosPacienteRapido] = useState({
@@ -140,7 +141,7 @@ export function FormularioCrearEditar({
               <input
                 type="datetime-local"
                 name="fecha_hora_inicio"
-                value={datosFormulario.fecha_hora_inicio || ""}
+                value={formatDateTimeInput(datosFormulario.fecha_hora_inicio) || ""}
                 onChange={actualizarDatos}
                 required
                 className="w-full border border-gray-300 p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2eb086]/50 focus:border-[#2eb086]"
@@ -228,7 +229,7 @@ export function FormularioCrearEditar({
                           type="button"
                           onClick={() => {
                             setMenuAccionesAbierto(false);
-                            if (abrirModalAtenderDesdeEdicion) abrirModalAtenderDesdeEdicion();
+                            if (abrirParaAtender) abrirParaAtender();
                           }}
                           className="flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 transition-colors text-left"
                         >
@@ -239,7 +240,7 @@ export function FormularioCrearEditar({
                           type="button"
                           onClick={() => {
                             setMenuAccionesAbierto(false);
-                            if (abrirModalReprogramarDesdeEdicion) abrirModalReprogramarDesdeEdicion();
+                            if (abrirParaReprogramar) abrirParaReprogramar();
                           }}
                           className="flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-[#3B7A94] hover:bg-[#f0f6f9] transition-colors text-left"
                         >
@@ -250,7 +251,7 @@ export function FormularioCrearEditar({
                           type="button"
                           onClick={() => {
                             setMenuAccionesAbierto(false);
-                            if (abrirModalInasistenteDesdeEdicion) abrirModalInasistenteDesdeEdicion();
+                            if (abrirParaInasistente) abrirParaInasistente();
                           }}
                           className="flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-[#2b5d73] hover:bg-[#f0f6f9] transition-colors text-left"
                         >
@@ -261,7 +262,7 @@ export function FormularioCrearEditar({
                           type="button"
                           onClick={() => {
                             setMenuAccionesAbierto(false);
-                            if (abrirModalCancelarDesdeEdicion) abrirModalCancelarDesdeEdicion();
+                            if (abrirParaCancelar) abrirParaCancelar();
                           }}
                           className="flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors text-left"
                         >

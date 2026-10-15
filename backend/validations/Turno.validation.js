@@ -13,9 +13,7 @@ export const validarEstadoProgramado = async () => {
 
 export const validarEstados = async (id_estado, estadoInicio, estadoFinal) => {
   // Aseguramos que estadoInicio sea un array
-  const estadosPermitidos = Array.isArray(estadoInicio)
-    ? estadoInicio
-    : [estadoInicio];
+  const estadosPermitidos = Array.isArray(estadoInicio) ? estadoInicio : [estadoInicio];
 
   // Verificar si el ID del estado actual está dentro de los permitidos
   if (!estadosPermitidos.includes(id_estado)) {
@@ -26,11 +24,7 @@ export const validarEstados = async (id_estado, estadoInicio, estadoFinal) => {
   return estadoFinal;
 };
 
-export const validarSolapaminetoHorarios = async (
-  fechaInicio,
-  fechaFin,
-  turnoIdExcluir = null,
-) => {
+export const validarSolapaminetoHorarios = async (fechaInicio, fechaFin, turnoIdExcluir = null) => {
   const inicio = new Date(fechaInicio);
   const fin = new Date(fechaFin);
 
@@ -42,6 +36,7 @@ export const validarSolapaminetoHorarios = async (
   const turnoExistente = await Turno.findOne({
     where: {
       id_estado: { [Op.eq]: estadoProgramado.id_estado },
+      activo: true,
       // Condición de solapamiento
       fecha_hora_inicio: { [Op.lt]: fin },
       fecha_hora_fin: { [Op.gt]: inicio },

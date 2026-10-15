@@ -1,10 +1,6 @@
 /** @format */
 
-import {
-  PacienteObraSocial,
-  Paciente,
-  ObraSocial,
-} from "../models/index.model.js";
+import { PacienteObraSocial, Paciente, ObraSocial } from "../models/index.model.js";
 
 // Obtener todos los pacientes por obra social
 export const getAllPacientesPorObraSocial = async (req, res) => {
@@ -17,9 +13,7 @@ export const getAllPacientesPorObraSocial = async (req, res) => {
     });
   } catch (error) {
     console.error("Error al obtener los pacientes por obra social:", error);
-    res
-      .status(500)
-      .json({ error: "Error al obtener los pacientes por obra social" });
+    res.status(500).json({ error: "Error al obtener los pacientes por obra social" });
   }
 };
 
@@ -29,6 +23,12 @@ export const getObrasSocialesByPacienteID = async (req, res) => {
     const pacienteId = req.paciente.id_paciente;
     const obrasSocialesPaciente = await PacienteObraSocial.findAll({
       where: { id_paciente: pacienteId },
+      include: [
+        {
+          model: ObraSocial,
+          attributes: ["nombre"],
+        },
+      ],
     });
 
     res.status(200).json({
@@ -37,9 +37,7 @@ export const getObrasSocialesByPacienteID = async (req, res) => {
     });
   } catch (error) {
     console.error("Error al obtener la obra social del paciente:", error);
-    res
-      .status(500)
-      .json({ error: "Error al obtener la obra social del paciente" });
+    res.status(500).json({ error: "Error al obtener la obra social del paciente" });
   }
 };
 
@@ -62,9 +60,7 @@ export const createPacientePorObraSocial = async (req, res) => {
     });
   } catch (error) {
     console.error("Error al crear la obra social del paciente:", error);
-    res
-      .status(500)
-      .json({ error: "Error al crear la obra social del paciente" });
+    res.status(500).json({ error: "Error al crear la obra social del paciente" });
   }
 };
 
@@ -108,9 +104,7 @@ export const updatePacientePorObraSocial = async (req, res) => {
     });
   } catch (error) {
     console.error("Error al actualizar la obra social del paciente:", error);
-    res
-      .status(500)
-      .json({ error: "Error al actualizar la obra social del paciente" });
+    res.status(500).json({ error: "Error al actualizar la obra social del paciente" });
   }
 };
 
@@ -121,13 +115,9 @@ export const deletePacientePorObraSocial = async (req, res) => {
 
     await pacientePorObraSocial.destroy();
 
-    res
-      .status(200)
-      .json({ message: "Paciente por obra social eliminado correctamente" });
+    res.status(200).json({ message: "Paciente por obra social eliminado correctamente" });
   } catch (error) {
     console.error("Error al eliminar la obra social del paciente:", error);
-    res
-      .status(500)
-      .json({ error: "Error al eliminar la obra social del paciente" });
+    res.status(500).json({ error: "Error al eliminar la obra social del paciente" });
   }
 };

@@ -1,12 +1,23 @@
 /** @format */
 
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import AgendaCalendario from "./components/AgendaCalendario";
-import api from "../../services/api";
-import { formatDateTimeInput, formatFechaCortaTexto } from "../../utils/index";
 import { Calendar, AlertTriangle, X, UserCheck } from "lucide-react";
+
+import api from "../../services/api";
+
+import { useNavigate } from "react-router-dom";
 import Header from "../../components/common/Header";
+import AgendaCalendario from "./components/AgendaCalendario";
+
+//* IMPORTACION DE HOOKS (para modales y paginacion) Y CONTEXT (para el boton flotante para telefono)
+import { useTurnoPaginationSearch } from "./hooks/useTurnoPaginationSearch";
+import { useTurnoCRUDModal } from "./hooks/useTurnoCRUDModal";
+import { useFloatingButton } from "../../context/BotonFlotanteContext";
+
+//* IMPORTACION DE FUNCIONES PARA FORMATEAR FECHAS
+import { formatDateTimeInput, formatFechaCortaTexto } from "../../utils/index";
+
+//* IMPORTACION DE FORMULARIOS
 import {
   FormularioCrearEditar,
   FormularioAtender,
@@ -14,54 +25,115 @@ import {
   FormularioReprogramar,
 } from "./components/FormulariosTurno";
 
+const ESTADO_INICIAL = {
+  id_paciente: "",
+  id_estado: 1,
+  fecha_hora_inicio: "",
+  fecha_hora_fin: "",
+  duracion_minutos: 30,
+  precio_final: 0,
+  notas_consulta: "",
+};
+
+const ESTADO_INICIAL_ATENCION = {
+  notas_consulta: "",
+  precio_final: 0,
+  practicas: [],
+};
+
+const ESTADO_INICIAL_REPROGRAMAR = {
+  fecha_hora_inicio: "",
+  duracion_minutos: 30,
+  fecha_hora_fin: "",
+};
+
+const ESTADO_INICIAL_CANCELAR = {
+  notas_consulta: "",
+};
+
 export default function AgendaDiaria() {
+  //* MOSTRAMOS EL BOTON FLOTANTE
+  const { setFloatingAction } = useFloatingButton();
+
   const navigate = useNavigate();
-  /* ─── VARIABLES GENERALES ─────────────────────────────────── */
-  const [turnos, setTurnos] = useState();
-  const [pacientes, setPacientes] = useState([]);
-  const [practicasLista, setPracticasLista] = useState([]);
-  const [pacientesObrasSociales, setPacientesObrasSociales] = useState([]);
+
+  //* CARGAMOS CON DATOS LOS HOOKS
+  const {
+    // Estados de modales
+    modalAbierto,
+    editando,
+    modalAtender,
+    modalReprogramar,
+    modalCancelar,
+    inasistente,
+    modalVer,
+    setModalVer,
+    modalEliminar,
+
+    // Selección y datos
+    itemSeleccionado: turnoSeleccionado,
+    setItemSeleccionado: setTurnoSeleccionado,
+    datosFormulario,
+    setDatosFormulario,
+    datosAtencion,
+    setDatosAtencion,
+    datosReprogramacion,
+    setDatosReprogramacion,
+    datosCancelacion,
+    setDatosCancelacion,
+
+    // Funciones de apertura
+    abrirParaCrear,
+    abrirParaEditar,
+    abrirParaAtender,
+    abrirParaCancelar,
+    abrirParaInasistente,
+    abrirParaReprogramar,
+    abrirParaEliminar,
+
+    // Utilidades y acciones
+    cerrarModal,
+    actualizarDatos,
+    actualizarDatosReprogramacion,
+    agregarPracticaAtencion,
+    actualizarPracticaAtencion,
+    eliminarPracticaAtencion,
+  } = useTurnoCRUDModal(
+    ESTADO_INICIAL,
+    ESTADO_INICIAL_ATENCION,
+    ESTADO_INICIAL_REPROGRAMAR,
+    ESTADO_INICIAL_CANCELAR,
+  );
+
+  const {
+    turnos: turnos,
+    pacientes: pacientes,
+    practicasLista: practicasLista,
+    obrasSocialesPaciente: obrasSocialesPaciente,
+    cargando,
+    page,
+    setPage,
+    total,
+    totalPages,
+    search,
+    setSearch,
+    inicioRegistro,
+    finRegistro,
+    recargar,
+    buscarOSPaciente,
+  } = useTurnoPaginationSearch("/turnos");
 
   /* ─── ESTADO PARA LA ADVERTENCIA DE PACIENTES INCOMPLETOS ─── */
   const [advertenciaVisible, setAdvertenciaVisible] = useState(true);
 
-  /* ─── VARIABLES DEL MODAL ─────────────────────────────────── */
-  const [datosFormulario, setDatosFormulario] = useState({
-    duracion_minutos: 30, // Valor por defecto
-  });
-  const [modalAbierto, setModalAbierto] = useState(false);
-  const [modalAtenderAbierto, setModalAtenderAbierto] = useState(false);
-  const [modalCancelarAbierto, setModalCancelarAbierto] = useState(false);
-  const [editando, setEditando] = useState(false);
-  const [turnoSeleccionado, setTurnoSeleccionado] = useState(null);
-
-  // Estado específico para el modal de Atender Turno
-  const [datosAtencion, setDatosAtencion] = useState({
-    notas_consulta: "",
-    precio_final: 0,
-    practicas: [],
-  });
-
-  // Estado específico para el modal de Cancelar e Inasistente
-  const [inasistente, setInasistente] = useState(false);
-  const [notasCancelarInasistente, setNotasCancelarInasistente] = useState("");
-
-  // Estados para el modal de reprogramación
-  const [modalReprogramarAbierto, setModalReprogramarAbierto] = useState(false);
-  const [datosReprogramacion, setDatosReprogramacion] = useState({
-    fecha_hora_inicio: "",
-    duracion_minutos: 30,
-    fecha_hora_fin: "",
-  });
-
-  /* ─── USE-EFFECTS ─────────────────────────────────── */
+  // * useEffect PARA QUE AL TOCAR EL BOTON SE ABRA EL MODAL
+  // ? NO ENTIENDO MUY BIEN QUE HACE
+  // ! DEBERIAMOS CORREGIR ESTO, NO ES UNA BUENA PRACTICA
   useEffect(() => {
-    buscarTurnos();
-    buscarPacientes();
-    buscarPracticas();
-  }, []);
+    setFloatingAction(() => modalAbierto);
 
-  useEffect(() => {}, [modalAbierto]);
+    return () => setFloatingAction(null);
+  }, [modalAbierto, setFloatingAction]);
 
   useEffect(() => {
     if (datosFormulario.fecha_hora_inicio && datosFormulario.duracion_minutos) {
@@ -69,58 +141,27 @@ export default function AgendaDiaria() {
     }
   }, [datosFormulario.fecha_hora_inicio, datosFormulario.duracion_minutos]);
 
-  // Recalcular precio base automáticamente en el modal de atención según las prácticas seleccionadas
+  // UseEffect específico para calcular la fecha fin en el modal de reprogramar
   useEffect(() => {
-    let total = 0;
-    datosAtencion.practicas.forEach((item) => {
-      if (item.id_practica) {
-        const encontrada = practicasLista.find((p) => Number(p.id_practica) === Number(item.id_practica));
-        if (encontrada) {
-          total += Number(encontrada.precio_referencia || 0);
-        }
+    if (datosReprogramacion.fecha_hora_inicio && datosReprogramacion.duracion_minutos) {
+      const inicio = new Date(datosReprogramacion.fecha_hora_inicio);
+      const minutos = parseInt(datosReprogramacion.duracion_minutos, 10);
+      if (!isNaN(inicio.getTime()) && !isNaN(minutos)) {
+        const fin = new Date(inicio.getTime() + minutos * 60000);
+        const isoFin = new Date(fin.getTime() - fin.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+        setDatosReprogramacion((prev) => ({ ...prev, fecha_hora_fin: isoFin }));
       }
-    });
-    setDatosAtencion((prev) => ({ ...prev, precio_final: total }));
-  }, [datosAtencion.practicas, practicasLista]);
+    }
+  }, [datosReprogramacion.fecha_hora_inicio, datosReprogramacion.duracion_minutos]);
+
+  useEffect(() => {
+    if (turnoSeleccionado && turnoSeleccionado.id_paciente) {
+      buscarOSPaciente(turnoSeleccionado.id_paciente);
+    }
+  }, [modalAtender === true]);
 
   /* ─── PETICIONES API ─────────────────────────────────── */
-  const buscarTurnos = async () => {
-    try {
-      const respuesta = await api.get("/turnos");
-      setTurnos(respuesta.data.data);
-    } catch (error) {
-      console.error("Error al cargar los turnos:", error);
-    }
-  };
 
-  const buscarPacientes = async () => {
-    try {
-      const respuesta = await api.get("/pacientes");
-      setPacientes(respuesta.data.data);
-    } catch (error) {
-      console.error("Error al cargar los pacientes:", error);
-    }
-  };
-
-  const buscarPracticas = async () => {
-    try {
-      const respuesta = await api.get("/practicas");
-      setPracticasLista(respuesta.data.data || []);
-    } catch (error) {
-      console.error("Error al cargar catálogo de prácticas:", error);
-    }
-  };
-
-  const buscarObrasSocialesPaciente = async (id_paciente) => {
-    try {
-      const respuesta = await api.get(`/pacientes-por-obras-sociales/${id_paciente}`);
-      setPacientesObrasSociales(respuesta.data.data || []);
-    } catch (error) {
-      console.error("Error al cargar relación paciente-obra social:", error);
-    }
-  };
-
-  /* ─── LÓGICA DE PACIENTES INCOMPLETOS ─────────────────────────── */
   const pacientesIncompletos = pacientes.filter((p) => !p.dni || !p.domicilio || !p.fecha_nacimiento);
 
   const obtenerCamposFaltantes = (p) => {
@@ -147,135 +188,6 @@ export default function AgendaDiaria() {
         fecha_hora_fin: isoFin,
       }));
     }
-  };
-
-  /* ─── FUNCIONES DEL MODAL ─────────────────────────────────── */
-
-  /* ─── MODAL PARA CREAR PACIENTE ─────────────────────────────────── */
-  const modalCreando = (selectInfo) => {
-    setEditando(false);
-    setTurnoSeleccionado(null);
-
-    const fechaInicio = selectInfo?.start ? formatDateTimeInput(selectInfo.start) : null;
-
-    setDatosFormulario({
-      id_paciente: null,
-      fecha_hora_inicio: fechaInicio,
-      duracion_minutos: 30,
-      precio_final: 0,
-      notas_consulta: "",
-    });
-
-    setModalAbierto(true);
-  };
-
-  /* ─── MODAL PARA EDITAR PACIENTE ─────────────────────────────────── */
-  const modalEditando = (turno) => {
-    setEditando(true);
-    setTurnoSeleccionado(turno);
-
-    setDatosFormulario({
-      ...turno,
-      fecha_hora_inicio: formatDateTimeInput(turno.fecha_hora_inicio),
-      fecha_hora_fin: formatDateTimeInput(turno.fecha_hora_fin),
-      duracion_minutos: turno.duracion_minutos || 30,
-    });
-
-    setModalAbierto(true);
-  };
-
-  /* ─── ABRIR MODAL ATENDER TURNO ──────────────────────────── */
-  const abrirModalAtenderDesdeEdicion = () => {
-    if (!turnoSeleccionado) return;
-    setModalAbierto(false); // Cierra el modal de edición actual
-
-    setDatosAtencion({
-      notas_consulta: turnoSeleccionado.notas_consulta || "",
-      precio_final: 0,
-      practicas: [],
-    });
-
-    buscarObrasSocialesPaciente(turnoSeleccionado.id_paciente);
-    setModalAtenderAbierto(true);
-  };
-
-  /* ─── ABRIR MODAL CANCELAR TURNO ──────────────────────────── */
-  const abrirModalCancelarDesdeEdicion = () => {
-    if (!turnoSeleccionado) return;
-    setModalAbierto(false); // Cierra el modal de edición actual
-
-    setInasistente(false);
-    setModalCancelarAbierto(true);
-  };
-
-  /* ─── ABRIR MODAL INASISTENTE TURNO ──────────────────────────── */
-  const abrirModalInasistenteDesdeEdicion = () => {
-    if (!turnoSeleccionado) return;
-    setModalAbierto(false); // Cierra el modal de edición actual
-
-    setInasistente(true);
-    setModalCancelarAbierto(true);
-  };
-
-  // Función para abrir el modal de reprogramación desde la edición del turno
-  const abrirModalReprogramarDesdeEdicion = (turno) => {
-    setTurnoSeleccionado(turno);
-    setModalAbierto(false);
-    setModalReprogramarAbierto(true);
-  };
-
-  /* ─── CERRAR MODALES ─────────────────────────────────── */
-  const cerrarModal = () => {
-    setModalAbierto(false);
-    setModalAtenderAbierto(false);
-    setModalCancelarAbierto(false);
-    setModalReprogramarAbierto(false);
-    setTurnoSeleccionado(null);
-    setDatosFormulario({});
-    setDatosAtencion({
-      notas_consulta: "",
-      precio_final: 0,
-      practicas: [],
-    });
-    setInasistente(false);
-    setNotasCancelarInasistente("");
-  };
-
-  /* ─── MANEJO DINÁMICO DE PRÁCTICAS EN ATENCIÓN ───────────── */
-  const agregarPracticaAtencion = () => {
-    setDatosAtencion((prev) => ({
-      ...prev,
-      practicas: [...prev.practicas, { id_practica: "", id_obra_social: "" }],
-    }));
-  };
-
-  const actualizarPracticaAtencion = (index, campo, valor) => {
-    setDatosAtencion((prev) => {
-      const nuevasPracticas = [...prev.practicas];
-      nuevasPracticas[index][campo] = valor;
-      return { ...prev, practicas: nuevasPracticas };
-    });
-  };
-
-  const eliminarPracticaAtencion = (index) => {
-    setDatosAtencion((prev) => ({
-      ...prev,
-      practicas: prev.practicas.filter((_, i) => i !== index),
-    }));
-  };
-
-  /* ─── ACTUALIZAR DATOS DEL FORMULARIO ─────────────────────────────────── */
-  const actualizarDatos = (e) => {
-    const { name, value } = e.target;
-    setDatosFormulario((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const actualizarDatosReprogramacion = (e) => {
-    const { name, value } = e.target;
-    setDatosReprogramacion((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
   };
 
   /* ─── ENVIAR EL FORMULARIO DE TURNO ─────────────────────────── */
@@ -401,7 +313,7 @@ export default function AgendaDiaria() {
   const procesarClickEnTurno = (clickInfo) => {
     const turnoSeleccionado = turnos.find((t) => String(t.id_turno) === String(clickInfo.event.id));
     if (turnoSeleccionado) {
-      modalEditando(turnoSeleccionado);
+      abrirParaEditar(turnoSeleccionado);
     }
   };
 
@@ -470,38 +382,53 @@ export default function AgendaDiaria() {
       {/* ─── CONTENEDOR DEL CALENDARIO (OCUPA TODO EL ESPACIO RESTANTE) ─── */}
       <div className="flex-1 w-full min-h-0 p-2 md:p-4 text-black flex flex-col">
         <div className="w-full h-full bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden p-2 md:p-4 flex flex-col">
-          <AgendaCalendario turnos={turnos} onDateSelect={modalCreando} onEventClick={procesarClickEnTurno} />
+          <AgendaCalendario
+            turnos={turnos}
+            onDateSelect={abrirParaCrear}
+            onEventClick={procesarClickEnTurno}
+          />
         </div>
       </div>
 
-      {/* ─── MODALES ─────────────────────────────────────────── */}
+      {/* //* MODALES: CREAR Y EDITAR */}
       {modalAbierto && (
         <FormularioCrearEditar
           modalAbierto={modalAbierto}
           cerrarModal={cerrarModal}
           editando={editando}
           pacientes={pacientes}
-          setPacientes={setPacientes}
           datosFormulario={datosFormulario}
           actualizarDatos={actualizarDatos}
-          setDatosFormulario={setDatosFormulario}
           procesarFormulario={procesarFormulario}
-          abrirModalAtenderDesdeEdicion={abrirModalAtenderDesdeEdicion}
-          abrirModalCancelarDesdeEdicion={abrirModalCancelarDesdeEdicion}
-          abrirModalInasistenteDesdeEdicion={abrirModalInasistenteDesdeEdicion}
-          abrirModalReprogramarDesdeEdicion={abrirModalReprogramarDesdeEdicion}
+          abrirParaAtender={abrirParaAtender}
+          abrirParaCancelar={abrirParaCancelar}
+          abrirParaInasistente={abrirParaInasistente}
+          abrirParaReprogramar={abrirParaReprogramar}
         />
       )}
 
-      {modalAtenderAbierto && (
+      {/* //* MODALES: REPROGRAMAR */}
+      {modalReprogramar && (
+        <FormularioReprogramar
+          modalReprogramarAbierto={modalReprogramar}
+          cerrarModal={cerrarModal}
+          turnoSeleccionado={turnoSeleccionado}
+          datosReprogramacion={datosReprogramacion}
+          actualizarDatosReprogramacion={actualizarDatosReprogramacion}
+          procesarReprogramacionTurno={procesarReprogramacionTurno}
+        />
+      )}
+
+      {/* //* MODALES: ATENDER */}
+      {modalAtender && (
         <FormularioAtender
-          modalAtenderAbierto={modalAtenderAbierto}
+          modalAtenderAbierto={modalAtender}
           cerrarModal={cerrarModal}
           turnoSeleccionado={turnoSeleccionado}
           datosAtencion={datosAtencion}
           setDatosAtencion={setDatosAtencion}
           practicasLista={practicasLista}
-          pacientesObrasSociales={pacientesObrasSociales}
+          pacientesObrasSociales={obrasSocialesPaciente}
           agregarPracticaAtencion={agregarPracticaAtencion}
           actualizarPracticaAtencion={actualizarPracticaAtencion}
           eliminarPracticaAtencion={eliminarPracticaAtencion}
@@ -509,26 +436,16 @@ export default function AgendaDiaria() {
         />
       )}
 
-      {modalCancelarAbierto && (
+      {/* //* MODALES: CANCELAR */}
+      {modalCancelar && (
         <FormularioCancelar
-          modalCancelarAbierto={modalCancelarAbierto}
+          modalCancelarAbierto={modalCancelar}
           cerrarModal={cerrarModal}
           turnoSeleccionado={turnoSeleccionado}
           inasistente={inasistente}
-          notasCanceladoInasistente={notasCancelarInasistente}
-          setNotasCanceladoInasistente={setNotasCancelarInasistente}
+          notasCanceladoInasistente={datosCancelacion}
+          setNotasCanceladoInasistente={setDatosCancelacion}
           procesarCancelacionTurno={procesarCancelacionTurno}
-        />
-      )}
-
-      {modalReprogramarAbierto && (
-        <FormularioReprogramar
-          modalReprogramarAbierto={modalReprogramarAbierto}
-          cerrarModal={cerrarModal}
-          turnoSeleccionado={turnoSeleccionado}
-          datosReprogramacion={datosReprogramacion}
-          actualizarDatosReprogramacion={actualizarDatosReprogramacion}
-          procesarReprogramacionTurno={procesarReprogramacionTurno}
         />
       )}
     </div>

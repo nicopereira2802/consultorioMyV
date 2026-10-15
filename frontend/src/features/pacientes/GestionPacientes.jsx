@@ -31,7 +31,6 @@ import {
 
 //* IMPORTACION DE FUNCION PARA COMPLETAR PACIENTE DESDE AGENDA DIARIA
 import { useSearchParams } from "react-router-dom";
-import C from "@fullcalendar/react";
 
 const ESTADO_INICIAL = {
   nombre: "",
@@ -183,27 +182,32 @@ export default function GestionPacientes() {
       };
 
       // 1. Guardar o actualizar datos principales del paciente...
+      let newPaciente;
 
       if (editando) {
         await api.put(`/pacientes/${pacienteSeleccionado.id_paciente}`, payloadPaciente);
       } else {
-        await api.post("/pacientes", payloadPaciente);
+        newPaciente = await api.post("/pacientes", payloadPaciente);
       }
 
+      const idPaciente = pacienteSeleccionado?.id_paciente
+        ? pacienteSeleccionado.id_paciente
+        : newPaciente.id_paciente;
+
       // 2. Procesar obras sociales (crear/actualizar)...
-      if (datosFormulario.obrasSociales.length > 0 && pacienteSeleccionado.id_paciente) {
+      if (datosFormulario.obrasSociales.length > 0 && idPaciente) {
         for (const os of datosFormulario.obrasSociales) {
           if (os.id_obra_social && os.nro_afiliado) {
             try {
               if (os.guardadoEnBD && os.id_relacion) {
                 await api.put(`/pacientes-por-obras-sociales/${os.id_relacion}`, {
-                  id_paciente: Number(pacienteSeleccionado.id_paciente),
+                  id_paciente: Number(idPaciente),
                   id_obra_social: Number(os.id_obra_social),
                   nro_afiliado: os.nro_afiliado.trim(),
                 });
               } else if (!os.guardadoEnBD) {
                 await api.post("/pacientes-por-obras-sociales", {
-                  id_paciente: Number(pacienteSeleccionado.id_paciente),
+                  id_paciente: Number(idPaciente),
                   id_obra_social: Number(os.id_obra_social),
                   nro_afiliado: os.nro_afiliado.trim(),
                 });
@@ -295,6 +299,7 @@ export default function GestionPacientes() {
             }}
             placeholder="Buscar pacientes..."
           />
+
           {/* //* TABLA: TABLA */}
           <div className="overflow-x-auto flex-1">
             <Tabla
