@@ -7,7 +7,6 @@ import { RouterProvider } from "react-router-dom";
 
 // * IMPORTACION DE CONTEXTS
 import { SidebarProvider } from "./context/SidebarProvider";
-import { FloatingButtonProvider } from "./context/BotonFlotanteContext";
 
 // * IMPORTACION DE COMPONENTES
 import Layout from "./components/layout/Layout";
@@ -63,9 +62,7 @@ function App() {
   return (
     //<AuthProvider>
     <SidebarProvider>
-      <FloatingButtonProvider>
-        <RouterProvider router={router} />
-      </FloatingButtonProvider>
+      <RouterProvider router={router} />
     </SidebarProvider>
     //</AuthProvider>
   );

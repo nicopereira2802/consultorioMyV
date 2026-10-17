@@ -17,6 +17,32 @@ import {
 } from "../validations/Turno.validation.js";
 import { ESTADOS } from "../constants/EstadosTurno.js";
 
+export const getAllTurnosAgenda = async (req, res) => {
+  try {
+    const turnos = await Turno.findAll({
+      where: { activo: true },
+      include: [
+        {
+          model: Paciente,
+          attributes: ["nombre", "apellido", "dni", "telefono"], // Atributos que quieres traer del paciente
+        },
+        {
+          model: EstadoTurno,
+          attributes: ["estado"], // Atributos que quieres traer del estado
+        },
+      ],
+    });
+
+    res.status(200).json({
+      status: "success",
+      data: turnos,
+    });
+  } catch (error) {
+    console.error("Error al obtener los turnos:", error);
+    res.status(500).json({ error: "Error al obtener los turnos" });
+  }
+};
+
 // Obtener todos los turnos
 export const getAllTurnos = async (req, res) => {
   try {
@@ -130,27 +156,16 @@ export const getTurnoById = async (req, res) => {
 // Crear un nuevo turno (T-123)
 export const createTurno = async (req, res) => {
   try {
-    const {
-      id_paciente,
-      fecha_hora_inicio,
-      fecha_hora_fin,
-      precio_final,
-      notas_consulta,
-    } = req.body;
+    const { id_paciente, fecha_hora_inicio, fecha_hora_fin, precio_final, notas_consulta } = req.body;
 
     // DEV: SUPONEMOS QUE ESTA CREADO EL ESTADO
     const id_estado = ESTADOS.PROGRAMADO;
 
-    const haySolapamiento = await validarSolapaminetoHorarios(
-      fecha_hora_inicio,
-      fecha_hora_fin,
-      null,
-    );
+    const haySolapamiento = await validarSolapaminetoHorarios(fecha_hora_inicio, fecha_hora_fin, null);
 
     if (haySolapamiento) {
       return res.status(409).json({
-        error:
-          "El horario seleccionado se superpone con un turno ya programado.",
+        error: "El horario seleccionado se superpone con un turno ya programado.",
       });
     }
 
@@ -186,9 +201,7 @@ export const createTurno = async (req, res) => {
     });
   } catch (error) {
     console.error("Error al crear el turno:", error);
-    res
-      .status(500)
-      .json({ error: "Error interno del servidor al crear el turno." });
+    res.status(500).json({ error: "Error interno del servidor al crear el turno." });
   }
 };
 
@@ -196,13 +209,7 @@ export const updateTurno = async (req, res) => {
   try {
     const turno = req.turno;
 
-    const {
-      id_paciente,
-      fecha_hora_inicio,
-      fecha_hora_fin,
-      precio_final,
-      notas_consulta,
-    } = req.body;
+    const { id_paciente, fecha_hora_inicio, fecha_hora_fin, precio_final, notas_consulta } = req.body;
 
     if (id_paciente) {
       const paciente = Paciente.findByPk(id_paciente);
@@ -222,8 +229,7 @@ export const updateTurno = async (req, res) => {
 
     if (haySolapamiento) {
       return res.status(409).json({
-        error:
-          "El horario seleccionado se superpone con un turno ya programado.",
+        error: "El horario seleccionado se superpone con un turno ya programado.",
       });
     }
 
@@ -241,34 +247,22 @@ export const updateTurno = async (req, res) => {
     });
   } catch (error) {
     console.error("Error al modificar el turno:", error);
-    res
-      .status(500)
-      .json({ error: "Error interno del servidor al modificar el turno." });
+    res.status(500).json({ error: "Error interno del servidor al modificar el turno." });
   }
 };
 
 // Finalizar atención del turno y registrar prácticas (T-1314)
 export const turnoAtendido = async (req, res) => {
   try {
-    const {
-      notas_consulta,
-      practicas_realizadas,
-      obras_sociales,
-      precio_final,
-    } = req.body;
+    const { notas_consulta, practicas_realizadas, obras_sociales, precio_final } = req.body;
 
     const turno = req.turno;
 
-    const estado = await validarEstados(
-      turno.id_estado,
-      ESTADOS.PROGRAMADO,
-      ESTADOS.ATENDIDO,
-    );
+    const estado = await validarEstados(turno.id_estado, ESTADOS.PROGRAMADO, ESTADOS.ATENDIDO);
 
     if (!estado) {
       return res.status(400).json({
-        error:
-          "El turno debe estar programado para poder marcarlo como atendido.",
+        error: "El turno debe estar programado para poder marcarlo como atendido.",
       });
     }
 
@@ -294,11 +288,7 @@ export const turnoAtendido = async (req, res) => {
       );
 
       // Guardar las prácticas en la tabla intermedia
-      if (
-        practicas_realizadas &&
-        Array.isArray(practicas_realizadas) &&
-        practicas_realizadas.length > 0
-      ) {
+      if (practicas_realizadas && Array.isArray(practicas_realizadas) && practicas_realizadas.length > 0) {
         const idsUnicos = [...new Set(practicas_realizadas)];
 
         // 2. Verificar la existencia de TODAS las prácticas en UNA sola consulta
@@ -312,9 +302,7 @@ export const turnoAtendido = async (req, res) => {
         // 3. Comparar la cantidad hallada con la cantidad solicitada
         if (practicasEncontradas.length !== idsUnicos.length) {
           console.error("Una o más prácticas especificadas no existen.", error);
-          res
-            .status(400)
-            .json({ error: "Una o más prácticas especificadas no existen" });
+          res.status(400).json({ error: "Una o más prácticas especificadas no existen" });
         }
         // 4. Mapear e insertar en lote (bulkCreate)
         const registrosPracticas = idsUnicos.map((id_practica, index) => ({
@@ -353,8 +341,7 @@ export const turnoCancelado = async (req, res) => {
 
     if (!estado) {
       return res.status(400).json({
-        error:
-          "El turno debe estar programado o inasistente para poder cancelarlo.",
+        error: "El turno debe estar programado o inasistente para poder cancelarlo.",
       });
     }
 
@@ -398,16 +385,11 @@ export const turnoInasistido = async (req, res) => {
     const turno = req.turno;
     const { notas_consulta } = req.body;
 
-    const estado = await validarEstados(
-      turno.id_estado,
-      ESTADOS.PROGRAMADO,
-      ESTADOS.INASISTENTE,
-    );
+    const estado = await validarEstados(turno.id_estado, ESTADOS.PROGRAMADO, ESTADOS.INASISTENTE);
 
     if (!estado) {
       return res.status(400).json({
-        error:
-          "El turno debe estar programado para poder marcarlo como inasistente.",
+        error: "El turno debe estar programado para poder marcarlo como inasistente.",
       });
     }
 
@@ -459,8 +441,7 @@ export const turnoReprogramado = async (req, res) => {
 
     if (!estado) {
       return res.status(400).json({
-        error:
-          "El turno debe estar inasistente o cancelado para poder marcarlo como programado.",
+        error: "El turno debe estar inasistente o cancelado para poder marcarlo como programado.",
       });
     }
 
@@ -472,8 +453,7 @@ export const turnoReprogramado = async (req, res) => {
 
     if (haySolapamiento) {
       return res.status(409).json({
-        error:
-          "El horario seleccionado se superpone con un turno ya programado.",
+        error: "El horario seleccionado se superpone con un turno ya programado.",
       });
     }
 

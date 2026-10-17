@@ -4,7 +4,7 @@ import { CreditCard, ShieldPlus, X } from "lucide-react";
 import InputFiltro from "../../../components/common/InputFiltro";
 
 export function FormularioCrearEditar({
-  crearOEditarPaciente,
+  guardarPaciente,
   modalAbierto,
   cerrarModal,
   editando,
@@ -16,7 +16,7 @@ export function FormularioCrearEditar({
   eliminarObraSocialForm,
 }) {
   return (
-    <form onSubmit={crearOEditarPaciente}>
+    <form onSubmit={guardarPaciente}>
       <Modal
         isOpen={modalAbierto}
         onClose={cerrarModal}
@@ -24,7 +24,7 @@ export function FormularioCrearEditar({
         title={editando ? "Editar Paciente" : "Registrar Nuevo Paciente"}
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Nombre */}
+          {/* //* NOMBRE */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">Nombre *</label>
             <input
@@ -38,7 +38,7 @@ export function FormularioCrearEditar({
             />
           </div>
 
-          {/* Apellido */}
+          {/* //* APELLIDO */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">Apellido *</label>
             <input
@@ -52,7 +52,7 @@ export function FormularioCrearEditar({
             />
           </div>
 
-          {/* DNI */}
+          {/* //* DNI */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">DNI</label>
             <input
@@ -65,7 +65,7 @@ export function FormularioCrearEditar({
             />
           </div>
 
-          {/* Teléfono */}
+          {/* //* TELEFONO */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">Teléfono / Celular *</label>
             <input
@@ -79,7 +79,7 @@ export function FormularioCrearEditar({
             />
           </div>
 
-          {/* Fecha de Nacimiento */}
+          {/* //* FECHA NACIMIENTO */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">Fecha de Nacimiento</label>
             <input
@@ -91,7 +91,7 @@ export function FormularioCrearEditar({
             />
           </div>
 
-          {/* Domicilio */}
+          {/* //* DOMICILIO */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">Domicilio</label>
             <input
@@ -104,7 +104,7 @@ export function FormularioCrearEditar({
             />
           </div>
 
-          {/* ─── SECCIÓN: OBRAS SOCIALES (MUCHAS A MUCHAS) ────────────── */}
+          {/* //* SECCION: OBRAS SOCIALES */}
           <div className="col-span-1 md:col-span-2 mt-2 pt-4 border-t border-gray-200">
             <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
               <div className="flex items-center gap-2">
@@ -132,7 +132,7 @@ export function FormularioCrearEditar({
                     key={index}
                     className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-gray-50 p-3 rounded-xl border border-gray-200"
                   >
-                    {/* Selector de Obra Social */}
+                    {/* //* SELECTOR DE OBRA SOCIAL */}
                     <InputFiltro
                       datos={obrasSocialesLista}
                       camposFiltrado={["nombre"]}
@@ -145,7 +145,7 @@ export function FormularioCrearEditar({
                     />
 
                     <div className="flex items-center gap-2 w-full sm:w-auto sm:flex-1">
-                      {/* N° de Afiliado */}
+                      {/* //* NRO AFILIADO */}
                       <input
                         type="text"
                         placeholder="N° de Afiliado *"
@@ -155,7 +155,7 @@ export function FormularioCrearEditar({
                         className="w-full border border-gray-300 p-2.5 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#2eb086]/50"
                       />
 
-                      {/* Botón Eliminar fila de OS */}
+                      {/* //* ELIMINAR OBRA SOCIAL */}
                       <button
                         type="button"
                         onClick={() => eliminarObraSocialForm(index)}
@@ -172,10 +172,10 @@ export function FormularioCrearEditar({
           </div>
         </div>
 
-        {/* Separador */}
+        {/* //* SEPARADOR */}
         <div className="border-t border-gray-200 my-5" />
 
-        {/* Acciones del Modal */}
+        {/* //* ACCIONES MODAL */}
         <div className="flex justify-end gap-3">
           <button
             type="button"

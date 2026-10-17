@@ -16,6 +16,7 @@ const router = express.Router();
 
 // Rutas básicas de Turno
 router.get("/", TurnoController.getAllTurnos);
+router.get("/agenda", TurnoController.getAllTurnosAgenda);
 
 router.get("/atendidos", TurnoController.getAllTurnosAtendidos);
 

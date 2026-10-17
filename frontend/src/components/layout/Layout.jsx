@@ -4,6 +4,7 @@ import { Outlet } from "react-router-dom";
 import { Sidebar } from "./Navbar/Sidebar";
 import { Bottombar } from "./Navbar/Bottombar";
 import { useSidebar } from "../../context/SidebarProvider";
+import { Toaster } from "react-hot-toast";
 
 export default function Layout() {
   const { isOpen } = useSidebar();
@@ -18,13 +19,14 @@ export default function Layout() {
       <main
         className={`flex-1 w-full transition-all bg-[#E8E8E8] text-black duration-300 ${isOpen ? "md:pl-72.5" : "md:pl-20"}`}
       >
+        <Toaster position="top-right" />
         <Outlet />
       </main>
 
       {/* Navegación móvil */}
-          <div className="block md:hidden">
-            <Bottombar />
-          </div>
+      <div className="block md:hidden">
+        <Bottombar />
+      </div>
     </div>
   );
 }

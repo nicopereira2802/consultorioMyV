@@ -25,7 +25,7 @@ export function FormularioCrearEditar({
   datosFormulario,
   actualizarDatos,
   setDatosFormulario,
-  procesarFormulario,
+  guardarTurno,
   abrirParaAtender,
   abrirParaCancelar,
   abrirParaInasistente,
@@ -95,7 +95,7 @@ export function FormularioCrearEditar({
 
   return (
     <>
-      <form onSubmit={procesarFormulario}>
+      <form onSubmit={guardarTurno}>
         <Modal
           isOpen={modalAbierto}
           onClose={cerrarModal}

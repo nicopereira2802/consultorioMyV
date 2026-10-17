@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { Calendar, CalendarClock, FileText, Users, Settings, Shield, ChevronUp } from "lucide-react";
-import { BotonFlotanteGlobal } from "./BotonFlotanteGlobal";
 
 export const Bottombar = () => {
   const location = useLocation();
@@ -81,8 +80,6 @@ export const Bottombar = () => {
             </NavLink>
           </div>
         )}
-
-        <BotonFlotanteGlobal />
 
         {/* ─── BARRA DE NAVEGACIÓN INFERIOR ─── */}
         <nav

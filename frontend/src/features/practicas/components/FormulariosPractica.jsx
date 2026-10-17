@@ -1,7 +1,7 @@
 import Modal from "../../../components/common/Modal";
 
 export function FormularioCrearEditar({
-  crearOEditarPractica,
+  guardarPractica,
   modalAbierto,
   cerrarModal,
   editando,
@@ -9,7 +9,7 @@ export function FormularioCrearEditar({
   actualizarDatos,
 }) {
   return (
-    <form onSubmit={crearOEditarPractica}>
+    <form onSubmit={guardarPractica}>
       <Modal
         isOpen={modalAbierto}
         onClose={cerrarModal}

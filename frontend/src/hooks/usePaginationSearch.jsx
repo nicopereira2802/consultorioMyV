@@ -8,7 +8,7 @@ export function usePaginationSearch(endpoint, limitPorDefecto = 9) {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
-  const [search, setSearch] = useState("");
+  const [search, setSearchState] = useState(""); 
   const [order, setOrder] = useState({ column: "", direction: "ASC" });
 
   const fetchData = async (parametrosExtra = {}) => {
@@ -38,6 +38,11 @@ export function usePaginationSearch(endpoint, limitPorDefecto = 9) {
   useEffect(() => {
     fetchData();
   }, [page, search, order]);
+
+  const setSearch = (nuevoTermino) => {
+    setSearchState(nuevoTermino);
+    setPage(1)
+  };
 
   // Cálculos automáticos centralizados
   const inicioRegistro = total === 0 ? 0 : (page - 1) * limitPorDefecto + 1;
