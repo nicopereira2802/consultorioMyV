@@ -89,3 +89,25 @@
   }
 }
 
+/* Bloqueo estricto de desplazamiento vertical y rebote táctil en autenticación */
+.auth-container,
+.auth-locked-scroll {
+  height: 100dvh;
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Evitar zoom automático en inputs en dispositivos móviles */
+@media screen and (max-width: 768px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+
+

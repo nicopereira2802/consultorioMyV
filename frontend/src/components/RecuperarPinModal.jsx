@@ -1,7 +1,7 @@
 /** @format */
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import api from "../services/api";
+import authService from "../services/auth.service";
 import RecuperarPasswordModal from "./RecuperarPasswordModal";
 import {
   X,
@@ -28,9 +28,6 @@ export default function RecuperarPinModal({
   // Estados Paso 1: Verificación de Identidad
   const usuarioGuardado =
     localStorage.getItem("usuario_guardado") || "Odontólogo";
-  const [usuario] = useState(
-    () => localStorage.getItem("usuario_guardado") || "odontologo"
-  );
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [cargandoVerificacion, setCargandoVerificacion] = useState(false);
@@ -115,26 +112,15 @@ export default function RecuperarPinModal({
     setCargandoVerificacion(true);
 
     try {
-      // Intentar llamada a backend si el endpoint existe
-      await api.post("/auth/verificar-password", {
-        nombre_usuario: usuario,
-        contraseña: password,
-      });
-
+      await authService.verificarPassword(password);
       setPaso(2);
       setErrorPaso1("");
-    } catch {
-      // Simulación / Mock local con retardo realista de 500ms
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      const passwordsValidas = ["admin123", "odontologia2026", "admin"];
-      if (passwordsValidas.includes(password.trim())) {
-        setPaso(2);
-        setErrorPaso1("");
-      } else {
-        setErrorPaso1(
-          "Contraseña incorrecta. Verificá tus credenciales."
-        );
-      }
+    } catch (err) {
+      const msg =
+        err.response?.data?.mensaje ||
+        err.response?.data?.message ||
+        "Contraseña incorrecta. Verificá tus credenciales de Odontólogo.";
+      setErrorPaso1(msg);
     } finally {
       setCargandoVerificacion(false);
     }
@@ -159,23 +145,25 @@ export default function RecuperarPinModal({
     setCargandoActualizacion(true);
 
     try {
-      // Intentar llamada a endpoint de backend si está disponible
-      await api.post("/auth/recuperar-pin", {
-        nombre_usuario: usuario,
-        nuevo_pin: nuevoPin,
-      });
-    } catch {
-      // Simulación local con retardo realista de 500ms
-      await new Promise((resolve) => setTimeout(resolve, 500));
-    } finally {
+      await authService.recuperarPin(password, nuevoPin);
       localStorage.setItem("terminal_pin", nuevoPin);
+      sessionStorage.removeItem("pin_attempts");
+      sessionStorage.removeItem("pin_lockout_until");
+      sessionStorage.removeItem("pin_permanent_lockout");
       setExito(true);
-      setCargandoActualizacion(false);
 
       setTimeout(() => {
         onSuccess?.(nuevoPin);
         handleClose();
       }, 1200);
+    } catch (err) {
+      const msg =
+        err.response?.data?.mensaje ||
+        err.response?.data?.message ||
+        "Error al actualizar el PIN. Verificá la contraseña ingresada.";
+      setErrorPaso2(msg);
+    } finally {
+      setCargandoActualizacion(false);
     }
   };
 
@@ -191,7 +179,7 @@ export default function RecuperarPinModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/80 backdrop-blur-md animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/80 backdrop-blur-md animate-in fade-in duration-200 overscroll-none touch-none select-none"
       onClick={(e) => {
         if (e.target === e.currentTarget) handleClose();
       }}
@@ -321,7 +309,7 @@ export default function RecuperarPinModal({
                     setErrorPaso1("");
                   }}
                   placeholder="Ingresá tu contraseña de acceso"
-                  className="w-full pl-10 pr-11 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#2eb086]/50 focus:border-[#2eb086] disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-slate-50 transition-all"
+                  className="w-full pl-10 pr-11 py-2.5 bg-white border border-slate-200 rounded-xl text-base md:text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#2eb086]/50 focus:border-[#2eb086] disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-slate-50 transition-all"
                   autoComplete="current-password"
                 />
                 <button

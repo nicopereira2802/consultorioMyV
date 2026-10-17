@@ -17,7 +17,7 @@ import {
   ArrowLeft,
   Loader2,
 } from "lucide-react";
-import api from "../services/api";
+import authService from "../services/auth.service";
 
 export default function PinLogin({
   onUnlock,
@@ -39,6 +39,7 @@ export default function PinLogin({
   const [cargandoMaestro, setCargandoMaestro] = useState(false);
   const [errorMaestro, setErrorMaestro] = useState("");
   const [alertaSeguridadMaestro, setAlertaSeguridadMaestro] = useState("");
+  const [mensajeExitoMaestro, setMensajeExitoMaestro] = useState("");
 
   // ─── ESTADOS VISTA B: CAPA DIARIA (PIN Y COOLDOWN) ────────────────
   const [pin, setPin] = useState("");
@@ -73,30 +74,19 @@ export default function PinLogin({
 
   const pinInputRef = useRef(null);
 
-  // ─── DETECCIÓN MÓVIL / TÁCTIL (iPhone 16) Y FACE ID ──────────────
-  const [isMobileOrTouch, setIsMobileOrTouch] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return (
-      window.matchMedia("(pointer: coarse)").matches ||
-      navigator.maxTouchPoints > 0 ||
-      window.innerWidth <= 768
-    );
-  });
-
+  // ─── ESTADOS FACE ID / BIOMETRÍA (ACTIVACIÓN EXCLUSIVA POR CLIC) ──
   const [isScanningFaceId, setIsScanningFaceId] = useState(false);
   const [faceIdSuccess, setFaceIdSuccess] = useState(false);
+  const [isMobileView, setIsMobileView] = useState(
+    () => typeof window !== "undefined" && window.innerWidth < 768
+  );
 
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobileOrTouch(
-        window.matchMedia("(pointer: coarse)").matches ||
-          navigator.maxTouchPoints > 0 ||
-          window.innerWidth <= 768
-      );
+    const handleResize = () => {
+      setIsMobileView(window.innerWidth < 768);
     };
-
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   // ─── CUENTA REGRESIVA DE COOLDOWN (ANTI-F5) ───────────────────────
@@ -143,6 +133,15 @@ export default function PinLogin({
   const [cooldownEmail, setCooldownEmail] = useState(0);
   const emailInputId = useId();
 
+  // Estados para ingresar el PIN de 6 dígitos y la nueva contraseña
+  const [codigoRecuperacion, setCodigoRecuperacion] = useState("");
+  const [nuevaPassword, setNuevaPassword] = useState("");
+  const [confirmarPassword, setConfirmarPassword] = useState("");
+  const [showNuevaPassword, setShowNuevaPassword] = useState(false);
+  const [passwordRestablecida, setPasswordRestablecida] = useState(false);
+  const [cargandoRestablecer, setCargandoRestablecer] = useState(false);
+  const [errorRestablecer, setErrorRestablecer] = useState("");
+
   // ─── HIGIENE ESTRICTA DE MEMORIA AL DESMONTAR LA PANTALLA ─────────
   useEffect(() => {
     return () => {
@@ -153,6 +152,11 @@ export default function PinLogin({
       setErrorMaestro("");
       setErrorPin("");
       setErrorEmail("");
+      setCodigoRecuperacion("");
+      setNuevaPassword("");
+      setConfirmarPassword("");
+      setErrorRestablecer("");
+      setMensajeExitoMaestro("");
     };
   }, []);
 
@@ -186,6 +190,7 @@ export default function PinLogin({
   // ─── TRANSICIONES DE VISTA CON HIGIENE DE MEMORIA INMEDIATA ───────
   const handleVolverAPin = () => {
     setErrorMaestro("");
+    setMensajeExitoMaestro("");
     setPassword(""); // Purga inmediata de contraseña
     setPin("");
     setErrorPin("");
@@ -197,6 +202,7 @@ export default function PinLogin({
     setErrorPin("");
     setPassword("");
     setErrorMaestro("");
+    setMensajeExitoMaestro("");
     if (alerta) setAlertaSeguridadMaestro(alerta);
     setVista("maestro");
   };
@@ -204,9 +210,15 @@ export default function PinLogin({
   const handleIrARecuperarEmail = () => {
     setPassword(""); // Purga inmediata de contraseña
     setErrorMaestro("");
+    setMensajeExitoMaestro("");
     setEmail("");
     setErrorEmail("");
     setEmailEnviado(false);
+    setCodigoRecuperacion("");
+    setNuevaPassword("");
+    setConfirmarPassword("");
+    setPasswordRestablecida(false);
+    setErrorRestablecer("");
     setVista("recuperar_password");
   };
 
@@ -214,37 +226,100 @@ export default function PinLogin({
     setEmail(""); // Purga inmediata de correo
     setErrorEmail("");
     setEmailEnviado(false);
+    setCodigoRecuperacion("");
+    setNuevaPassword("");
+    setConfirmarPassword("");
+    setPasswordRestablecida(false);
+    setErrorRestablecer("");
     setPassword("");
     setErrorMaestro("");
+    setMensajeExitoMaestro(""); // Reseteo explícito para evitar mensaje de éxito falso al volver o cancelar
     setVista("maestro");
   };
 
-  // ─── CONFIRMAR RESTABLECIMIENTO Y DESBLOQUEO DIRECTO ──────────────
-  const handleConfirmarRestablecimiento = () => {
-    const token = "mock_jwt_header.payload.signature";
-    const expira = Date.now() + 5 * 24 * 60 * 60 * 1000;
+  const handleRestablecerPasswordSubmit = async (e) => {
+    if (e) e.preventDefault();
+    if (cargandoRestablecer) return;
+    setErrorRestablecer("");
 
-    const user = usuarioGuardado || usuario || "Odontólogo";
-    localStorage.setItem("usuario_guardado", user);
-    localStorage.setItem("jwt_dispositivo", token);
-    localStorage.setItem("jwt_expira", String(expira));
+    if (codigoRecuperacion.length !== 6) {
+      setErrorRestablecer("El código debe tener exactamente 6 dígitos numéricos.");
+      return;
+    }
 
-    sessionStorage.removeItem("pin_attempts");
-    sessionStorage.removeItem("pin_lockout_until");
-    sessionStorage.removeItem("pin_permanent_lockout");
-    setIntentosFallidos(0);
-    setIsLockedOut(false);
-    setIsPermanentLockout(false);
-    setAlertaSeguridadMaestro("");
+    if (nuevaPassword.length < 8) {
+      setErrorRestablecer("La nueva contraseña debe tener al menos 8 caracteres.");
+      return;
+    }
 
-    // Purga de campos sensibles antes de salir
-    setPassword("");
-    setPin("");
-    setEmail("");
+    if (
+      !/[A-Z]/.test(nuevaPassword) ||
+      !/[a-z]/.test(nuevaPassword) ||
+      !/[0-9]/.test(nuevaPassword) ||
+      !/[^A-Za-z0-9]/.test(nuevaPassword)
+    ) {
+      setErrorRestablecer(
+        "La contraseña debe contener al menos una mayúscula, una minúscula, un número y un carácter especial."
+      );
+      return;
+    }
 
-    onDeviceLinked?.(token, expira);
-    if (onUnlock) onUnlock();
+    if (nuevaPassword !== confirmarPassword) {
+      setErrorRestablecer("Las contraseñas no coinciden.");
+      return;
+    }
+
+    setCargandoRestablecer(true);
+
+    try {
+      const res = await authService.restablecerPassword(codigoRecuperacion, nuevaPassword);
+
+      // Capa 3: Reset de sesión residual
+      localStorage.removeItem("token");
+      localStorage.removeItem("jwt_dispositivo");
+      localStorage.removeItem("jwt_expira");
+      sessionStorage.removeItem("pin_unlocked");
+      sessionStorage.removeItem("pin_attempts");
+      sessionStorage.removeItem("pin_lockout_until");
+      sessionStorage.removeItem("pin_permanent_lockout");
+
+      // Resetear estados de bloqueo de PIN si existían
+      setIntentosFallidos(0);
+      setIsLockedOut(false);
+      setIsPermanentLockout(false);
+      setCooldownSeconds(0);
+      setErrorPin("");
+      setPin("");
+      setAlertaSeguridadMaestro("");
+
+      // Purga de campos de recuperación
+      setEmail("");
+      setErrorEmail("");
+      setEmailEnviado(false);
+      setCodigoRecuperacion("");
+      setNuevaPassword("");
+      setConfirmarPassword("");
+      setPasswordRestablecida(false);
+      setErrorRestablecer("");
+      setPassword("");
+      setErrorMaestro("");
+
+      // Situar la vista directamente en el Login Maestro con mensaje de éxito
+      setMensajeExitoMaestro(
+        res?.mensaje || "Contraseña actualizada exitosamente. Inicie sesión con sus nuevas credenciales."
+      );
+      setVista("maestro");
+    } catch (err) {
+      const msg =
+        err.response?.data?.mensaje ||
+        err.response?.data?.message ||
+        "Código inválido o expirado. Verificá los 6 dígitos.";
+      setErrorRestablecer(msg);
+    } finally {
+      setCargandoRestablecer(false);
+    }
   };
+
 
   // ─── ACCIONES VISTA A: LOGIN MAESTRO (PREVENCIÓN DOBLE CLIC) ──────
   const handleLoginMaestro = async (e) => {
@@ -252,6 +327,7 @@ export default function PinLogin({
     if (cargandoMaestro) return; // Bloqueo de doble clic
 
     setErrorMaestro("");
+    setMensajeExitoMaestro("");
 
     if (!usuario.trim()) {
       setErrorMaestro("Por favor, ingresá tu nombre de usuario.");
@@ -266,16 +342,14 @@ export default function PinLogin({
     setCargandoMaestro(true);
 
     try {
-      const res = await api.post("/auth/vincular-dispositivo", {
-        nombre_usuario: usuario.trim(),
-        contraseña: password,
-      });
+      const data = await authService.loginMaestro(usuario.trim(), password);
 
-      const token = res.data?.token || "mock_jwt_header.payload.signature";
-      const expira = res.data?.expira || Date.now() + 5 * 24 * 60 * 60 * 1000;
+      const token = data?.token;
+      const expira = Date.now() + 5 * 24 * 60 * 60 * 1000; // 5 días de vigencia
 
       localStorage.setItem("usuario_guardado", usuario.trim());
       localStorage.setItem("jwt_dispositivo", token);
+      localStorage.setItem("token", token);
       localStorage.setItem("jwt_expira", String(expira));
 
       sessionStorage.removeItem("pin_attempts");
@@ -292,108 +366,85 @@ export default function PinLogin({
 
       // Desbloqueo y autenticación directa sin retornar al PIN
       if (onUnlock) onUnlock();
-    } catch {
-      // Simulación Frontend-First con retardo de procesamiento realista (500ms)
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      const contrasenasValidas = ["admin123", "odontologia2026", "admin"];
-
-      if (contrasenasValidas.includes(password.trim())) {
-        const token = "mock_jwt_header.payload.signature";
-        const expira = Date.now() + 5 * 24 * 60 * 60 * 1000; // 5 días
-
-        localStorage.setItem("usuario_guardado", usuario.trim());
-        localStorage.setItem("jwt_dispositivo", token);
-        localStorage.setItem("jwt_expira", String(expira));
-
-        sessionStorage.removeItem("pin_attempts");
-        sessionStorage.removeItem("pin_lockout_until");
-        sessionStorage.removeItem("pin_permanent_lockout");
-        setIntentosFallidos(0);
-        setIsLockedOut(false);
-        setIsPermanentLockout(false);
-        setAlertaSeguridadMaestro("");
-
-        // Purga de contraseña de memoria
-        setPassword("");
-        onDeviceLinked?.(token, expira);
-
-        // Desbloqueo y autenticación directa sin retornar al PIN
-        if (onUnlock) onUnlock();
-      } else {
-        setErrorMaestro(
-          "Contraseña incorrecta. Verificá tus credenciales de Odontólogo (Tip de prueba: 'admin123')."
-        );
-      }
+    } catch (err) {
+      const errorMsg =
+        err.response?.data?.mensaje ||
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        "Credenciales inválidas. Verificá tu usuario y contraseña de cuenta.";
+      setErrorMaestro(errorMsg);
     } finally {
       setCargandoMaestro(false);
     }
   };
 
-  // ─── ACCIONES VISTA B: VALIDACIÓN DE PIN ──────────────────────────
-  const getValidPin = () => localStorage.getItem("terminal_pin") || "1234";
-
-  const validarPin = (enteredPin) => {
+  // ─── ACCIONES VISTA B: VALIDACIÓN DE PIN (BACKEND ENDPOINT REAL) ──
+  const validarPin = async (enteredPin) => {
     if (isLockedOut || isPermanentLockout || isValidatingPin) return;
 
     setIsValidatingPin(true);
-    const validPin = getValidPin();
+    setErrorPin("");
+    setMensajeExitoPin("");
 
-    setTimeout(() => {
-      if (enteredPin === validPin) {
-        setErrorPin("");
-        setMensajeExitoPin("");
-        sessionStorage.removeItem("pin_attempts");
-        sessionStorage.removeItem("pin_lockout_until");
-        sessionStorage.removeItem("pin_permanent_lockout");
-        setIntentosFallidos(0);
-        setIsLockedOut(false);
-        setIsPermanentLockout(false);
+    try {
+      await authService.validarPin(enteredPin);
+
+      // Éxito (HTTP 200): PIN validado en backend
+      sessionStorage.removeItem("pin_attempts");
+      sessionStorage.removeItem("pin_lockout_until");
+      sessionStorage.removeItem("pin_permanent_lockout");
+      setIntentosFallidos(0);
+      setIsLockedOut(false);
+      setIsPermanentLockout(false);
+      setPin(""); // Purga inmediata
+      setIsValidatingPin(false);
+      if (onUnlock) onUnlock();
+    } catch (err) {
+      // Error (HTTP 401 / 400): Disparo de efecto de error y reintentos
+      const nuevosIntentos = intentosFallidos + 1;
+      setIntentosFallidos(nuevosIntentos);
+      sessionStorage.setItem("pin_attempts", String(nuevosIntentos));
+      setMensajeExitoPin("");
+
+      if (nuevosIntentos >= 5) {
+        // Degradación obligatoria tras 5 fallos: forzar login maestro
+        setIsPermanentLockout(true);
+        sessionStorage.setItem("pin_permanent_lockout", "true");
+        setAlertaSeguridadMaestro(
+          "Terminal bloqueada por seguridad tras 5 intentos fallidos. Ingresá tu contraseña maestra para reanudar el acceso."
+        );
+        setVista("maestro");
         setPin(""); // Purga inmediata
         setIsValidatingPin(false);
-        if (onUnlock) onUnlock();
+      } else if (nuevosIntentos === 3) {
+        // Penalización de 30 segundos
+        const lockUntil = Date.now() + 30 * 1000;
+        sessionStorage.setItem("pin_lockout_until", String(lockUntil));
+        setCooldownSeconds(30);
+        setIsLockedOut(true);
+        setIsShaking(true);
+        setPin(""); // Purga inmediata
+        setIsValidatingPin(false);
+        setTimeout(() => setIsShaking(false), 400);
       } else {
-        const nuevosIntentos = intentosFallidos + 1;
-        setIntentosFallidos(nuevosIntentos);
-        sessionStorage.setItem("pin_attempts", String(nuevosIntentos));
-        setMensajeExitoPin("");
-
-        if (nuevosIntentos >= 5) {
-          // Degradación obligatoria tras 5 fallos: forzar login maestro
-          setIsPermanentLockout(true);
-          sessionStorage.setItem("pin_permanent_lockout", "true");
-          setAlertaSeguridadMaestro(
-            "Terminal bloqueada por seguridad. Ingresá tu contraseña maestra para reanudar el acceso."
-          );
-          setVista("maestro");
+        setIsShaking(true);
+        const restantes =
+          nuevosIntentos < 3 ? 3 - nuevosIntentos : 5 - nuevosIntentos;
+        const msgBackend =
+          err.response?.data?.mensaje || err.response?.data?.errors?.pin;
+        setErrorPin(
+          msgBackend
+            ? `${msgBackend}. Te queda${restantes === 1 ? "" : "n"} ${restantes} intento${restantes === 1 ? "" : "s"}.`
+            : `PIN incorrecto. Te queda${restantes === 1 ? "" : "n"} ${restantes} intento${restantes === 1 ? "" : "s"}.`
+        );
+        setTimeout(() => {
+          setIsShaking(false);
           setPin(""); // Purga inmediata
           setIsValidatingPin(false);
-        } else if (nuevosIntentos === 3) {
-          // Penalización de 30 segundos
-          const lockUntil = Date.now() + 30 * 1000;
-          sessionStorage.setItem("pin_lockout_until", String(lockUntil));
-          setCooldownSeconds(30);
-          setIsLockedOut(true);
-          setIsShaking(true);
-          setPin(""); // Purga inmediata
-          setIsValidatingPin(false);
-          setTimeout(() => setIsShaking(false), 400);
-        } else {
-          setIsShaking(true);
-          const restantes =
-            nuevosIntentos < 3 ? 3 - nuevosIntentos : 5 - nuevosIntentos;
-          setErrorPin(
-            `PIN incorrecto. Te queda${restantes === 1 ? "" : "n"} ${restantes} intento${restantes === 1 ? "" : "s"}.`
-          );
-          setTimeout(() => {
-            setIsShaking(false);
-            setPin(""); // Purga inmediata
-            setIsValidatingPin(false);
-            if (pinInputRef.current) pinInputRef.current.focus();
-          }, 400);
-        }
+          if (pinInputRef.current) pinInputRef.current.focus();
+        }, 400);
       }
-    }, 400); // 400ms de verificación realista
+    }
   };
 
   const handlePinChange = (e) => {
@@ -408,7 +459,20 @@ export default function PinLogin({
   };
 
   const handleFaceIdLogin = async () => {
-    if (isLockedOut || isPermanentLockout || isScanningFaceId) return;
+    // Si la pantalla es de escritorio, abortar inmediatamente sin tocar WebAuthn
+    if (typeof window !== "undefined" && window.innerWidth >= 768) {
+      console.warn("[Face ID] Deshabilitado en entorno de escritorio");
+      return;
+    }
+
+    if (
+      isLockedOut ||
+      isPermanentLockout ||
+      isScanningFaceId ||
+      isValidatingPin
+    ) {
+      return;
+    }
 
     setIsScanningFaceId(true);
     setErrorPin("");
@@ -416,46 +480,61 @@ export default function PinLogin({
 
     try {
       if (
-        window.PublicKeyCredential &&
-        window.isSecureContext &&
-        typeof window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable ===
+        !window.PublicKeyCredential ||
+        !window.isSecureContext ||
+        typeof window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable !==
           "function"
       ) {
-        const hasAuthenticator =
-          await window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-        if (hasAuthenticator) {
-          const challenge = new Uint8Array(32);
-          window.crypto.getRandomValues(challenge);
-          try {
-            await navigator.credentials.get({
-              publicKey: {
-                challenge,
-                timeout: 4000,
-                userVerification: "preferred",
-              },
-            });
-            setFaceIdSuccess(true);
-            setTimeout(() => {
-              if (onUnlock) onUnlock();
-            }, 400);
-            return;
-          } catch {
-            // Fallback a simulación
-          }
-        }
+        throw new Error("Biometría no disponible en este dispositivo o navegador");
       }
 
-      // Simulación biométrica de 1 segundo (iPhone 16 / Dev Mode)
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const hasAuthenticator =
+        await window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+      if (!hasAuthenticator) {
+        throw new Error("Autenticador de plataforma no disponible");
+      }
+
+      const challenge = new Uint8Array(32);
+      window.crypto.getRandomValues(challenge);
+
+      const credential = await navigator.credentials.get({
+        publicKey: {
+          challenge,
+          timeout: 10000,
+          userVerification: "preferred",
+        },
+      });
+
+      if (!credential) {
+        throw new Error("No se obtuvo credencial biométrica válida");
+      }
+
+      // Autenticación biométrica legítima completada con éxito
       setFaceIdSuccess(true);
+      sessionStorage.removeItem("pin_attempts");
+      sessionStorage.removeItem("pin_lockout_until");
+      sessionStorage.removeItem("pin_permanent_lockout");
+      setIntentosFallidos(0);
+      setIsLockedOut(false);
+      setIsPermanentLockout(false);
+
       setTimeout(() => {
         setIsScanningFaceId(false);
         setFaceIdSuccess(false);
         if (onUnlock) onUnlock();
-      }, 500);
-    } catch {
+      }, 400);
+    } catch (err) {
+      // Manejo estricto de errores: cancelación voluntaria, abort o rechazo
+      console.warn(
+        "[Biometría] Autenticación cancelada o rechazada:",
+        err?.name || err?.message
+      );
       setIsScanningFaceId(false);
       setFaceIdSuccess(false);
+      // NUNCA desbloquear, no emitir tokens y permitir ingreso manual de PIN
+      setTimeout(() => {
+        if (pinInputRef.current) pinInputRef.current.focus();
+      }, 100);
     }
   };
 
@@ -474,21 +553,22 @@ export default function PinLogin({
     setCargandoEmail(true);
 
     try {
-      await api.post("/auth/recuperar-password", { email: email.trim() });
+      await authService.recuperarPassword(email.trim());
       setEmailEnviado(true);
       setCooldownEmail(60);
-    } catch {
-      // Simulación de envío con retardo realista de 500ms
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      setEmailEnviado(true);
-      setCooldownEmail(60);
+    } catch (err) {
+      const errorMsg =
+        err.response?.data?.mensaje ||
+        err.response?.data?.message ||
+        "Error al solicitar recuperación de contraseña. Intentá nuevamente.";
+      setErrorEmail(errorMsg);
     } finally {
       setCargandoEmail(false);
     }
   };
 
   return (
-    <div className="w-full min-h-screen lg:h-screen overflow-y-auto lg:overflow-hidden flex flex-col lg:flex-row bg-white font-sans relative">
+    <div className="w-full h-[100dvh] overflow-hidden overscroll-none touch-none select-none flex flex-col lg:flex-row bg-white font-sans relative auth-locked-scroll">
       {/* ══════════════════════════════════════════════════════════════
           RESPLANDORES DIFUMINADOS CONTINUOS (AMBIENT GLOW REAL)
           Efecto etéreo sin cortes rectangulares ni divisiones duras
@@ -521,7 +601,7 @@ export default function PinLogin({
 
             <div className="flex flex-col justify-center">
               <h1 className="text-4xl lg:text-[44px] font-bold text-slate-900 tracking-tight leading-none m-0">
-                M&V Dental
+                M&V Odontologia
               </h1>
               <p className="text-lg lg:text-xl font-medium text-slate-600 mt-2 tracking-tight">
                 Gestión de Turnos
@@ -540,33 +620,30 @@ export default function PinLogin({
       </section>
 
       {/* ══════════════════════════════════════════════════════════════
-          CABECERA INTEGRADA FLOTANTE (MÓVIL < lg)
-          Sin recuadros rígidos, con espacio superior para iOS
+          LATERAL DERECHO / CONTENIDO MÓVIL INTEGRADO
       ══════════════════════════════════════════════════════════════ */}
-      <div className="lg:hidden w-full pt-8 sm:pt-12 pb-2 px-6 flex flex-col items-center text-center relative z-10 select-none">
-        <div className="w-20 h-20 sm:w-24 sm:h-24 mb-3">
-          <img
-            src={logoImg}
-            alt="Logo M&V Dental"
-            className="w-full h-full object-contain mix-blend-multiply"
-          />
+      <section className="w-full lg:w-1/2 flex-1 lg:h-full flex flex-col items-center justify-center p-3 sm:p-6 lg:p-8 xl:p-12 relative z-10 overflow-hidden">
+        {/* Cabecera integrada exclusiva para móvil (< lg) agrupada directamente sobre la tarjeta */}
+        <div className="lg:hidden w-full max-w-sm sm:max-w-md flex flex-col items-center text-center select-none mb-3 sm:mb-4">
+          <div className="w-[72px] h-[72px] sm:w-20 sm:h-20 mb-2">
+            <img
+              src={logoImg}
+              alt="Logo M&V Dental"
+              className="w-full h-full object-contain mix-blend-multiply"
+            />
+          </div>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight m-0">
+            M&V Odontologia
+          </h1>
+          <p className="text-[11px] sm:text-xs font-medium text-slate-600 mt-0.5">
+            Gestión de Turnos
+          </p>
+          <p className="text-[10px] text-slate-400 mt-0.5">
+            Sistema Odontológico Integral
+          </p>
         </div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight m-0">
-          M&V Dental
-        </h1>
-        <p className="text-xs sm:text-sm font-medium text-slate-600 mt-0.5">
-          Gestión de Turnos
-        </p>
-        <p className="text-[11px] text-slate-400 mt-1">
-          Sistema Odontológico Integral
-        </p>
-      </div>
 
-      {/* ══════════════════════════════════════════════════════════════
-          LATERAL DERECHO: TARJETA FLOTANTE DE INTERACCIÓN
-      ══════════════════════════════════════════════════════════════ */}
-      <section className="w-full lg:w-1/2 lg:h-full flex items-center justify-center p-4 sm:p-6 lg:p-8 xl:p-12 relative z-10">
-        <main className="bg-white max-w-sm sm:max-w-md w-full p-6 sm:p-8 lg:p-10 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 transition-all text-left">
+        <main className="bg-white max-w-sm sm:max-w-md w-full p-5 sm:p-8 lg:p-10 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 transition-all text-left">
           {/* ──────────────────────────────────────────────────────────
               VISTA A: CAPA MAESTRA (INICIAR SESIÓN)
           ────────────────────────────────────────────────────────── */}
@@ -582,6 +659,16 @@ export default function PinLogin({
                     : "Ingresá tu usuario y contraseña para vincular este dispositivo"}
                 </p>
               </header>
+
+              {mensajeExitoMaestro && (
+                <div className="mb-4 flex items-start gap-2.5 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium animate-in fade-in">
+                  <CheckCircle2
+                    size={16}
+                    className="shrink-0 mt-0.5 text-emerald-600"
+                  />
+                  <span>{mensajeExitoMaestro}</span>
+                </div>
+              )}
 
               {alertaSeguridadMaestro && (
                 <div className="mb-4 flex items-start gap-2.5 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-medium animate-in fade-in">
@@ -628,13 +715,14 @@ export default function PinLogin({
                         onChange={(e) => {
                           setUsuario(e.target.value);
                           setErrorMaestro("");
+                          setMensajeExitoMaestro("");
                         }}
                         placeholder="Ingresá tu usuario (ej. Odontologo)"
                         autoComplete="off"
                         autoCorrect="off"
                         autoCapitalize="off"
                         spellCheck="false"
-                        className={`w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1e6f85]/30 focus:border-[#1e6f85] transition-all ${
+                        className={`w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-base md:text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1e6f85]/30 focus:border-[#1e6f85] transition-all ${
                           cargandoMaestro
                             ? "opacity-60 cursor-not-allowed bg-slate-50"
                             : ""
@@ -661,10 +749,11 @@ export default function PinLogin({
                       onChange={(e) => {
                         setPassword(e.target.value);
                         setErrorMaestro("");
+                        setMensajeExitoMaestro("");
                       }}
                       placeholder="Ingresá tu contraseña de cuenta"
                       autoComplete="current-password"
-                      className={`w-full pl-10 pr-11 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1e6f85]/30 focus:border-[#1e6f85] transition-all ${
+                      className={`w-full pl-10 pr-11 py-2.5 bg-white border border-slate-200 rounded-xl text-base md:text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1e6f85]/30 focus:border-[#1e6f85] transition-all ${
                         cargandoMaestro
                           ? "opacity-60 cursor-not-allowed bg-slate-50"
                           : ""
@@ -767,11 +856,12 @@ export default function PinLogin({
                   maxLength={4}
                   value={pin}
                   onChange={handlePinChange}
-                  autoFocus
-                  autoComplete="off"
+                  autoComplete="one-time-code"
                   autoCorrect="off"
                   autoCapitalize="off"
                   spellCheck="false"
+                  data-lpignore="true"
+                  data-form-type="other"
                   onPaste={(e) => e.preventDefault()}
                   onCopy={(e) => e.preventDefault()}
                   onCut={(e) => e.preventDefault()}
@@ -806,9 +896,9 @@ export default function PinLogin({
                 </div>
               </div>
 
-              {/* Botón Face ID integrado con fondo suave (bg-slate-50 border-slate-200 text-slate-700) */}
-              {isMobileOrTouch && (
-                <div className="mt-5 w-full">
+              {/* Botón Face ID: Exclusivo para vista móvil (< 768px) */}
+              {isMobileView && (
+                <div className="w-full md:hidden mt-5">
                   <button
                     type="button"
                     onClick={handleFaceIdLogin}
@@ -871,7 +961,7 @@ export default function PinLogin({
                     }
                     className="mt-1 text-xs font-semibold text-teal-700 hover:text-teal-800 underline underline-offset-2 cursor-pointer transition-colors"
                   >
-                    ¿Sos la titular? Ingresar con contraseña
+                    Ingresar con contraseña
                   </button>
                 </div>
               ) : (
@@ -917,60 +1007,162 @@ export default function PinLogin({
                 </p>
               </header>
 
-              {emailEnviado ? (
-                <div className="py-6 flex flex-col items-center text-center gap-3">
-                  <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center animate-in zoom-in">
-                    <CheckCircle2 size={32} />
+              {passwordRestablecida ? (
+                <div className="py-6 flex flex-col items-center text-center gap-4 animate-in fade-in">
+                  <div className="w-14 h-14 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center">
+                    <CheckCircle2 size={30} />
                   </div>
-                  <h3 className="text-base font-bold text-slate-900">
-                    ¡Correo de Recuperación Enviado!
-                  </h3>
-                  <p className="text-xs text-slate-600 max-w-xs leading-relaxed">
-                    Te enviamos un correo con las instrucciones para restablecer tu
-                    clave.
-                  </p>
-                  <p className="text-[11px] text-slate-400 font-mono">
-                    {email}
-                  </p>
-
-                  {/* Cooldown de 60 segundos para reenvío (Rate Limiting de UI) */}
-                  {cooldownEmail > 0 ? (
-                    <div className="mt-2 w-full py-2.5 px-4 rounded-xl text-xs font-semibold text-slate-500 bg-slate-50 border border-slate-200 flex items-center justify-center gap-2 cursor-not-allowed select-none">
-                      <Clock size={14} className="text-teal-600 animate-pulse" />
-                      <span>
-                        Reenviar enlace en (00:{String(cooldownEmail).padStart(2, "0")})...
-                      </span>
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={handleRecuperarPassword}
-                      disabled={cargandoEmail}
-                      className="mt-2 w-full py-2.5 px-4 rounded-xl text-xs font-semibold text-teal-700 bg-teal-50 hover:bg-teal-100 border border-teal-200 transition-colors cursor-pointer flex items-center justify-center gap-2"
-                    >
-                      <Mail size={14} />
-                      <span>Reenviar enlace de recuperación</span>
-                    </button>
-                  )}
-
-                  {/* Confirmación y desbloqueo directo hacia la agenda */}
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-bold text-slate-900">
+                      ¡Contraseña Restablecida!
+                    </h3>
+                    <p className="text-xs text-slate-600 leading-relaxed max-w-xs">
+                      Tu clave de acceso ha sido actualizada con éxito. Ya podés iniciar sesión con tus nuevas credenciales.
+                    </p>
+                  </div>
                   <button
                     type="button"
-                    onClick={handleConfirmarRestablecimiento}
-                    className="mt-3 w-full py-3 px-4 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#1e6f85] to-[#2eb086] hover:opacity-95 active:scale-98 transition-all cursor-pointer shadow-md shadow-teal-700/10 flex items-center justify-center gap-2"
+                    onClick={() => {
+                      handleVolverAIniciarSesion();
+                      setMensajeExitoMaestro(
+                        "Contraseña actualizada exitosamente. Inicie sesión con sus nuevas credenciales."
+                      );
+                    }}
+                    className="w-full mt-2 py-2.5 px-4 rounded-xl text-xs font-semibold text-white bg-[#1e6f85] hover:bg-[#18586a] active:scale-98 transition-all shadow-sm cursor-pointer"
                   >
-                    <CheckCircle2 size={16} />
-                    <span>Confirmar y Desbloquear Terminal</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleVolverAIniciarSesion}
-                    className="mt-2 text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
-                  >
-                    Volver a Iniciar Sesión
+                    Volver al inicio de sesión
                   </button>
                 </div>
+              ) : emailEnviado ? (
+                <form
+                  onSubmit={handleRestablecerPasswordSubmit}
+                  autoComplete="off"
+                  className="space-y-4 animate-in fade-in"
+                >
+                  <div className="p-3 rounded-xl bg-teal-50 border border-teal-100 text-teal-800 text-xs font-medium leading-relaxed">
+                    Enviamos un código de 6 dígitos a <strong>{email}</strong>. Válido durante 15 minutos.
+                  </div>
+
+                  {/* Código de 6 dígitos */}
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-semibold text-slate-700 text-center">
+                      Código de 6 Dígitos
+                    </label>
+                    <input
+                      type="text"
+                      maxLength={6}
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      value={codigoRecuperacion}
+                      disabled={cargandoRestablecer}
+                      onChange={(e) => {
+                        const clean = e.target.value.replace(/\D/g, "").slice(0, 6);
+                        setCodigoRecuperacion(clean);
+                        setErrorRestablecer("");
+                      }}
+                      placeholder="000000"
+                      className="w-full text-center font-mono text-2xl tracking-[0.25em] font-bold py-2.5 px-4 bg-white border border-slate-200 rounded-xl text-[#0f766e] placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#1e6f85]/30 focus:border-[#1e6f85] transition-all disabled:opacity-60"
+                      autoFocus
+                    />
+                  </div>
+
+                  {/* Nueva Contraseña */}
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-semibold text-slate-700">
+                      Nueva Contraseña
+                    </label>
+                    <div className="relative flex items-center">
+                      <span className="absolute left-3.5 text-slate-400">
+                        <Lock size={16} />
+                      </span>
+                      <input
+                        type={showNuevaPassword ? "text" : "password"}
+                        value={nuevaPassword}
+                        disabled={cargandoRestablecer}
+                        onChange={(e) => {
+                          setNuevaPassword(e.target.value);
+                          setErrorRestablecer("");
+                        }}
+                        placeholder="Mínimo 8 caracteres"
+                        className="w-full pl-10 pr-10 py-2.5 bg-white border border-slate-200 rounded-xl text-base md:text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1e6f85]/30 focus:border-[#1e6f85] transition-all disabled:opacity-60"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNuevaPassword(!showNuevaPassword)}
+                        className="absolute right-3 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+                      >
+                        {showNuevaPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Confirmar Nueva Contraseña */}
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-semibold text-slate-700">
+                      Confirmar Nueva Contraseña
+                    </label>
+                    <div className="relative flex items-center">
+                      <span className="absolute left-3.5 text-slate-400">
+                        <Lock size={16} />
+                      </span>
+                      <input
+                        type={showNuevaPassword ? "text" : "password"}
+                        value={confirmarPassword}
+                        disabled={cargandoRestablecer}
+                        onChange={(e) => {
+                          setConfirmarPassword(e.target.value);
+                          setErrorRestablecer("");
+                        }}
+                        placeholder="Repetí la contraseña"
+                        className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-base md:text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1e6f85]/30 focus:border-[#1e6f85] transition-all disabled:opacity-60"
+                      />
+                    </div>
+                  </div>
+
+                  {errorRestablecer && (
+                    <div className="flex items-start gap-2 p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium animate-in fade-in">
+                      <AlertCircle size={15} className="shrink-0 mt-0.5" />
+                      <span>{errorRestablecer}</span>
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={
+                      cargandoRestablecer ||
+                      codigoRecuperacion.length !== 6 ||
+                      !nuevaPassword ||
+                      !confirmarPassword
+                    }
+                    className="w-full mt-3 flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs font-semibold text-white bg-[#1e6f85] hover:bg-[#18586a] active:scale-98 disabled:opacity-60 disabled:cursor-not-allowed transition-all shadow-sm cursor-pointer"
+                  >
+                    {cargandoRestablecer ? (
+                      <div className="flex items-center justify-center gap-2">
+                        <Loader2 size={16} className="animate-spin text-white" />
+                        <span>Restableciendo...</span>
+                      </div>
+                    ) : (
+                      <span>Restablecer contraseña</span>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEmailEnviado(false);
+                      setCodigoRecuperacion("");
+                      setNuevaPassword("");
+                      setConfirmarPassword("");
+                      setErrorRestablecer("");
+                      setErrorEmail("");
+                      setMensajeExitoMaestro("");
+                    }}
+                    disabled={cargandoRestablecer}
+                    className="w-full text-center text-xs text-slate-500 hover:text-slate-800 font-semibold mt-2 cursor-pointer transition-colors"
+                  >
+                    ← Volver o ingresar otro correo
+                  </button>
+                </form>
               ) : (
                 <form
                   onSubmit={handleRecuperarPassword}
@@ -1003,7 +1195,7 @@ export default function PinLogin({
                         autoCorrect="off"
                         autoCapitalize="off"
                         spellCheck="false"
-                        className={`w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1e6f85]/30 focus:border-[#1e6f85] transition-all ${
+                        className={`w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-base md:text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1e6f85]/30 focus:border-[#1e6f85] transition-all ${
                           cargandoEmail
                             ? "opacity-60 cursor-not-allowed bg-slate-50"
                             : ""
@@ -1028,10 +1220,10 @@ export default function PinLogin({
                     {cargandoEmail ? (
                       <div className="flex items-center justify-center gap-2">
                         <Loader2 size={16} className="animate-spin text-white" />
-                        <span>Enviando enlace...</span>
+                        <span>Enviando...</span>
                       </div>
                     ) : (
-                      <span>Enviar Enlace de Recuperación</span>
+                      <span>Enviar instrucciones</span>
                     )}
                   </button>
 
@@ -1050,7 +1242,7 @@ export default function PinLogin({
       </section>
 
       {/* Pie móvil discreto */}
-      <footer className="lg:hidden pb-6 pt-2 text-center text-[11px] text-slate-400 relative z-10 select-none">
+      <footer className="lg:hidden shrink-0 pb-3 pt-1 text-center text-[10px] text-slate-400 relative z-10 select-none">
         Desarrollado para M&V Dental
       </footer>
     </div>

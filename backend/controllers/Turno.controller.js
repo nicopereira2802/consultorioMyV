@@ -1,0 +1,527 @@
+/** @format */
+
+import sequelize from "../config/database.js";
+import { Op } from "sequelize";
+import {
+  Turno,
+  HistorialEstadoTurno,
+  Practica,
+  PracticaTurno,
+  EstadoTurno,
+  Paciente,
+} from "../models/index.model.js";
+import {
+  validarEstadoProgramado,
+  validarEstados,
+  validarSolapaminetoHorarios,
+} from "../validations/Turno.validation.js";
+import { ESTADOS } from "../constants/EstadosTurno.js";
+
+// Obtener todos los turnos
+export const getAllTurnos = async (req, res) => {
+  try {
+    // paginacion
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 9;
+    const offset = (page - 1) * limit;
+    const search = req.query.search || "";
+    const sortField = req.query.sortField || "fecha_hora_inicio";
+    const sortOrder = req.query.sortOrder || "ASC";
+    const estadoFiltrado = req.query.estadoFiltrado;
+    let where = {
+      activo: true,
+    };
+    if (estadoFiltrado) {
+      where = {
+        id_estado: estadoFiltrado,
+      };
+    }
+
+    // Busqueda por nombre apellido dni telefono
+    if (search.trim() !== "") {
+      where[Op.or] = [
+        { fecha_hora_inicio: { [Op.like]: `%${search}%` } },
+        { fecha_hora_fin: { [Op.like]: `%${search}%` } },
+        { "$Paciente.nombre$": { [Op.like]: `%${search}%` } },
+        { "$Paciente.apellido$": { [Op.like]: `%${search}%` } },
+        { "$Paciente.dni$": { [Op.like]: `%${search}%` } },
+        { "$Paciente.telefono$": { [Op.like]: `%${search}%` } },
+      ];
+    }
+    const { count, rows: turnos } = await Turno.findAndCountAll({
+      where,
+      limit,
+      offset,
+      order: [[sortField, sortOrder]],
+      include: [
+        {
+          model: Paciente,
+          attributes: ["nombre", "apellido", "dni", "telefono"], // Atributos que quieres traer del paciente
+        },
+        {
+          model: EstadoTurno,
+          attributes: ["estado"], // Atributos que quieres traer del estado
+        },
+      ],
+    });
+
+    const totalPages = Math.ceil(count / limit);
+
+    res.status(200).json({
+      status: "success",
+      data: turnos,
+      meta: {
+        total: count,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
+    });
+  } catch (error) {
+    console.error("Error al obtener los turnos:", error);
+    res.status(500).json({ error: "Error al obtener los turnos" });
+  }
+};
+
+// Obtener todos los turnos en Atendido
+export const getAllTurnosAtendidos = async (req, res) => {
+  try {
+    const turnos = await Turno.findAll({
+      where: { activo: true, id_estado: 2 },
+      include: [
+        {
+          model: Paciente,
+          attributes: ["nombre", "apellido", "dni", "telefono"], // Atributos que quieres traer del paciente
+        },
+        {
+          model: EstadoTurno,
+          attributes: ["estado"], // Atributos que quieres traer del estado
+        },
+      ],
+    });
+
+    res.status(200).json({
+      status: "success",
+      data: turnos,
+    });
+  } catch (error) {
+    console.error("Error al obtener los turnos atendidos:", error);
+    res.status(500).json({ error: "Error al obtener los turnos atendidos" });
+  }
+};
+
+// Obtener un turno por su ID
+export const getTurnoById = async (req, res) => {
+  try {
+    const turno = req.turno;
+
+    res.status(200).json({
+      status: "success",
+      data: turno,
+    });
+  } catch (error) {
+    console.error("Error al obtener el turno:", error);
+    res.status(500).json({ error: "Error al obtener el turno" });
+  }
+};
+
+// Crear un nuevo turno (T-123)
+export const createTurno = async (req, res) => {
+  try {
+    const {
+      id_paciente,
+      fecha_hora_inicio,
+      fecha_hora_fin,
+      precio_final,
+      notas_consulta,
+    } = req.body;
+
+    // DEV: SUPONEMOS QUE ESTA CREADO EL ESTADO
+    const id_estado = ESTADOS.PROGRAMADO;
+
+    const haySolapamiento = await validarSolapaminetoHorarios(
+      fecha_hora_inicio,
+      fecha_hora_fin,
+      null,
+    );
+
+    if (haySolapamiento) {
+      return res.status(409).json({
+        error:
+          "El horario seleccionado se superpone con un turno ya programado.",
+      });
+    }
+
+    const result = await sequelize.transaction(async (t) => {
+      const nuevoTurno = await Turno.create(
+        {
+          id_paciente,
+          id_estado: id_estado,
+          fecha_hora_inicio,
+          fecha_hora_fin,
+          precio_final,
+          notas_consulta: notas_consulta || null,
+        },
+        { transaction: t },
+      );
+
+      await HistorialEstadoTurno.create(
+        {
+          id_turno: nuevoTurno.id_turno,
+          id_estado: id_estado,
+          fecha_hora_cambio: new Date(),
+          descripcion: "Turno programado",
+        },
+        { transaction: t },
+      );
+
+      return nuevoTurno;
+    });
+
+    res.status(201).json({
+      status: "success",
+      data: result,
+    });
+  } catch (error) {
+    console.error("Error al crear el turno:", error);
+    res
+      .status(500)
+      .json({ error: "Error interno del servidor al crear el turno." });
+  }
+};
+
+export const updateTurno = async (req, res) => {
+  try {
+    const turno = req.turno;
+
+    const {
+      id_paciente,
+      fecha_hora_inicio,
+      fecha_hora_fin,
+      precio_final,
+      notas_consulta,
+    } = req.body;
+
+    if (id_paciente) {
+      const paciente = Paciente.findByPk(id_paciente);
+      if (!paciente) {
+        return res.status(400).json({
+          status: "error",
+          message: "El paciente seleccionado no existen.",
+        });
+      }
+    }
+
+    const haySolapamiento = await validarSolapaminetoHorarios(
+      fecha_hora_inicio,
+      fecha_hora_fin,
+      turno.id_turno,
+    );
+
+    if (haySolapamiento) {
+      return res.status(409).json({
+        error:
+          "El horario seleccionado se superpone con un turno ya programado.",
+      });
+    }
+
+    await turno.update({
+      id_paciente: id_paciente || turno.id_paciente,
+      fecha_hora_inicio: fecha_hora_inicio || turno.fecha_hora_inicio,
+      fecha_hora_fin: fecha_hora_fin || turno.fecha_hora_fin,
+      precio_final: precio_final || turno.precio_final,
+      notas_consulta: notas_consulta || null,
+    });
+
+    res.status(200).json({
+      status: "success",
+      data: turno,
+    });
+  } catch (error) {
+    console.error("Error al modificar el turno:", error);
+    res
+      .status(500)
+      .json({ error: "Error interno del servidor al modificar el turno." });
+  }
+};
+
+// Finalizar atención del turno y registrar prácticas (T-1314)
+export const turnoAtendido = async (req, res) => {
+  try {
+    const {
+      notas_consulta,
+      practicas_realizadas,
+      obras_sociales,
+      precio_final,
+    } = req.body;
+
+    const turno = req.turno;
+
+    const estado = await validarEstados(
+      turno.id_estado,
+      ESTADOS.PROGRAMADO,
+      ESTADOS.ATENDIDO,
+    );
+
+    if (!estado) {
+      return res.status(400).json({
+        error:
+          "El turno debe estar programado para poder marcarlo como atendido.",
+      });
+    }
+
+    const result = await sequelize.transaction(async (t) => {
+      await turno.update(
+        {
+          id_estado: estado,
+          notas_consulta: notas_consulta || null,
+          precio_final: precio_final || turno.precio_final,
+        },
+        { transaction: t },
+      );
+
+      // Guardar historial
+      await HistorialEstadoTurno.create(
+        {
+          id_turno: turno.id_turno,
+          id_estado: estado,
+          fecha_hora_cambio: new Date(),
+          descripcion: "Turno atendido",
+        },
+        { transaction: t },
+      );
+
+      // Guardar las prácticas en la tabla intermedia
+      if (
+        practicas_realizadas &&
+        Array.isArray(practicas_realizadas) &&
+        practicas_realizadas.length > 0
+      ) {
+        const idsUnicos = [...new Set(practicas_realizadas)];
+
+        // 2. Verificar la existencia de TODAS las prácticas en UNA sola consulta
+        const practicasEncontradas = await Practica.findAll({
+          where: {
+            id_practica: { [Op.in]: idsUnicos },
+          },
+          transaction: t,
+        });
+
+        // 3. Comparar la cantidad hallada con la cantidad solicitada
+        if (practicasEncontradas.length !== idsUnicos.length) {
+          console.error("Una o más prácticas especificadas no existen.", error);
+          res
+            .status(400)
+            .json({ error: "Una o más prácticas especificadas no existen" });
+        }
+        // 4. Mapear e insertar en lote (bulkCreate)
+        const registrosPracticas = idsUnicos.map((id_practica, index) => ({
+          id_turno: turno.id_turno,
+          id_practica,
+          id_obra_social: obras_sociales ? obras_sociales[index] : null,
+        }));
+
+        await PracticaTurno.bulkCreate(registrosPracticas, { transaction: t });
+      }
+
+      return turno;
+    });
+
+    res.status(200).json({
+      status: "success",
+      data: result,
+    });
+  } catch (error) {
+    console.error("Error al finalizar la atención:", error);
+    res.status(500).json({ error: "Error interno al registrar la atención" });
+  }
+};
+
+// Cambiar estado del turno
+export const turnoCancelado = async (req, res) => {
+  try {
+    const turno = req.turno;
+    const { notas_consulta } = req.body;
+
+    const estado = await validarEstados(
+      turno.id_estado,
+      [ESTADOS.PROGRAMADO, ESTADOS.INASISTENTE],
+      ESTADOS.CANCELADO,
+    );
+
+    if (!estado) {
+      return res.status(400).json({
+        error:
+          "El turno debe estar programado o inasistente para poder cancelarlo.",
+      });
+    }
+
+    const result = await sequelize.transaction(async (t) => {
+      await turno.update(
+        {
+          id_estado: estado,
+          notas_consulta: notas_consulta,
+        },
+        { transaction: t },
+      );
+
+      // Guardar historial
+      await HistorialEstadoTurno.create(
+        {
+          id_turno: turno.id_turno,
+          id_estado: estado,
+          fecha_hora_cambio: new Date(),
+          descripcion: "Turno cancelado",
+        },
+        { transaction: t },
+      );
+
+      // Guardar las prácticas en la tabla intermedia
+
+      return turno;
+    });
+
+    res.status(200).json({
+      status: "success",
+      data: result,
+    });
+  } catch (error) {
+    console.error("Error al actualizar estado:", error);
+    res.status(500).json({ error: "Error interno al actualizar el estado" });
+  }
+};
+
+export const turnoInasistido = async (req, res) => {
+  try {
+    const turno = req.turno;
+    const { notas_consulta } = req.body;
+
+    const estado = await validarEstados(
+      turno.id_estado,
+      ESTADOS.PROGRAMADO,
+      ESTADOS.INASISTENTE,
+    );
+
+    if (!estado) {
+      return res.status(400).json({
+        error:
+          "El turno debe estar programado para poder marcarlo como inasistente.",
+      });
+    }
+
+    const result = await sequelize.transaction(async (t) => {
+      await turno.update(
+        {
+          id_estado: estado,
+          notas_consulta: notas_consulta,
+        },
+        { transaction: t },
+      );
+
+      // Guardar historial
+      await HistorialEstadoTurno.create(
+        {
+          id_turno: turno.id_turno,
+          id_estado: estado,
+          fecha_hora_cambio: new Date(),
+          descripcion: "Turno marcado como Inasistido",
+        },
+        { transaction: t },
+      );
+
+      // Guardar las prácticas en la tabla intermedia
+
+      return turno;
+    });
+
+    res.status(200).json({
+      status: "success",
+      data: result,
+    });
+  } catch (error) {
+    console.error("Error al actualizar estado:", error);
+    res.status(500).json({ error: "Error interno al actualizar el estado" });
+  }
+};
+
+export const turnoReprogramado = async (req, res) => {
+  try {
+    const turno = req.turno;
+    const { fecha_hora_inicio, fecha_hora_fin } = req.body;
+
+    const estado = await validarEstados(
+      turno.id_estado,
+      [ESTADOS.PROGRAMADO, ESTADOS.INASISTENTE, ESTADOS.CANCELADO],
+      ESTADOS.PROGRAMADO,
+    );
+
+    if (!estado) {
+      return res.status(400).json({
+        error:
+          "El turno debe estar inasistente o cancelado para poder marcarlo como programado.",
+      });
+    }
+
+    const haySolapamiento = await validarSolapaminetoHorarios(
+      fecha_hora_inicio,
+      fecha_hora_fin,
+      turno.id_turno,
+    );
+
+    if (haySolapamiento) {
+      return res.status(409).json({
+        error:
+          "El horario seleccionado se superpone con un turno ya programado.",
+      });
+    }
+
+    const result = await sequelize.transaction(async (t) => {
+      await turno.update(
+        {
+          fecha_hora_inicio: fecha_hora_inicio,
+          fecha_hora_fin: fecha_hora_fin,
+          id_estado: estado,
+        },
+        { transaction: t },
+      );
+
+      // Guardar historial
+      await HistorialEstadoTurno.create(
+        {
+          id_turno: turno.id_turno,
+          id_estado: estado,
+          fecha_hora_cambio: new Date(),
+          descripcion: "Turno reprogramado",
+        },
+        { transaction: t },
+      );
+
+      // Guardar las prácticas en la tabla intermedia
+
+      return turno;
+    });
+
+    res.status(200).json({
+      status: "success",
+      data: result,
+    });
+  } catch (error) {
+    console.error("Error al actualizar estado:", error);
+    res.status(500).json({ error: "Error interno al actualizar el estado" });
+  }
+};
+
+// Eliminar un turno existente
+export const deleteTurno = async (req, res) => {
+  try {
+    const turno = req.turno;
+    await turno.update({ activo: !turno.activo });
+
+    res.status(200).json({ message: "Turno eliminado correctamente" });
+  } catch (error) {
+    console.error("Error al eliminar el turno:", error);
+    res.status(500).json({ error: "Error al eliminar el turno" });
+  }
+};

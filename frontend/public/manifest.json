@@ -1,0 +1,21 @@
+{
+  "name": "Consultorio MyV",
+  "short_name": "MyV",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#3f444d",
+  "theme_color": "#3f444d",
+  "icons": [
+    {
+      "src": "/logo-muelita.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo-muelita.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

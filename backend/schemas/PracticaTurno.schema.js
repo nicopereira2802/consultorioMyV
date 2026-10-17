@@ -1,0 +1,57 @@
+/** @format */
+
+import { z } from "zod";
+
+export const createPracticaTurnoSchema = z.object({
+  id_turno: z
+    .number({
+      required_error: "El ID del turno es obligatorio",
+      invalid_type_error: "El ID del turno debe ser un número",
+    })
+    .int("El ID debe ser un número entero")
+    .positive("El ID no es válido"),
+
+  id_practica: z
+    .number({
+      required_error: "El ID de la practica es obligatorio",
+      invalid_type_error: "El ID de la practica debe ser un número",
+    })
+    .int("El ID debe ser un número entero")
+    .positive("El ID no es válido"),
+
+  id_obra_social: z
+    .number({
+      invalid_type_error: "El ID de la obra social debe ser un número",
+    })
+    .int("El ID debe ser un número entero")
+    .positive("El ID no es válido")
+    .optional(),
+});
+
+export const updatePracticaTurnoSchema = z.object({
+  id_turno: z
+    .number({
+      required_error: "El ID del turno es obligatorio",
+      invalid_type_error: "El ID del turno debe ser un número",
+    })
+    .int("El ID debe ser un número entero")
+    .positive("El ID no es válido")
+    .optional(),
+
+  id_practica: z
+    .number({
+      required_error: "El ID de la practica es obligatorio",
+      invalid_type_error: "El ID de la practica debe ser un número",
+    })
+    .int("El ID debe ser un número entero")
+    .positive("El ID no es válido")
+    .optional(),
+
+  id_obra_social: z
+    .number({
+      invalid_type_error: "El ID de la obra social debe ser un número",
+    })
+    .int("El ID debe ser un número entero")
+    .positive("El ID no es válido")
+    .optional(),
+});

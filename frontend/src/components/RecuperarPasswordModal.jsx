@@ -6,61 +6,57 @@ import {
   Mail,
   CheckCircle2,
   AlertCircle,
-  ArrowRight,
   ShieldCheck,
   Loader2,
-  Clock,
+  Lock,
+  Eye,
+  EyeOff,
+  KeyRound,
 } from "lucide-react";
-import api from "../services/api";
+import authService from "../services/auth.service";
 
-export default function RecuperarPasswordModal({
-  isOpen,
-  onClose,
-  onSuccess,
-}) {
+export default function RecuperarPasswordModal({ isOpen, onClose, onSuccess }) {
+  const [paso, setPaso] = useState(1); // 1: Pedir correo, 2: Ingresar código y nueva contraseña, 3: Éxito
   const [email, setEmail] = useState("");
+  const [codigo, setCodigo] = useState("");
+  const [nuevaPassword, setNuevaPassword] = useState("");
+  const [confirmarPassword, setConfirmarPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [cargando, setCargando] = useState(false);
-  const [enviado, setEnviado] = useState(false);
   const [error, setError] = useState("");
-  const [cooldownEmail, setCooldownEmail] = useState(0);
-  const inputRef = useRef(null);
+
+  const inputEmailRef = useRef(null);
+  const inputCodigoRef = useRef(null);
   const emailInputId = useId();
+  const codigoInputId = useId();
+  const passwordInputId = useId();
+  const confirmPasswordInputId = useId();
 
   // ─── HIGIENE ESTRICTA DE MEMORIA AL DESMONTAR ─────────────────────
   useEffect(() => {
     return () => {
+      setPaso(1);
       setEmail("");
+      setCodigo("");
+      setNuevaPassword("");
+      setConfirmarPassword("");
       setError("");
       setCargando(false);
-      setEnviado(false);
     };
   }, []);
 
-  // ─── COOLDOWN DE 60 SEGUNDOS PARA REENVÍO DE CORREO ───────────────
-  useEffect(() => {
-    if (cooldownEmail <= 0) return;
-
-    const timer = setInterval(() => {
-      setCooldownEmail((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [cooldownEmail]);
-
   const handleClose = useCallback(() => {
+    setPaso(1);
     setEmail("");
+    setCodigo("");
+    setNuevaPassword("");
+    setConfirmarPassword("");
     setError("");
-    setEnviado(false);
     setCargando(false);
     onClose?.();
   }, [onClose]);
 
+  // Cierre con Escape y autofoco dinámico
   useEffect(() => {
     if (!isOpen) return;
 
@@ -73,20 +69,22 @@ export default function RecuperarPasswordModal({
 
     window.addEventListener("keydown", handleKeyDown);
     const timer = setTimeout(() => {
-      if (inputRef.current) inputRef.current.focus();
+      if (paso === 1 && inputEmailRef.current) inputEmailRef.current.focus();
+      if (paso === 2 && inputCodigoRef.current) inputCodigoRef.current.focus();
     }, 150);
 
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       clearTimeout(timer);
     };
-  }, [isOpen, handleClose]);
+  }, [isOpen, paso, handleClose]);
 
   if (!isOpen) return null;
 
-  const handleSubmit = async (e) => {
+  // Paso 1: Enviar solicitud de código
+  const handleSolicitarCodigo = async (e) => {
     if (e) e.preventDefault();
-    if (cargando || cooldownEmail > 0) return;
+    if (cargando) return;
     setError("");
 
     if (!email.trim() || !email.includes("@")) {
@@ -97,15 +95,84 @@ export default function RecuperarPasswordModal({
     setCargando(true);
 
     try {
-      // Intentar llamada al backend si existe
-      await api.post("/auth/recuperar-password", { email: email.trim() });
-      setEnviado(true);
-      setCooldownEmail(60);
-    } catch {
-      // Simulación Frontend-First con retardo de 500ms
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      setEnviado(true);
-      setCooldownEmail(60);
+      await authService.recuperarPassword(email.trim());
+      setPaso(2);
+      setError("");
+    } catch (err) {
+      const msg =
+        err.response?.data?.mensaje ||
+        err.response?.data?.message ||
+        "Error al solicitar recuperación. Intentá nuevamente.";
+      setError(msg);
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  // Paso 2: Restablecer contraseña con código de 6 dígitos
+  const handleRestablecerPassword = async (e) => {
+    if (e) e.preventDefault();
+    if (cargando) return;
+    setError("");
+
+    if (codigo.length !== 6) {
+      setError("El código debe tener exactamente 6 dígitos numéricos.");
+      return;
+    }
+
+    if (nuevaPassword.length < 8) {
+      setError("La nueva contraseña debe tener al menos 8 caracteres.");
+      return;
+    }
+
+    if (
+      !/[A-Z]/.test(nuevaPassword) ||
+      !/[a-z]/.test(nuevaPassword) ||
+      !/[0-9]/.test(nuevaPassword) ||
+      !/[^A-Za-z0-9]/.test(nuevaPassword)
+    ) {
+      setError(
+        "La contraseña debe contener al menos una mayúscula, una minúscula, un número y un carácter especial."
+      );
+      return;
+    }
+
+    if (nuevaPassword !== confirmarPassword) {
+      setError("Las contraseñas no coinciden.");
+      return;
+    }
+
+    setCargando(true);
+
+    try {
+      const res = await authService.restablecerPassword(codigo, nuevaPassword);
+
+      // Capa 3: Reset de sesión residual
+      localStorage.removeItem("token");
+      localStorage.removeItem("jwt_dispositivo");
+      localStorage.removeItem("jwt_expira");
+      sessionStorage.removeItem("pin_unlocked");
+      sessionStorage.removeItem("pin_attempts");
+      sessionStorage.removeItem("pin_lockout_until");
+      sessionStorage.removeItem("pin_permanent_lockout");
+
+      const msgExito =
+        res?.mensaje ||
+        "Contraseña actualizada exitosamente. Inicie sesión con sus nuevas credenciales.";
+
+      if (onSuccess) {
+        onSuccess(msgExito);
+        handleClose();
+      } else {
+        setPaso(3);
+        setError("");
+      }
+    } catch (err) {
+      const msg =
+        err.response?.data?.mensaje ||
+        err.response?.data?.message ||
+        "Código inválido o expirado. Verificá los 6 dígitos.";
+      setError(msg);
     } finally {
       setCargando(false);
     }
@@ -113,138 +180,224 @@ export default function RecuperarPasswordModal({
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-white/80 backdrop-blur-md animate-in fade-in duration-200"
+      className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200 overscroll-none touch-none select-none"
       onClick={(e) => {
         if (e.target === e.currentTarget) handleClose();
       }}
     >
       <div
-        className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl shadow-slate-200/50 border border-slate-200 overflow-hidden text-slate-800 animate-in zoom-in-95 duration-200"
+        className="relative w-full max-w-md bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden text-slate-800 animate-in zoom-in-95 duration-200"
         role="dialog"
         aria-modal="true"
       >
-        {/* Encabezado con paleta médica */}
-        <header className="bg-gradient-to-r from-[#205e74] via-[#2d6f88] to-[#2eb086] text-white p-5 relative">
+        {/* Encabezado */}
+        <header className="p-6 pb-4 relative border-b border-slate-100 flex items-start justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-100 flex items-center justify-center text-[#1e6f85] shrink-0">
+              {paso === 2 ? <KeyRound size={20} /> : <ShieldCheck size={20} />}
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-slate-900 leading-tight">
+                {paso === 2 ? "Código de Verificación" : "Recuperar Contraseña"}
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {paso === 2
+                  ? "Ingresá el PIN de 6 dígitos recibido por correo"
+                  : "Ingresá tu correo para recibir las instrucciones"}
+              </p>
+            </div>
+          </div>
           <button
             type="button"
             onClick={handleClose}
-            className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
+            className="w-8 h-8 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 flex items-center justify-center transition-colors cursor-pointer"
             aria-label="Cerrar modal"
           >
             <X size={18} />
           </button>
-
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-white/15 flex items-center justify-center shrink-0 shadow-xs border border-white/20">
-              <ShieldCheck size={22} className="text-white" />
-            </div>
-            <div>
-              <span className="text-[10px] font-bold tracking-wider text-emerald-200 uppercase block">
-                Seguridad de la Cuenta
-              </span>
-              <h2 className="text-lg font-bold leading-tight">
-                Recuperar Contraseña
-              </h2>
-            </div>
-          </div>
         </header>
 
-        {enviado ? (
-          /* Estado de confirmación de envío exitoso */
-          <div className="p-8 flex flex-col items-center justify-center text-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center animate-in zoom-in duration-300">
-              <CheckCircle2 size={36} />
+        {paso === 3 ? (
+          /* Estado Éxito: Contraseña restablecida */
+          <div className="p-6 flex flex-col items-center text-center gap-4">
+            <div className="w-14 h-14 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center animate-in zoom-in duration-200">
+              <CheckCircle2 size={30} />
             </div>
             <div className="space-y-1">
-              <h3 className="text-base font-bold text-slate-900">
-                ¡Correo de Recuperación Enviado!
+              <h3 className="text-sm font-bold text-slate-900">
+                ¡Contraseña Restablecida!
               </h3>
-              <p className="text-xs text-slate-600 max-w-xs leading-relaxed">
-                Te enviamos un correo con las instrucciones para restablecer tu clave.
-              </p>
-              <p className="text-[11px] text-slate-400 mt-2 font-mono">
-                Destinatario: {email}
+              <p className="text-xs text-slate-600 leading-relaxed max-w-xs">
+                Tu clave de acceso ha sido actualizada con éxito. Ya podés iniciar sesión con tus nuevas credenciales.
               </p>
             </div>
-
-            {/* Cooldown de 60 segundos para reenvío (Rate Limiting de UI) */}
-            {cooldownEmail > 0 ? (
-              <div className="w-full py-2.5 px-4 rounded-xl text-xs font-semibold text-slate-500 bg-slate-50 border border-slate-200 flex items-center justify-center gap-2 cursor-not-allowed select-none">
-                <Clock size={14} className="text-teal-600 animate-pulse" />
-                <span>
-                  Reenviar enlace en (00:{String(cooldownEmail).padStart(2, "0")})...
-                </span>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={handleSubmit}
-                disabled={cargando}
-                className="w-full py-2.5 px-4 rounded-xl text-xs font-semibold text-teal-700 bg-teal-50 hover:bg-teal-100 border border-teal-200 transition-colors cursor-pointer flex items-center justify-center gap-2"
-              >
-                <Mail size={14} />
-                <span>Reenviar enlace de recuperación</span>
-              </button>
-            )}
-
-            {/* Confirmar y desbloquear terminal directamente */}
             <button
               type="button"
               onClick={() => {
-                const token = "mock_jwt_header.payload.signature";
-                const expira = Date.now() + 5 * 24 * 60 * 60 * 1000;
-                localStorage.setItem("jwt_dispositivo", token);
-                localStorage.setItem("jwt_expira", String(expira));
-                sessionStorage.setItem("pin_unlocked", "true");
-                onSuccess?.();
+                onSuccess?.(
+                  "Contraseña actualizada exitosamente. Inicie sesión con sus nuevas credenciales."
+                );
                 handleClose();
               }}
-              className="mt-2 w-full py-2.5 px-4 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#205e74] to-[#2eb086] hover:opacity-95 transition-all cursor-pointer shadow-xs flex items-center justify-center gap-1.5"
+              className="w-full mt-2 py-2.5 px-4 rounded-xl text-xs font-semibold text-white bg-[#1e6f85] hover:bg-[#18586a] active:scale-98 transition-all shadow-sm cursor-pointer"
             >
-              <CheckCircle2 size={16} />
-              <span>Confirmar y Desbloquear Terminal</span>
-            </button>
-            <button
-              type="button"
-              onClick={handleClose}
-              className="mt-1 text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
-            >
-              Volver a Iniciar Sesión
+              Volver al inicio de sesión
             </button>
           </div>
-        ) : (
-          /* Formulario de Solicitud */
-          <form
-            onSubmit={handleSubmit}
-            autoComplete="off"
-            className="p-6 space-y-4"
-          >
-            <div>
-              <h3 className="text-sm font-bold text-slate-900">
-                Restablecer Credenciales
-              </h3>
-              <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
-                Ingresá el correo electrónico registrado del titular para
-                restablecer la contraseña.
-              </p>
+        ) : paso === 2 ? (
+          /* Paso 2: Ingresar PIN de 6 dígitos y nueva contraseña */
+          <form onSubmit={handleRestablecerPassword} autoComplete="off" className="p-6 space-y-4">
+            <div className="p-3 rounded-xl bg-teal-50 border border-teal-100 text-teal-800 text-xs font-medium leading-relaxed">
+              Enviamos un código de 6 dígitos a <strong>{email}</strong>. Válido durante 15 minutos.
             </div>
 
+            {/* Código de 6 dígitos */}
+            <div className="space-y-1.5">
+              <label
+                htmlFor={codigoInputId}
+                className="block text-xs font-semibold text-slate-700 text-center"
+              >
+                Código de 6 Dígitos
+              </label>
+              <div className="relative">
+                <input
+                  ref={inputCodigoRef}
+                  id={codigoInputId}
+                  name="codigo_recuperacion"
+                  type="text"
+                  maxLength={6}
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  value={codigo}
+                  disabled={cargando}
+                  onChange={(e) => {
+                    const clean = e.target.value.replace(/\D/g, "").slice(0, 6);
+                    setCodigo(clean);
+                    setError("");
+                  }}
+                  placeholder="000000"
+                  className="w-full text-center font-mono text-2xl tracking-[0.25em] font-bold py-2.5 px-4 bg-white border border-slate-200 rounded-xl text-[#0f766e] placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#1e6f85]/30 focus:border-[#1e6f85] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                />
+              </div>
+            </div>
+
+            {/* Nueva Contraseña */}
+            <div className="space-y-1.5">
+              <label
+                htmlFor={passwordInputId}
+                className="block text-xs font-semibold text-slate-700"
+              >
+                Nueva Contraseña
+              </label>
+              <div className="relative flex items-center">
+                <span className="absolute left-3.5 text-slate-400">
+                  <Lock size={16} />
+                </span>
+                <input
+                  id={passwordInputId}
+                  type={showPassword ? "text" : "password"}
+                  value={nuevaPassword}
+                  disabled={cargando}
+                  onChange={(e) => {
+                    setNuevaPassword(e.target.value);
+                    setError("");
+                  }}
+                  placeholder="Mínimo 8 caracteres"
+                  className="w-full pl-10 pr-10 py-2.5 bg-white border border-slate-200 rounded-xl text-base md:text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1e6f85]/30 focus:border-[#1e6f85] transition-all disabled:opacity-60"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </div>
+
+            {/* Confirmar Nueva Contraseña */}
+            <div className="space-y-1.5">
+              <label
+                htmlFor={confirmPasswordInputId}
+                className="block text-xs font-semibold text-slate-700"
+              >
+                Confirmar Nueva Contraseña
+              </label>
+              <div className="relative flex items-center">
+                <span className="absolute left-3.5 text-slate-400">
+                  <Lock size={16} />
+                </span>
+                <input
+                  id={confirmPasswordInputId}
+                  type={showPassword ? "text" : "password"}
+                  value={confirmarPassword}
+                  disabled={cargando}
+                  onChange={(e) => {
+                    setConfirmarPassword(e.target.value);
+                    setError("");
+                  }}
+                  placeholder="Repetí la contraseña"
+                  className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-base md:text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1e6f85]/30 focus:border-[#1e6f85] transition-all disabled:opacity-60"
+                />
+              </div>
+            </div>
+
+            {error && (
+              <div className="flex items-start gap-2 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium animate-in fade-in">
+                <AlertCircle size={16} className="shrink-0 mt-0.5" />
+                <span>{error}</span>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={cargando || codigo.length !== 6 || !nuevaPassword || !confirmarPassword}
+              className="w-full py-2.5 px-4 rounded-xl text-xs font-semibold text-white bg-[#1e6f85] hover:bg-[#18586a] active:scale-98 disabled:opacity-60 disabled:cursor-not-allowed transition-all shadow-sm cursor-pointer flex items-center justify-center gap-2"
+            >
+              {cargando ? (
+                <>
+                  <Loader2 size={16} className="animate-spin text-white" />
+                  <span>Restableciendo...</span>
+                </>
+              ) : (
+                <span>Restablecer contraseña</span>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setPaso(1);
+                setCodigo("");
+                setNuevaPassword("");
+                setConfirmarPassword("");
+                setError("");
+              }}
+              disabled={cargando}
+              className="w-full text-center text-xs text-slate-500 hover:text-slate-800 font-semibold cursor-pointer transition-colors pt-1"
+            >
+              ← Volver o ingresar otro correo
+            </button>
+          </form>
+        ) : (
+          /* Paso 1: Pedir Correo */
+          <form onSubmit={handleSolicitarCodigo} autoComplete="off" className="p-6 space-y-4">
             <div className="space-y-1.5">
               <label
                 htmlFor={emailInputId}
                 className="block text-xs font-semibold text-slate-700"
               >
-                Correo Electrónico
+                Correo Electrónico Registrado
               </label>
               <div className="relative flex items-center">
                 <span className="absolute left-3.5 text-slate-400">
                   <Mail size={16} />
                 </span>
                 <input
-                  ref={inputRef}
-                  type="email"
-                  name="email_recovery_prevent_autofill"
+                  ref={inputEmailRef}
                   id={emailInputId}
+                  name="email_recovery_prevent_autofill"
+                  type="email"
                   value={email}
                   disabled={cargando}
                   onChange={(e) => {
@@ -253,10 +406,7 @@ export default function RecuperarPasswordModal({
                   }}
                   placeholder="ejemplo@consultoriomyv.com"
                   autoComplete="off"
-                  autoCorrect="off"
-                  autoCapitalize="off"
-                  spellCheck="false"
-                  className={`w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#2eb086]/50 focus:border-[#2eb086] transition-all ${
+                  className={`w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-base md:text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1e6f85]/30 focus:border-[#1e6f85] transition-all ${
                     cargando ? "opacity-60 cursor-not-allowed bg-slate-50" : ""
                   }`}
                 />
@@ -264,38 +414,35 @@ export default function RecuperarPasswordModal({
             </div>
 
             {error && (
-              <div className="flex items-start gap-2 p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium animate-in fade-in">
-                <AlertCircle size={15} className="shrink-0 mt-0.5" />
+              <div className="flex items-start gap-2 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium animate-in fade-in">
+                <AlertCircle size={16} className="shrink-0 mt-0.5" />
                 <span>{error}</span>
               </div>
             )}
 
-            <div className="pt-2 flex items-center justify-end gap-2.5 border-t border-slate-100">
-              <button
-                type="button"
-                onClick={handleClose}
-                className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
-              >
-                Volver a Iniciar Sesión
-              </button>
-              <button
-                type="submit"
-                disabled={cargando || !email.trim() || cooldownEmail > 0}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-[#2eb086] hover:bg-[#259370] active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed transition-all shadow-xs cursor-pointer"
-              >
-                {cargando ? (
-                  <>
-                    <Loader2 size={16} className="animate-spin text-white" />
-                    <span>Enviando enlace...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Enviar enlace de recuperación</span>
-                    <ArrowRight size={14} />
-                  </>
-                )}
-              </button>
-            </div>
+            <button
+              type="submit"
+              disabled={cargando || !email.trim()}
+              className="w-full py-2.5 px-4 rounded-xl text-xs font-semibold text-white bg-[#1e6f85] hover:bg-[#18586a] active:scale-98 disabled:opacity-60 disabled:cursor-not-allowed transition-all shadow-sm cursor-pointer flex items-center justify-center gap-2"
+            >
+              {cargando ? (
+                <>
+                  <Loader2 size={16} className="animate-spin text-white" />
+                  <span>Enviando...</span>
+                </>
+              ) : (
+                <span>Enviar instrucciones</span>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleClose}
+              disabled={cargando}
+              className="w-full text-center text-xs text-slate-500 hover:text-slate-800 font-semibold cursor-pointer transition-colors pt-1"
+            >
+              Volver al inicio de sesión
+            </button>
           </form>
         )}
       </div>

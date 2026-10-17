@@ -1,6 +1,7 @@
 /** @format */
 
 import { useState, useEffect } from "react";
+import "./PinLogin.css";
 import logoImg from "../assets/logo.png";
 import RecuperarPasswordModal from "./RecuperarPasswordModal";
 import {
@@ -12,8 +13,9 @@ import {
   ArrowRight,
   AlertCircle,
   Loader2,
+  CheckCircle2,
 } from "lucide-react";
-import api from "../services/api";
+import authService from "../services/auth.service";
 
 export default function LoginMaestro({ onLoginSuccess }) {
   const usuarioGuardado = localStorage.getItem("usuario_guardado") || "";
@@ -24,6 +26,7 @@ export default function LoginMaestro({ onLoginSuccess }) {
   const [showPassword, setShowPassword] = useState(false);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
+  const [mensajeExito, setMensajeExito] = useState("");
   const [mostrarModalRecuperar, setMostrarModalRecuperar] = useState(false);
 
   // ─── HIGIENE ESTRICTA DE MEMORIA AL DESMONTAR ─────────────────────
@@ -31,6 +34,7 @@ export default function LoginMaestro({ onLoginSuccess }) {
     return () => {
       setPassword("");
       setError("");
+      setMensajeExito("");
       setCargando(false);
     };
   }, []);
@@ -39,6 +43,7 @@ export default function LoginMaestro({ onLoginSuccess }) {
     e.preventDefault();
     if (cargando) return; // Bloqueo de doble clic
     setError("");
+    setMensajeExito("");
 
     if (!usuario.trim()) {
       setError("Por favor, ingresá tu nombre de usuario.");
@@ -53,45 +58,31 @@ export default function LoginMaestro({ onLoginSuccess }) {
     setCargando(true);
 
     try {
-      // Intentar llamada a backend si el endpoint existe
-      const res = await api.post("/auth/vincular-dispositivo", {
-        nombre_usuario: usuario.trim(),
-        contraseña: password,
-      });
+      const data = await authService.loginMaestro(usuario.trim(), password);
 
-      const token = res.data?.token || "mock_jwt_header.payload.signature";
-      const expira = res.data?.expira || Date.now() + 5 * 24 * 60 * 60 * 1000;
+      const token = data?.token;
+      const expira = Date.now() + 5 * 24 * 60 * 60 * 1000;
 
       localStorage.setItem("usuario_guardado", usuario.trim());
       localStorage.setItem("jwt_dispositivo", token);
+      localStorage.setItem("token", token);
       localStorage.setItem("jwt_expira", String(expira));
+      setPassword(""); // Purga de memoria
       onLoginSuccess?.(token, expira);
-    } catch {
-      // Mock Frontend-First para desarrollo local con retardo realista
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      const contrasenasValidas = ["admin123", "odontologia2026", "admin"];
-
-      if (contrasenasValidas.includes(password.trim())) {
-        const token = "mock_jwt_header.payload.signature";
-        const expira = Date.now() + 5 * 24 * 60 * 60 * 1000; // 5 días exactos
-
-        localStorage.setItem("usuario_guardado", usuario.trim());
-        localStorage.setItem("jwt_dispositivo", token);
-        localStorage.setItem("jwt_expira", String(expira));
-        setPassword(""); // Purga de memoria
-        onLoginSuccess?.(token, expira);
-      } else {
-        setError(
-          "Contraseña incorrecta. Verificá tus credenciales de Odontólogo (Tip de prueba: 'admin123')."
-        );
-      }
+    } catch (err) {
+      const errorMsg =
+        err.response?.data?.mensaje ||
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        "Credenciales inválidas. Verificá tu usuario y contraseña de cuenta.";
+      setError(errorMsg);
     } finally {
       setCargando(false);
     }
   };
 
   return (
-    <div className="min-h-screen w-screen flex items-center justify-center bg-slate-50 p-4 box-border">
+    <div className="h-[100dvh] w-full overflow-hidden overscroll-none touch-none select-none flex items-center justify-center bg-slate-50 p-4 box-border auth-locked-scroll">
       <main className="w-full max-w-[380px] bg-white rounded-3xl shadow-xl shadow-slate-200/60 border border-slate-200/80 p-8 text-center text-slate-800 animate-in fade-in zoom-in-95 duration-200">
         {/* Cabecera institucional */}
         <header className="flex flex-col items-center">
@@ -124,6 +115,14 @@ export default function LoginMaestro({ onLoginSuccess }) {
             ? "Tu sesión de 5 días expiró en este equipo. Ingresá tu contraseña maestra para renovar el acceso."
             : "Ingresá tus credenciales de usuario y contraseña para vincular este equipo por los próximos 5 días."}
         </p>
+
+        {/* Notificación de Éxito tras Restablecimiento */}
+        {mensajeExito && (
+          <div className="mb-4 flex items-start gap-2.5 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium text-left animate-in fade-in">
+            <CheckCircle2 size={16} className="shrink-0 mt-0.5 text-emerald-600" />
+            <span>{mensajeExito}</span>
+          </div>
+        )}
 
         {/* Formulario Maestro */}
         <form onSubmit={handleSubmit} className="space-y-4 text-left">
@@ -160,6 +159,7 @@ export default function LoginMaestro({ onLoginSuccess }) {
                   onChange={(e) => {
                     setUsuario(e.target.value);
                     setError("");
+                    setMensajeExito("");
                   }}
                   disabled={cargando}
                   placeholder="Ingresá tu nombre de usuario"
@@ -167,7 +167,7 @@ export default function LoginMaestro({ onLoginSuccess }) {
                   autoCorrect="off"
                   autoCapitalize="off"
                   spellCheck="false"
-                  className={`w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#2eb086]/50 focus:border-[#2eb086] transition-all ${
+                  className={`w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-base md:text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#2eb086]/50 focus:border-[#2eb086] transition-all ${
                     cargando ? "opacity-60 cursor-not-allowed bg-slate-50" : ""
                   }`}
                   autoFocus
@@ -192,10 +192,11 @@ export default function LoginMaestro({ onLoginSuccess }) {
                 onChange={(e) => {
                   setPassword(e.target.value);
                   setError("");
+                  setMensajeExito("");
                 }}
                 placeholder="Ingresá tu contraseña"
                 autoComplete="current-password"
-                className={`w-full pl-10 pr-11 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#2eb086]/50 focus:border-[#2eb086] transition-all ${
+                className={`w-full pl-10 pr-11 py-2.5 bg-white border border-slate-200 rounded-xl text-base md:text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#2eb086]/50 focus:border-[#2eb086] transition-all ${
                   cargando ? "opacity-60 cursor-not-allowed bg-slate-50" : ""
                 }`}
                 autoFocus={esDispositivoReconocido}
@@ -260,7 +261,16 @@ export default function LoginMaestro({ onLoginSuccess }) {
       {mostrarModalRecuperar && (
         <RecuperarPasswordModal
           isOpen={mostrarModalRecuperar}
-          onClose={() => setMostrarModalRecuperar(false)}
+          onClose={() => {
+            setMensajeExito("");
+            setError("");
+            setMostrarModalRecuperar(false);
+          }}
+          onSuccess={(msg) => {
+            setMensajeExito(msg);
+            setError("");
+            setMostrarModalRecuperar(false);
+          }}
         />
       )}
     </div>

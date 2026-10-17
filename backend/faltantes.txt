@@ -1,0 +1,12 @@
+
+No poder asignar la misma practica al turno mas de una vez
+
+
+
+
+------ PARA DESPUES DE USUARIO; INICIAR SESION; ETC
+
+TESTS:
+Usuario --- PENDIENTE PARA CUANDO ESTE TODO (Validacion, login, token, ...)
+
+Toda la parte de usuario (Validacion, login, token -> bcrypt y jwtoken, etc)
