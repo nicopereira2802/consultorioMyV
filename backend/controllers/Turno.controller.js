@@ -54,13 +54,15 @@ export const getAllTurnos = async (req, res) => {
     const sortField = req.query.sortField || "fecha_hora_inicio";
     const sortOrder = req.query.sortOrder || "ASC";
     const estadoFiltrado = req.query.estadoFiltrado;
+    const id_paciente = req.query.id_paciente;
     let where = {
       activo: true,
     };
     if (estadoFiltrado) {
-      where = {
-        id_estado: estadoFiltrado,
-      };
+      where.id_estado = estadoFiltrado;
+    }
+    if (id_paciente) {
+      where.id_paciente = Number(id_paciente);
     }
 
     // Busqueda por nombre apellido dni telefono
@@ -79,6 +81,7 @@ export const getAllTurnos = async (req, res) => {
       limit,
       offset,
       order: [[sortField, sortOrder]],
+      distinct: true,
       include: [
         {
           model: Paciente,
@@ -87,6 +90,16 @@ export const getAllTurnos = async (req, res) => {
         {
           model: EstadoTurno,
           attributes: ["estado"], // Atributos que quieres traer del estado
+        },
+        {
+          model: PracticaTurno,
+          attributes: ["id_practica_turno", "id_practica"],
+          include: [
+            {
+              model: Practica,
+              attributes: ["id_practica", "nombre_referencia", "nombre_nomenclador"],
+            },
+          ],
         },
       ],
     });

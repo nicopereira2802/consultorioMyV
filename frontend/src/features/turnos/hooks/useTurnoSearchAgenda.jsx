@@ -58,6 +58,7 @@ export function useTurnoSearchAgenda(endpoint, limitPorDefecto = 9) {
   return {
     turnos: turnos,
     pacientes: pacientes,
+    setPacientes: setPacientes,
     practicasLista: practicasLista,
     obrasSocialesPaciente: obrasSocialesPaciente,
     cargando,

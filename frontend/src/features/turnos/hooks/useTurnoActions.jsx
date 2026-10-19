@@ -10,11 +10,12 @@ export function useTurnoActions(recargar, cerrarModal) {
     setCargandoAccion(true);
     try {
       const { duracion_minutos, ...restoDatos } = datosFormulario;
+      const precioNum = parseFloat(restoDatos.precio_final);
       const payload = {
         ...restoDatos,
         id_paciente: Number(restoDatos.id_paciente),
-        id_estado: Number(restoDatos.id_estado),
-        precio_final: parseFloat(restoDatos.precio_final),
+        id_estado: Number(restoDatos.id_estado) || 1,
+        precio_final: isNaN(precioNum) ? 0 : precioNum,
         fecha_hora_inicio: new Date(restoDatos.fecha_hora_inicio).toISOString(),
         fecha_hora_fin: new Date(restoDatos.fecha_hora_fin).toISOString(),
         notas_consulta: restoDatos.notas_consulta?.trim() || "",
@@ -40,13 +41,14 @@ export function useTurnoActions(recargar, cerrarModal) {
   const procesarAtencionTurno = async (datosAtencion, turnoSeleccionado, cerrarModalAtender) => {
     if (!turnoSeleccionado) return;
     try {
+      const precioNum = parseFloat(datosAtencion?.precio_final);
       const payloadAtencion = {
-        notas_consulta: datosAtencion.notas_consulta.trim(),
-        precio_final: parseFloat(datosAtencion.precio_final),
-        practicas_realizadas: datosAtencion.practicas
+        notas_consulta: datosAtencion?.notas_consulta?.trim() || "",
+        precio_final: isNaN(precioNum) ? 0 : precioNum,
+        practicas_realizadas: (datosAtencion?.practicas || [])
           .filter((p) => p.id_practica)
           .map((p) => Number(p.id_practica)),
-        obras_sociales: datosAtencion.practicas
+        obras_sociales: (datosAtencion?.practicas || [])
           .filter((p) => p.id_practica)
           .map((p) => (p.id_obra_social ? Number(p.id_obra_social) : null)),
       };
@@ -55,7 +57,7 @@ export function useTurnoActions(recargar, cerrarModal) {
 
       toast.success("Turno atendido correctamente");
       recargar();
-      cerrarModalAtender();
+      if (typeof cerrarModalAtender === "function") cerrarModalAtender();
     } catch (error) {
       console.error("Error al registrar la atención del turno:", error);
       manejarErrorApi(error, "No se pudo atender el turno.");
@@ -65,7 +67,7 @@ export function useTurnoActions(recargar, cerrarModal) {
   const procesarCancelacionTurno = async (inasistente, turnoSeleccionadoCancelar, datosCancelacion, cerrarModalCancelar) => {
     if (!turnoSeleccionadoCancelar) return;
     try {
-      const payloadAtencion = { notas_consulta: datosCancelacion.notas_consulta.trim() };
+      const payloadAtencion = { notas_consulta: datosCancelacion?.notas_consulta?.trim() || "" };
       if (inasistente) {
         await api.patch(`/turnos/${turnoSeleccionadoCancelar.id_turno}/inasistente`, payloadAtencion);
       } else {
@@ -76,7 +78,7 @@ export function useTurnoActions(recargar, cerrarModal) {
         inasistente ? "Turno marcado como inasistente correctamente" : "Turno cancelado correctamente",
       );
       recargar();
-      cerrarModalCancelar();
+      if (typeof cerrarModalCancelar === "function") cerrarModalCancelar();
     } catch (error) {
       console.error("Error al registrar la cancelación:", error);
       manejarErrorApi(
@@ -97,7 +99,7 @@ export function useTurnoActions(recargar, cerrarModal) {
 
       toast.success("Turno reprogramado correctamente");
       recargar();
-      cerrarModalReprogramar();
+      if (typeof cerrarModalReprogramar === "function") cerrarModalReprogramar();
     } catch (error) {
       console.error("Error al reprogramar el turno:", error);
       manejarErrorApi(error, "No se pudo reprogramar el turno.");

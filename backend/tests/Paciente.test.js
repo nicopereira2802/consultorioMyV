@@ -219,6 +219,46 @@ describe("Suite de Tests Completa para /api/pacientes", () => {
       expect(res.body.data.domicilio).toBe("Nuevas Heras 4321");
     });
 
+    test("200: Actualizar correctamente la fecha de nacimiento sin desplazamiento de zona horaria", async () => {
+      const res = await request(app).put(`/api/pacientes/${pacienteId}`).send({
+        nombre: "Mateo",
+        apellido: "Aronna",
+        dni: "40123456",
+        fecha_nacimiento: "1998-07-20",
+        telefono: "3519998877",
+        domicilio: "Nuevas Heras 4321",
+      });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.fecha_nacimiento).toBe("1998-07-20");
+    });
+
+    test("200: Actualizar permitiendo valores null en campos opcionales", async () => {
+      const res = await request(app).put(`/api/pacientes/${pacienteIdOpcional}`).send({
+        nombre: "Sofía",
+        apellido: "Gómez",
+        dni: null,
+        fecha_nacimiento: null,
+        telefono: "3519876543",
+        domicilio: null,
+      });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.fecha_nacimiento).toBeNull();
+      expect(res.body.data.dni).toBeNull();
+    });
+
+    test("400 Zod: Rechazar actualización con fecha de nacimiento futura", async () => {
+      const res = await request(app).put(`/api/pacientes/${pacienteId}`).send({
+        nombre: "Mateo",
+        apellido: "Aronna",
+        fecha_nacimiento: "2099-01-01",
+        telefono: "3519998877",
+      });
+
+      expect(res.status).toBe(400);
+    });
+
     test("400 Zod: Rechazar actualización con teléfono o formato inválido", async () => {
       const res = await request(app).put(`/api/pacientes/${pacienteId}`).send({
         nombre: "Mateo",

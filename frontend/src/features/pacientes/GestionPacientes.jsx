@@ -1,8 +1,8 @@
 /** @format */
 
-//* useSearchParams E ICONOS
+import { useState } from "react";
 import { useSearchParams } from "react-router-dom"; // * PARA PERMITIR COMPLETAR PACIENTE DESDE AGENDA
-import { Users, Plus, Edit, Phone, Ban, RotateCcw } from "lucide-react";
+import { Users, Plus, Edit, Phone, Ban, RotateCcw, CalendarClock } from "lucide-react";
 
 //* COMPONENTES COMUNES
 import Header from "../../components/common/Header";
@@ -25,6 +25,7 @@ import { formatearPacienteParaEditar } from "./utils/formatearPacienteParaEditar
 
 // * FORMULARIOS
 import { FormularioCrearEditar, FormularioToggle } from "./components/FormulariosPaciente";
+import { ModalTurnosPaciente } from "./components/ModalTurnosPaciente";
 
 const ESTADO_INICIAL = {
   nombre: "",
@@ -37,9 +38,20 @@ const ESTADO_INICIAL = {
   obrasSocialesEliminadas: [],
 };
 
-// - INICIO DE COMPONENTE
 export default function GestionPacientes() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const [modalTurnosAbierto, setModalTurnosAbierto] = useState(false);
+  const [pacienteParaTurnos, setPacienteParaTurnos] = useState(null);
+
+  const abrirTurnosPaciente = (paciente) => {
+    setPacienteParaTurnos(paciente);
+    setModalTurnosAbierto(true);
+  };
+
+  const cerrarModalTurnos = () => {
+    setModalTurnosAbierto(false);
+    setPacienteParaTurnos(null);
+  };
 
   //* HOOK DE PAGINACIÓN
   const {
@@ -175,6 +187,14 @@ export default function GestionPacientes() {
                       <div className="flex items-center justify-center gap-2">
                         <button
                           type="button"
+                          onClick={() => abrirTurnosPaciente(paciente)}
+                          className="p-2 rounded-lg text-[#3B7A94] hover:bg-[#f0f6f9] transition-colors"
+                          title="Ver Turnos del Paciente"
+                        >
+                          <CalendarClock size={18} />
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => abrirParaEditar(paciente, formatearPacienteParaEditar)}
                           className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
                           title="Editar Paciente"
@@ -220,6 +240,7 @@ export default function GestionPacientes() {
             obrasSocialesLista={obrasSocialesLista}
             actualizarObraSocialForm={actualizarObraSocialForm}
             eliminarObraSocialForm={eliminarObraSocialForm}
+            onVerTurnos={() => abrirTurnosPaciente(pacienteSeleccionado)}
           />
         )}
 
@@ -230,6 +251,15 @@ export default function GestionPacientes() {
             cerrarModal={cerrarModal}
             pacienteSeleccionado={pacienteSeleccionado}
             togglePaciente={() => togglePaciente(pacienteSeleccionado)}
+          />
+        )}
+
+        {/* //* MODALES: TURNOS DEL PACIENTE */}
+        {modalTurnosAbierto && (
+          <ModalTurnosPaciente
+            isOpen={modalTurnosAbierto}
+            onClose={cerrarModalTurnos}
+            paciente={pacienteParaTurnos}
           />
         )}
       </div>

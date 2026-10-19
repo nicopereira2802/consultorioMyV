@@ -94,7 +94,7 @@ export default function AgendaDiaria() {
   } = useTurnoReprogramarModal(ESTADO_INICIAL_REPROGRAMAR);
 
   // 3. Paginación y Búsqueda de Turnos
-  const { turnos, pacientes, practicasLista, obrasSocialesPaciente, recargar, buscarOSPaciente } =
+  const { turnos, pacientes, setPacientes, practicasLista, obrasSocialesPaciente, recargar, buscarOSPaciente } =
     useTurnoSearchAgenda("/turnos/agenda");
 
   // 4. Hook de Acciones API unificadas
@@ -240,10 +240,12 @@ export default function AgendaDiaria() {
           cerrarModal={cerrarModal}
           editando={editando}
           pacientes={pacientes}
+          setPacientes={setPacientes}
           datosFormulario={datosFormulario}
           actualizarDatos={actualizarDatos}
+          setDatosFormulario={setDatosFormulario}
           guardarTurno={(e) => {
-            e.preventDefault();
+            if (e && e.preventDefault) e.preventDefault();
             guardarTurno(datosFormulario, editando, turnoSeleccionado);
           }}
           abrirParaAtender={() => {

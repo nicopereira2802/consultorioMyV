@@ -20,17 +20,22 @@ export function FormularioCrearEditar({
   modalAbierto,
   cerrarModal,
   editando,
-  pacientes,
+  pacientes = [],
   setPacientes,
   datosFormulario,
   actualizarDatos,
   setDatosFormulario,
   guardarTurno,
+  procesarFormulario,
   abrirParaAtender,
+  abrirModalAtenderDesdeEdicion,
   abrirParaCancelar,
+  abrirModalCancelarDesdeEdicion,
   abrirParaInasistente,
+  abrirModalInasistenteDesdeEdicion,
   abrirModalCobrarDesdeEdicion, // Prop opcional para cobrar
   abrirParaReprogramar,
+  abrirModalReprogramarDesdeEdicion,
 }) {
   const [modalPacienteRapidoAbierto, setModalPacienteRapidoAbierto] = useState(false);
   const [datosPacienteRapido, setDatosPacienteRapido] = useState({
@@ -71,14 +76,16 @@ export function FormularioCrearEditar({
       const nuevoPaciente = respuesta.data.data || respuesta.data;
       const nuevoId = nuevoPaciente.id_paciente;
 
-      if (setPacientes) {
+      if (typeof setPacientes === "function") {
         setPacientes((prev) => [...prev, nuevoPaciente]);
       }
 
-      setDatosFormulario((prev) => ({
-        ...prev,
-        id_paciente: nuevoId,
-      }));
+      if (typeof setDatosFormulario === "function") {
+        setDatosFormulario((prev) => ({
+          ...prev,
+          id_paciente: nuevoId,
+        }));
+      }
 
       setDatosPacienteRapido({ nombre: "", apellido: "", telefono: "" });
       setModalPacienteRapidoAbierto(false);
@@ -89,13 +96,31 @@ export function FormularioCrearEditar({
   };
 
   // Identificar el estado del turno
-  const idEstadoActual = Number(datosFormulario.id_estado);
+  const idEstadoActual = Number(datosFormulario?.id_estado);
   const esProgramado = idEstadoActual === 1 || !editando;
   const esAtendido = idEstadoActual === 2;
 
+  // Normalizar callbacks de acciones
+  const onAtender = abrirParaAtender || abrirModalAtenderDesdeEdicion;
+  const onCancelar = abrirParaCancelar || abrirModalCancelarDesdeEdicion;
+  const onInasistente = abrirParaInasistente || abrirModalInasistenteDesdeEdicion;
+  const onReprogramar = abrirParaReprogramar || abrirModalReprogramarDesdeEdicion;
+
+  const handleSubmit = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    const accion = guardarTurno || procesarFormulario;
+    if (typeof accion === "function") {
+      if (accion.length >= 2) {
+        accion(datosFormulario, editando, datosFormulario);
+      } else {
+        accion(e);
+      }
+    }
+  };
+
   return (
     <>
-      <form onSubmit={guardarTurno}>
+      <form onSubmit={handleSubmit}>
         <Modal
           isOpen={modalAbierto}
           onClose={cerrarModal}
@@ -229,7 +254,7 @@ export function FormularioCrearEditar({
                           type="button"
                           onClick={() => {
                             setMenuAccionesAbierto(false);
-                            if (abrirParaAtender) abrirParaAtender();
+                            if (onAtender) onAtender();
                           }}
                           className="flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 transition-colors text-left"
                         >
@@ -240,7 +265,7 @@ export function FormularioCrearEditar({
                           type="button"
                           onClick={() => {
                             setMenuAccionesAbierto(false);
-                            if (abrirParaReprogramar) abrirParaReprogramar();
+                            if (onReprogramar) onReprogramar();
                           }}
                           className="flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-[#3B7A94] hover:bg-[#f0f6f9] transition-colors text-left"
                         >
@@ -251,7 +276,7 @@ export function FormularioCrearEditar({
                           type="button"
                           onClick={() => {
                             setMenuAccionesAbierto(false);
-                            if (abrirParaInasistente) abrirParaInasistente();
+                            if (onInasistente) onInasistente();
                           }}
                           className="flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-[#2b5d73] hover:bg-[#f0f6f9] transition-colors text-left"
                         >
@@ -262,7 +287,7 @@ export function FormularioCrearEditar({
                           type="button"
                           onClick={() => {
                             setMenuAccionesAbierto(false);
-                            if (abrirParaCancelar) abrirParaCancelar();
+                            if (onCancelar) onCancelar();
                           }}
                           className="flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors text-left"
                         >

@@ -208,6 +208,7 @@ export default function GestionTurnos() {
   const {
     turnos,
     pacientes,
+    setPacientes,
     practicasLista,
     obrasSocialesPaciente,
     cargando,
@@ -444,15 +445,30 @@ export default function GestionTurnos() {
             cerrarModal={cerrarModal}
             editando={editando}
             pacientes={pacientes}
+            setPacientes={setPacientes}
             datosFormulario={datosFormulario}
             actualizarDatos={actualizarDatos}
-            procesarFormulario={guardarTurno}
-            abrirModalAtenderDesdeEdicion={() => abrirParaAtender(turnoSeleccionado)}
-            abrirModalCancelarDesdeEdicion={() => abrirParaCancelar(turnoSeleccionado)}
-            abrirModalInasistenteDesdeEdicion={() => abrirParaInasistente(turnoSeleccionado)}
-            abrirModalReprogramarDesdeEdicion={() =>
-              abrirParaReprogramar(turnoSeleccionado, formatearTurnoParaReprogramar)
-            }
+            setDatosFormulario={setDatosFormulario}
+            guardarTurno={(e) => {
+              if (e && e.preventDefault) e.preventDefault();
+              guardarTurno(datosFormulario, editando, turnoSeleccionado);
+            }}
+            abrirParaAtender={() => {
+              cerrarModal();
+              abrirParaAtender(turnoSeleccionado);
+            }}
+            abrirParaCancelar={() => {
+              cerrarModal();
+              abrirParaCancelar(turnoSeleccionado);
+            }}
+            abrirParaInasistente={() => {
+              cerrarModal();
+              abrirParaInasistente(turnoSeleccionado);
+            }}
+            abrirParaReprogramar={() => {
+              cerrarModal();
+              abrirParaReprogramar(turnoSeleccionado, formatearTurnoParaReprogramar);
+            }}
           />
         )}
 
@@ -465,7 +481,11 @@ export default function GestionTurnos() {
             actualizarDatosReprogramacion={actualizarDatosReprogramacion}
             procesarReprogramacionTurno={(e) => {
               e.preventDefault();
-              procesarReprogramacionTurno(datosReprogramacion, turnoSeleccionado);
+              procesarReprogramacionTurno(
+                datosReprogramacion,
+                turnoSeleccionadoReprogramar,
+                cerrarModalReprogramar,
+              );
             }}
           />
         )}
@@ -484,7 +504,11 @@ export default function GestionTurnos() {
             eliminarPracticaAtencion={eliminarPracticaAtencion}
             procesarAtencionTurno={(e) => {
               e.preventDefault();
-              procesarAtencionTurno(datosAtencion, turnoSeleccionado);
+              procesarAtencionTurno(
+                datosAtencion,
+                turnoSeleccionadoAtender,
+                cerrarModalAtender,
+              );
             }}
           />
         )}
@@ -499,7 +523,12 @@ export default function GestionTurnos() {
             setNotasCanceladoInasistente={setDatosCancelacion}
             procesarCancelacionTurno={(e) => {
               e.preventDefault();
-              procesarCancelacionTurno(inasistente, turnoSeleccionadoCancelar, datosCancelacion);
+              procesarCancelacionTurno(
+                inasistente,
+                turnoSeleccionadoCancelar,
+                datosCancelacion,
+                cerrarModalCancelar,
+              );
             }}
           />
         )}

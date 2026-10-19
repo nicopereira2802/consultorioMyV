@@ -1,6 +1,6 @@
 /** @format */
 import Modal from "../../../components/common/Modal";
-import { CreditCard, ShieldPlus, X } from "lucide-react";
+import { CreditCard, ShieldPlus, X, CalendarClock } from "lucide-react";
 import InputFiltro from "../../../components/common/InputFiltro";
 
 export function FormularioCrearEditar({
@@ -14,6 +14,7 @@ export function FormularioCrearEditar({
   obrasSocialesLista,
   actualizarObraSocialForm,
   eliminarObraSocialForm,
+  onVerTurnos,
 }) {
   return (
     <form onSubmit={guardarPaciente}>
@@ -176,20 +177,35 @@ export function FormularioCrearEditar({
         <div className="border-t border-gray-200 my-5" />
 
         {/* //* ACCIONES MODAL */}
-        <div className="flex justify-end gap-3">
-          <button
-            type="button"
-            onClick={cerrarModal}
-            className="px-4 py-2.5 rounded-xl text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors font-medium text-sm"
-          >
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            className="px-5 py-2.5 rounded-xl text-white bg-[#2eb086] hover:bg-[#259370] transition-all shadow-sm font-semibold text-sm"
-          >
-            {editando ? "Guardar Cambios" : "Registrar Paciente"}
-          </button>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          {editando && onVerTurnos ? (
+            <button
+              type="button"
+              onClick={onVerTurnos}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[#3B7A94] bg-[#f0f6f9] hover:bg-[#e1edf3] border border-[#3B7A94]/20 transition-all font-semibold text-sm active:scale-95 shadow-2xs"
+            >
+              <CalendarClock size={16} />
+              <span>Ver Turnos</span>
+            </button>
+          ) : (
+            <div />
+          )}
+
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={cerrarModal}
+              className="px-4 py-2.5 rounded-xl text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors font-medium text-sm"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className="px-5 py-2.5 rounded-xl text-white bg-[#2eb086] hover:bg-[#259370] transition-all shadow-sm font-semibold text-sm"
+            >
+              {editando ? "Guardar Cambios" : "Registrar Paciente"}
+            </button>
+          </div>
         </div>
       </Modal>
     </form>

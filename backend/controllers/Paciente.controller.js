@@ -158,12 +158,12 @@ export const updatePaciente = async (req, res) => {
     }
 
     await paciente.update({
-      nombre: nombre || paciente.nombre,
-      apellido: apellido || paciente.apellido,
-      fecha_nacimiento: fecha_nacimiento || paciente.fecha_nacimiento,
-      dni: dni || paciente.dni,
-      telefono: telefono || paciente.telefono,
-      domicilio: domicilio || paciente.domicilio,
+      nombre: nombre !== undefined ? nombre : paciente.nombre,
+      apellido: apellido !== undefined ? apellido : paciente.apellido,
+      fecha_nacimiento: fecha_nacimiento !== undefined ? fecha_nacimiento : paciente.fecha_nacimiento,
+      dni: dni !== undefined ? dni : paciente.dni,
+      telefono: telefono !== undefined ? telefono : paciente.telefono,
+      domicilio: domicilio !== undefined ? domicilio : paciente.domicilio,
     });
 
     res.status(200).json({
