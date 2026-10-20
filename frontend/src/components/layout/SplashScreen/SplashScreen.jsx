@@ -13,7 +13,7 @@ export const SplashScreen = ({ visible = true, mensaje }) => {
 
   return (
     <div
-      className="fixed inset-0 top-0 left-0 w-screen h-screen m-0 p-0 border-none rounded-none bg-white flex flex-col items-center justify-center z-99999 transition-all duration-400 ease-in-out"
+      className="fixed inset-0 top-0 left-0 w-screen h-screen m-0 p-0 border-none rounded-none bg-white flex flex-col items-center justify-center z-50 transition-all duration-400 ease-in-out"
       role="status"
       aria-live="polite"
       aria-label="Cargando M&V"

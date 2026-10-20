@@ -9,7 +9,7 @@ export const getAllCobros = async (req, res) => {
     const limit = parseInt(req.query.limit) || 9;
     const offset = (page - 1) * limit;
     const search = req.query.search || "";
-    const sortField = req.query.sortField || "codigo_nomenclador";
+    const sortField = req.query.sortField || "fecha_emision";
     const sortOrder = req.query.sortOrder || "ASC";
     const where = {
       activo: true,
@@ -41,14 +41,7 @@ export const getAllCobros = async (req, res) => {
         },
         {
           model: Cuota,
-          attributes: [
-            "id_cuota",
-            "monto_cuota",
-            "monto_cobrado",
-            "estado",
-            "fecha_cobro",
-          ],
-          where: { activo: true },
+          attributes: ["id_cuota", "monto_cuota", "monto_cobrado", "estado", "fecha_cobro"],
         },
       ],
     });
@@ -167,6 +160,163 @@ export const updateCobro = async (req, res) => {
   }
 };
 
+// ==========================================
+// 1. COBRO INMEDIATO (Pago Total en 1 cuota)
+// ==========================================
+export const createCobroInmediato = async (req, res) => {
+  try {
+    const { monto_a_cobrar, metodo_pago } = req.body;
+    const id_turno = req.turno.id_turno;
+    const id_paciente = req.paciente.id_paciente;
+
+    const turnoExiste = await Cobro.findOne({ where: { id_turno, activo: true } });
+    if (turnoExiste) {
+      return res.status(409).json({
+        status: "error",
+        message: "Este turno ya tiene un cobro registrado.",
+      });
+    }
+
+    // Creamos el cobro con 1 sola cuota
+    const newCobro = await Cobro.create({
+      id_turno,
+      id_paciente,
+      monto_a_cobrar: Number(monto_a_cobrar),
+      cant_cuotas: 1,
+    });
+
+    // Creamos y asentamos automáticamente la cuota como pagada en el acto
+    await Cuota.create({
+      id_cobro: newCobro.id_cobro,
+      nro_cuota: 1,
+      monto_cuota: Number(monto_a_cobrar),
+      monto_cobrado: Number(monto_a_cobrar),
+      fecha_vencimiento: new Date().toISOString().split("T")[0],
+      fecha_cobro: new Date(),
+      metodo_pago: metodo_pago || "Efectivo",
+      estado: "Pagada",
+    });
+
+    return res.status(201).json({
+      status: "success",
+      data: newCobro,
+      message: "Cobro inmediato registrado correctamente.",
+    });
+  } catch (error) {
+    console.error("Error al crear cobro inmediato:", error);
+    return res.status(500).json({ error: "Error al procesar el cobro inmediato." });
+  }
+};
+
+// ==========================================
+// 2. PLAN DE CUOTAS FIJAS (Distribución automática)
+// ==========================================
+export const createCobroCuotas = async (req, res) => {
+  try {
+    const { monto_a_cobrar, cant_cuotas, fecha_primer_vencimiento } = req.body;
+    const id_turno = req.turno.id_turno;
+    const id_paciente = req.paciente.id_paciente;
+
+    const turnoExiste = await Cobro.findOne({ where: { id_turno, activo: true } });
+    if (turnoExiste) {
+      return res.status(409).json({
+        status: "error",
+        message: "Este turno ya tiene un cobro registrado.",
+      });
+    }
+
+    const total = Number(monto_a_cobrar);
+    const cantidadCuotas = Number(cant_cuotas) || 1;
+    const montoPorCuota = Number((total / cantidadCuotas).toFixed(2));
+
+    const newCobro = await Cobro.create({
+      id_turno,
+      id_paciente,
+      monto_a_cobrar: total,
+      cant_cuotas: cantidadCuotas,
+    });
+
+    // Generamos las n cuotas con sus respectivos vencimientos mensuales
+    const fechaBase = new Date(fecha_primer_vencimiento || Date.now());
+
+    for (let i = 1; i <= cantidadCuotas; i++) {
+      let fechaVenc = new Date(fechaBase);
+      fechaVenc.setMonth(fechaVenc.getMonth() + (i - 1));
+
+      await Cuota.create({
+        id_cobro: newCobro.id_cobro,
+        nro_cuota: i,
+        monto_cuota: montoPorCuota,
+        monto_cobrado: 0,
+        fecha_vencimiento: fechaVenc.toISOString().split("T")[0],
+        estado: "Pendiente",
+      });
+    }
+
+    return res.status(201).json({
+      status: "success",
+      data: newCobro,
+      message: "Plan de cuotas fijas creado correctamente.",
+    });
+  } catch (error) {
+    console.error("Error al crear plan de cuotas:", error);
+    return res.status(500).json({ error: "Error al procesar el plan de cuotas." });
+  }
+};
+
+// ==========================================
+// 3. ACUERDO INFORMAL / LIBRE (Con o sin entrega inicial)
+// ==========================================
+export const createCobroInformal = async (req, res) => {
+  try {
+    const { monto_a_cobrar, entrega_inicial, metodo_pago } = req.body;
+    const id_turno = req.turno.id_turno;
+    const id_paciente = req.paciente.id_paciente;
+
+    const turnoExiste = await Cobro.findOne({ where: { id_turno, activo: true } });
+    if (turnoExiste) {
+      return res.status(409).json({
+        status: "error",
+        message: "Este turno ya tiene un cobro registrado.",
+      });
+    }
+
+    const total = Number(monto_a_cobrar);
+    const entrega = Number(entrega_inicial) || 0;
+
+    const newCobro = await Cobro.create({
+      id_turno,
+      id_paciente,
+      monto_a_cobrar: total,
+      cant_cuotas: 1, // Se maneja como libre a cuenta
+    });
+
+    // Si hay una entrega inicial, la registramos como un pago parcial o total inicial
+    if (entrega > 0) {
+      const estadoCuota = entrega >= total ? "Pagada" : "Parcialmente pagada";
+      await Cuota.create({
+        id_cobro: newCobro.id_cobro,
+        nro_cuota: 1,
+        monto_cuota: total,
+        monto_cobrado: entrega,
+        fecha_vencimiento: new Date().toISOString().split("T")[0],
+        fecha_cobro: new Date(),
+        metodo_pago: metodo_pago || "Efectivo",
+        estado: estadoCuota,
+      });
+    }
+
+    return res.status(201).json({
+      status: "success",
+      data: newCobro,
+      message: "Acuerdo informal registrado correctamente.",
+    });
+  } catch (error) {
+    console.error("Error al registrar acuerdo informal:", error);
+    return res.status(500).json({ error: "Error al registrar el acuerdo informal." });
+  }
+};
+
 // Eliminar una cobro existente
 export const deleteCobro = async (req, res) => {
   try {
@@ -176,9 +326,7 @@ export const deleteCobro = async (req, res) => {
       activo: false,
     });
 
-    res
-      .status(200)
-      .json({ status: "success", message: "Cobro eliminado correctamente" });
+    res.status(200).json({ status: "success", message: "Cobro eliminado correctamente" });
   } catch (error) {
     console.error("Error al eliminar el cobro:", error);
     res.status(500).json({ error: "Error al eliminar el cobro" });

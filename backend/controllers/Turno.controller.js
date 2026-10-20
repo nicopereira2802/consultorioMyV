@@ -9,6 +9,7 @@ import {
   PracticaTurno,
   EstadoTurno,
   Paciente,
+  Cobro,
 } from "../models/index.model.js";
 import {
   validarEstadoProgramado,
@@ -114,16 +115,30 @@ export const getAllTurnos = async (req, res) => {
 // Obtener todos los turnos en Atendido
 export const getAllTurnosAtendidos = async (req, res) => {
   try {
+    const cobrosExistentes = await Cobro.findAll({
+      where: { activo: true },
+      attributes: ["id_turno"],
+    });
+
+    const turnosConCobroIds = cobrosExistentes.map((cobro) => cobro.id_turno);
+
+    // 2. Traemos los turnos atendidos excluyendo los que ya están en la lista de cobrados
     const turnos = await Turno.findAll({
-      where: { activo: true, id_estado: 2 },
+      where: {
+        activo: true,
+        id_estado: 2, // Atendido
+        id_turno: {
+          [Op.notIn]: turnosConCobroIds.length > 0 ? turnosConCobroIds : [-1], // Evita error si el array está vacío
+        },
+      },
       include: [
         {
           model: Paciente,
-          attributes: ["nombre", "apellido", "dni", "telefono"], // Atributos que quieres traer del paciente
+          attributes: ["nombre", "apellido", "dni", "telefono"],
         },
         {
           model: EstadoTurno,
-          attributes: ["estado"], // Atributos que quieres traer del estado
+          attributes: ["estado"],
         },
       ],
     });
@@ -133,7 +148,7 @@ export const getAllTurnosAtendidos = async (req, res) => {
       data: turnos,
     });
   } catch (error) {
-    console.error("Error al obtener los turnos atendidos:", error);
+    console.error("Error al obtener los turnos atendidos sin cobro:", error);
     res.status(500).json({ error: "Error al obtener los turnos atendidos" });
   }
 };
@@ -209,7 +224,7 @@ export const updateTurno = async (req, res) => {
   try {
     const turno = req.turno;
 
-    const { id_paciente, fecha_hora_inicio, fecha_hora_fin, precio_final, notas_consulta } = req.body;
+    const { id_paciente, precio_final, notas_consulta } = req.body;
 
     if (id_paciente) {
       const paciente = Paciente.findByPk(id_paciente);
@@ -221,22 +236,8 @@ export const updateTurno = async (req, res) => {
       }
     }
 
-    const haySolapamiento = await validarSolapaminetoHorarios(
-      fecha_hora_inicio,
-      fecha_hora_fin,
-      turno.id_turno,
-    );
-
-    if (haySolapamiento) {
-      return res.status(409).json({
-        error: "El horario seleccionado se superpone con un turno ya programado.",
-      });
-    }
-
     await turno.update({
       id_paciente: id_paciente || turno.id_paciente,
-      fecha_hora_inicio: fecha_hora_inicio || turno.fecha_hora_inicio,
-      fecha_hora_fin: fecha_hora_fin || turno.fecha_hora_fin,
       precio_final: precio_final || turno.precio_final,
       notas_consulta: notas_consulta || null,
     });

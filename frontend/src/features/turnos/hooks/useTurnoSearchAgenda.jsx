@@ -33,7 +33,6 @@ export function useTurnoSearchAgenda(endpoint, limitPorDefecto = 9) {
   const fetchObrasSocialesPaciente = async (id_paciente) => {
     try {
       const respuesta = await api.get(`/pacientes-por-obras-sociales/${id_paciente}`);
-      console.log(respuesta.data.data);
       setObrasSocialesPaciente(respuesta.data.data);
     } catch (error) {
       console.error("Error al cargar las obras sociales de los pacientes:", error);
@@ -58,6 +57,7 @@ export function useTurnoSearchAgenda(endpoint, limitPorDefecto = 9) {
   return {
     turnos: turnos,
     pacientes: pacientes,
+    setPacientes: setPacientes,
     practicasLista: practicasLista,
     obrasSocialesPaciente: obrasSocialesPaciente,
     cargando,

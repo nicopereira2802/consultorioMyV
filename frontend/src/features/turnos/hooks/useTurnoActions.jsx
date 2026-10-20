@@ -2,6 +2,8 @@ import { useState } from "react";
 import api from "../../../services/api";
 import toast from "react-hot-toast";
 import { manejarErrorApi } from "../../../utils/errorHandler";
+import { formatDateTimeInput } from "../../../utils";
+import { formatearTurnoParaReprogramar } from "../utils/formatTurnoParaReprogramar";
 
 export function useTurnoActions(recargar, cerrarModal) {
   const [cargandoAccion, setCargandoAccion] = useState(false);
@@ -9,20 +11,30 @@ export function useTurnoActions(recargar, cerrarModal) {
   const guardarTurno = async (datosFormulario, editando, turnoSeleccionadoCRUD) => {
     setCargandoAccion(true);
     try {
-      const { duracion_minutos, ...restoDatos } = datosFormulario;
-      const payload = {
-        ...restoDatos,
-        id_paciente: Number(restoDatos.id_paciente),
-        id_estado: Number(restoDatos.id_estado),
-        precio_final: parseFloat(restoDatos.precio_final),
-        fecha_hora_inicio: new Date(restoDatos.fecha_hora_inicio).toISOString(),
-        fecha_hora_fin: new Date(restoDatos.fecha_hora_fin).toISOString(),
-        notas_consulta: restoDatos.notas_consulta?.trim() || "",
-      };
+      let payload;
 
       if (editando) {
+        payload = {
+          id_paciente: Number(datosFormulario.id_paciente),
+          id_estado: Number(datosFormulario.id_estado),
+          precio_final: parseFloat(datosFormulario.precio_final || 0),
+          notas_consulta: datosFormulario.notas_consulta?.trim() || "",
+        };
+
         await api.put(`/turnos/${turnoSeleccionadoCRUD.id_turno}`, payload);
       } else {
+        // Al crear, sí requerimos las fechas y la duración completa
+        const { duracion_minutos, ...restoDatos } = datosFormulario;
+        payload = {
+          ...restoDatos,
+          id_paciente: Number(restoDatos.id_paciente),
+          id_estado: Number(restoDatos.id_estado),
+          precio_final: parseFloat(restoDatos.precio_final || 0),
+          fecha_hora_inicio: new Date(restoDatos.fecha_hora_inicio).toISOString(),
+          fecha_hora_fin: new Date(restoDatos.fecha_hora_fin).toISOString(),
+          notas_consulta: restoDatos.notas_consulta?.trim() || "",
+        };
+
         await api.post("/turnos", payload);
       }
 
@@ -62,7 +74,12 @@ export function useTurnoActions(recargar, cerrarModal) {
     }
   };
 
-  const procesarCancelacionTurno = async (inasistente, turnoSeleccionadoCancelar, datosCancelacion, cerrarModalCancelar) => {
+  const procesarCancelacionTurno = async (
+    inasistente,
+    turnoSeleccionadoCancelar,
+    datosCancelacion,
+    cerrarModalCancelar,
+  ) => {
     if (!turnoSeleccionadoCancelar) return;
     try {
       const payloadAtencion = { notas_consulta: datosCancelacion.notas_consulta.trim() };
@@ -86,7 +103,11 @@ export function useTurnoActions(recargar, cerrarModal) {
     }
   };
 
-  const procesarReprogramacionTurno = async (datosReprogramacion, turnoSeleccionado, cerrarModalReprogramar) => {
+  const procesarReprogramacionTurno = async (
+    datosReprogramacion,
+    turnoSeleccionado,
+    cerrarModalReprogramar,
+  ) => {
     if (!turnoSeleccionado) return;
 
     try {
@@ -117,7 +138,48 @@ export function useTurnoActions(recargar, cerrarModal) {
       manejarErrorApi(error, "No se pudo eliminar el turno.");
     }
   };
-  
+
+  const manejarSeleccionFechaCalendario = (
+    selectInfo,
+    abrirParaCrear,
+    abrirParaReprogramar,
+    actualizarDatos,
+    turnoReprogramando,
+    setTurnoReprogramando,
+  ) => {
+    if (selectInfo && selectInfo.startStr) {
+      const nuevaFechaInicio = formatDateTimeInput(selectInfo.startStr);
+
+      // Si había un turno esperando ser reprogramado:
+      if (turnoReprogramando) {
+        const turnoConNuevaFecha = {
+          ...turnoReprogramando,
+          fecha_hora_inicio: nuevaFechaInicio,
+        };
+
+        // Abrimos el modal de reprogramar con la nueva fecha seleccionada
+        abrirParaReprogramar(turnoConNuevaFecha, formatearTurnoParaReprogramar);
+
+        // Limpiamos el estado y el toast
+        setTurnoReprogramando(null);
+        toast.dismiss();
+        return;
+      }
+
+      // Si no había ningún turno para reprogramar, funciona como siempre (Crear Turno)
+      abrirParaCrear();
+      actualizarDatos({
+        target: { name: "fecha_hora_inicio", value: nuevaFechaInicio },
+      });
+    }
+  };
+
+  const procesarClickEnTurno = (clickInfo, abrirParaEditar, abrirParaVer) => {
+    const turnoEncontrado = clickInfo.event._def.extendedProps;
+    if (!turnoEncontrado) return;
+
+    abrirParaVer(turnoEncontrado);
+  };
 
   return {
     guardarTurno,
@@ -125,6 +187,8 @@ export function useTurnoActions(recargar, cerrarModal) {
     procesarCancelacionTurno,
     procesarReprogramacionTurno,
     ejecutarEliminacion,
+    manejarSeleccionFechaCalendario,
+    procesarClickEnTurno,
     cargandoAccion,
   };
 }

@@ -20,7 +20,7 @@ export default function TablaPaginacion({ page, setPage, totalPages }) {
           onChange={(e) => setPage(Number(e.target.value))}
           className="px-3 py-1.5 bg-[#2eb086] text-white rounded-xl text-xs font-semibold shadow-sm focus:outline-none cursor-pointer"
         >
-          {Array.from({ length: totalPages }, (_, index) => (
+          {Array.from({ length: totalPages || 1 }, (_, index) => (
             <option key={index + 1} value={index + 1} className="bg-white text-gray-800">
               {index + 1}
             </option>

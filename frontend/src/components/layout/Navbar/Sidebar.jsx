@@ -57,16 +57,14 @@ export const Sidebar = () => {
   return (
     <aside
       className={`fixed top-0 left-0 h-screen z-50 bg-[#3B7A94] text-white shadow-xl flex flex-col transition-all duration-300 ease-in-out overflow-hidden ${
-        !isOpen ? "w-20" : "w-72.5"
+        !isOpen ? "w-20" : "w-72"
       }`}
       aria-label="Menú de navegación principal"
     >
       {/* Cabecera */}
       <div
         className={`flex items-center border-b border-white/15 min-h-21.25 transition-all duration-300 ${
-          !isOpen
-            ? "flex-col justify-center gap-4 py-4"
-            : "justify-between px-5 py-6.5"
+          !isOpen ? "flex-col justify-center gap-4 py-4" : "justify-between px-5 py-6.5"
         }`}
       >
         <div className="flex items-center gap-3">
@@ -76,12 +74,8 @@ export const Sidebar = () => {
 
           {isOpen && (
             <div className="flex flex-col whitespace-nowrap">
-              <span className="text-lg font-bold text-white leading-tight">
-                M&V Turnos
-              </span>
-              <span className="text-xs font-medium text-white/70">
-                Gestión Odontológica
-              </span>
+              <span className="text-lg font-bold text-white leading-tight">M&V Turnos</span>
+              <span className="text-xs font-medium text-white/70">Gestión Odontológica</span>
             </div>
           )}
         </div>
@@ -95,9 +89,7 @@ export const Sidebar = () => {
         >
           <PanelLeftClose
             size={18}
-            className={`transition-transform duration-300 ${
-              !isOpen ? "rotate-180" : ""
-            }`}
+            className={`transition-transform duration-300 ${!isOpen ? "rotate-180" : ""}`}
           />
         </button>
       </div>
@@ -183,9 +175,7 @@ export const Sidebar = () => {
         <div className="p-4 border-t border-white/15 bg-[#2c6177] flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse shrink-0" />
-            <span className="text-xs font-semibold text-emerald-300">
-              Consultorio Operativo
-            </span>
+            <span className="text-xs font-semibold text-emerald-300">Consultorio Operativo</span>
           </div>
           <span className="text-xs font-medium text-white/60">v1.0</span>
         </div>

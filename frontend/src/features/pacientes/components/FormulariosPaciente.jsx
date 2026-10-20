@@ -130,7 +130,7 @@ export function FormularioCrearEditar({
                 {datosFormulario.obrasSociales.map((osItem, index) => (
                   <div
                     key={index}
-                    className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-gray-50 p-3 rounded-xl border border-gray-200"
+                    className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-gray-50 p-3 rounded-xl border border-gray-200 items-center relative"
                   >
                     {/* //* SELECTOR DE OBRA SOCIAL */}
                     <InputFiltro
@@ -138,10 +138,13 @@ export function FormularioCrearEditar({
                       camposFiltrado={["nombre"]}
                       formatoVisual={(os) => `${os.nombre}`}
                       placeholder="Busca una obra social..."
-                      alSeleccionar={(os) =>
-                        actualizarObraSocialForm(index, "id_obra_social", os.id_obra_social)
-                      }
-                      valorInicial={osItem.id_obra_social}
+                      alSeleccionar={(os) => {
+                        if (os && os.id_obra_social) {
+                          actualizarObraSocialForm(index, "id_obra_social", os.id_obra_social);
+                        }
+                      }}
+                      valorInicial={osItem.id_obra_social || ""}
+                      mitad="true"
                     />
 
                     <div className="flex items-center gap-2 w-full sm:w-auto sm:flex-1">

@@ -1,5 +1,6 @@
 /** @format */
 import { SearchX } from "lucide-react";
+import React from "react";
 
 export default function Tabla({
   columnas,
@@ -10,7 +11,7 @@ export default function Tabla({
   children,
 }) {
   // Verificamos si los children contienen filas con datos
-  const tieneDatos = Array.isArray(children) ? children.length > 0 : Boolean(children);
+  const tieneDatos = React.Children.count(children) > 0;
   const estaBuscando = search.trim().length > 0;
 
   return (
@@ -18,8 +19,8 @@ export default function Tabla({
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           {/* ENCABEZADO DE LA TABLA */}
-          <thead className="bg-[#caecce]">
-            <tr className="bg-[#e8f7f1] border-b border-gray-100 text-xs font-bold text-gray-500 uppercase tracking-wider">
+          <thead className="bg-[#e8f7f1]">
+            <tr className="border-b border-gray-100 text-xs font-bold text-gray-500 uppercase tracking-wider">
               {columnas.map((col, index) => (
                 <th
                   key={index}

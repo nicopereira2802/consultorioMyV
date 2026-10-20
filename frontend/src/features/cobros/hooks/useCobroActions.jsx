@@ -9,38 +9,40 @@ export function useCobroActions(recargar, cerrarModal) {
   const guardarCobro = async (datosFormulario, editando, cobroSeleccionado) => {
     setCargandoAccion(true);
     try {
-      const payloadCobro = {
+      const payloadBase = {
         id_turno: Number(datosFormulario.id_turno),
         id_paciente: Number(datosFormulario.id_paciente),
         monto_a_cobrar: Number(datosFormulario.monto_a_cobrar),
-        cant_cuotas: datosFormulario.modalidad === "cuotas" ? Number(datosFormulario.cant_cuotas) : 1,
       };
 
-      let idCobroGenerado;
-
       if (editando) {
-        await api.put(`/cobros/${cobroSeleccionado.id_cobro}`, payloadCobro);
-        idCobroGenerado = cobroSeleccionado.id_cobro;
-      } else {
-        const resCobro = await api.post("/cobros", payloadCobro);
-        idCobroGenerado = resCobro.data.data?.id_cobro || resCobro.data.id_cobro;
-      }
-
-      // Si es pago inmediato, se asienta automáticamente la primera cuota pagada
-      if (datosFormulario.modalidad === "inmediato" && idCobroGenerado) {
-        await api.post("/cuotas", {
-          id_cobro: idCobroGenerado,
-          nro_cuota: 1,
-          monto_cuota: Number(datosFormulario.monto_a_cobrar),
-          monto_cobrado: Number(datosFormulario.monto_a_cobrar),
-          fecha_vencimiento: new Date().toISOString().split("T")[0],
-          fecha_cobro: new Date().toISOString(),
-          metodo_pago: datosFormulario.metodo_pago,
-          estado: "Pagada",
+        await api.put(`/cobros/${cobroSeleccionado.id_cobro}`, {
+          ...payloadBase,
+          cant_cuotas: datosFormulario.modalidad === "cuotas" ? Number(datosFormulario.cant_cuotas) : 1,
         });
+        toast.success("Cobro actualizado correctamente");
+      } else {
+        if (datosFormulario.modalidad === "inmediato") {
+          await api.post("/cobros/inmediato", {
+            ...payloadBase,
+            metodo_pago: datosFormulario.metodo_pago,
+          });
+        } else if (datosFormulario.modalidad === "cuotas") {
+          await api.post("/cobros/cuotas", {
+            ...payloadBase,
+            cant_cuotas: Number(datosFormulario.cant_cuotas),
+            fecha_primer_vencimiento: datosFormulario.fecha_primer_vencimiento,
+          });
+        } else if (datosFormulario.modalidad === "informal") {
+          await api.post("/cobros/informal", {
+            ...payloadBase,
+            entrega_inicial: Number(datosFormulario.entrega_inicial) || 0,
+            metodo_pago: datosFormulario.metodo_pago,
+          });
+        }
+        toast.success("Cobro registrado correctamente");
       }
 
-      toast.success(editando ? "Cobro actualizado correctamente" : "Cobro registrado correctamente");
       recargar();
       cerrarModal();
     } catch (error) {
@@ -51,14 +53,14 @@ export function useCobroActions(recargar, cerrarModal) {
     }
   };
 
-  const ejecutarEliminacion = async (cobroSeleccionado) => {
+  const ejecutarEliminacion = async (cobroSeleccionado, cerrarModalEliminar) => {
     if (!cobroSeleccionado) return;
     setCargandoAccion(true);
     try {
       await api.patch(`/cobros/${cobroSeleccionado.id_cobro}/delete`);
       toast.success("Registro de cobro desactivado");
       recargar();
-      cerrarModal();
+      if (typeof cerrarModalEliminar === "function") cerrarModalEliminar();
     } catch (error) {
       console.error("Error al desactivar cobro:", error);
       manejarErrorApi(error, "No se pudo desactivar el cobro.");

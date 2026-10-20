@@ -14,34 +14,79 @@ import "@fullcalendar/react/themes/forma/palettes/green.css";
 
 const VISTAS = ["timeGridDay", "timeGridWeek", "dayGridMonth"];
 
+// Mapeo de colores según el estado del turno
+const OBTENER_ESTILOS_ESTADO = (estado) => {
+  const nombreEstado = (estado || "").toLowerCase();
+
+  if (nombreEstado.includes("programado")) {
+    return { bg: "#3B82F6", border: "#2563EB", text: "#ffffff" }; // Azul
+  }
+  if (nombreEstado.includes("atendido")) {
+    return { bg: "#10B981", border: "#059669", text: "#ffffff" }; // Verde
+  }
+  if (nombreEstado.includes("cancelado")) {
+    return { bg: "#EF4444", border: "#DC2626", text: "#ffffff" }; // Rojo
+  }
+  if (nombreEstado.includes("inasistente")) {
+    return { bg: "#F59E0B", border: "#D97706", text: "#ffffff" }; // Ámbar/Naranja
+  }
+
+  return { bg: "#6B7280", border: "#4B5563", text: "#ffffff" };
+};
+
 export const AgendaCalendar = ({ turnos = [], onDateSelect, onEventClick }) => {
   const calendarRef = useRef(null);
   const [vistaActual, setVistaActual] = useState(0);
   const [esMobile, setEsMobile] = useState(window.innerWidth < 768);
+  const [ahora, setAhora] = useState(new Date());
 
-  // Detectar cambios de pantalla para ajustar la barra del calendario
+  // Actualizar el "ahora" para refrescar la zona gris del tiempo pasado
   useEffect(() => {
-    const handleResize = () => {
-      setEsMobile(window.innerWidth < 768);
-    };
+    const handleResize = () => setEsMobile(window.innerWidth < 768);
     window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+
+    const interval = setInterval(() => setAhora(new Date()), 60000); // Actualiza cada minuto
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      clearInterval(interval);
+    };
   }, []);
 
-  /* ─── FORMATEAR TURNOS ─────────────────────────────────── */
+  /* ─── FORMATEAR TURNOS CON ID DINÁMICA ─────────────────── */
   const turnosFormateados = turnos.map((turno) => {
     const nombrePaciente = turno.Paciente
       ? `${turno.Paciente.nombre} ${turno.Paciente.apellido}`
       : `Paciente #${turno.id_paciente}`;
 
+    const estadoTexto = turno.EstadoTurno?.estado || "Programado";
+    const estilos = OBTENER_ESTILOS_ESTADO(estadoTexto);
+
     return {
-      id: String(turno.id_turno),
-      title: `${nombrePaciente} ${turno.notas_consulta ? `- ${turno.notas_consulta}` : ""} - ${turno.EstadoTurno.estado} `,
+      id: `${turno.id_turno}-${estadoTexto}`,
+
+      title: `${nombrePaciente} ${turno.notas_consulta ? `- ${turno.notas_consulta}` : ""} - ${estadoTexto}`,
       start: turno.fecha_hora_inicio,
       end: turno.fecha_hora_fin,
-      extendedProps: { ...turno },
+      extendedProps: {
+        ...turno,
+        colorBg: estilos.bg,
+        colorBorder: estilos.border,
+        colorText: estilos.text,
+      },
     };
   });
+
+  // Evento especial de fondo que pinta de gris todo lo transcurrido hasta "ahora"
+  const eventoPasadoSombra = {
+    id: "pasado-sombra-bg",
+    start: "1970-01-01T00:00:00",
+    end: ahora.toISOString(),
+    display: "background",
+    backgroundColor: "#e2e8f0",
+  };
+
+  const listaEventos = [...turnosFormateados, eventoPasadoSombra];
 
   const cambiarVista = (direccion) => {
     let siguienteVista = vistaActual;
@@ -67,18 +112,29 @@ export const AgendaCalendar = ({ turnos = [], onDateSelect, onEventClick }) => {
     trackMouse: false,
   });
 
+  // Bloquear selección/creación antes de la hora actual exacta
+  const selectAllow = (selectInfo) => {
+    return selectInfo.start >= new Date();
+  };
+
+  // Forzar estilos de colores en las tarjetas de turnos
+  const handleEventDidMount = (info) => {
+    if (info.event.display === "background") return;
+
+    const { colorBg, colorBorder, colorText } = info.event.extendedProps;
+    if (colorBg) {
+      info.el.style.setProperty("background-color", colorBg, "important");
+      info.el.style.setProperty("border-color", colorBorder, "important");
+      info.el.style.setProperty("color", colorText, "important");
+    }
+  };
+
   return (
-    <div {...handlers} className="w-full h-full bg-white">
+    <div {...handlers} className="w-full h-full bg-white relative">
       <FullCalendar
         ref={calendarRef}
-        plugins={[
-          themePlugin,
-          dayGridPlugin,
-          timeGridPlugin,
-          interactionPlugin,
-        ]}
+        plugins={[themePlugin, dayGridPlugin, timeGridPlugin, interactionPlugin]}
         initialView="timeGridDay"
-        // Adaptamos la botonera superior para móviles (botones más compactos o separados)
         headerToolbar={
           esMobile
             ? {
@@ -98,13 +154,22 @@ export const AgendaCalendar = ({ turnos = [], onDateSelect, onEventClick }) => {
         slotMaxTime="21:30:00"
         allDaySlot={false}
         selectable={true}
+        selectAllow={selectAllow}
         editable={true}
         nowIndicator={true}
         height="100%"
-        events={turnosFormateados}
+        events={listaEventos}
         select={onDateSelect}
         eventClick={onEventClick}
+        eventDidMount={handleEventDidMount}
       />
+
+      {/* Estilos adicionales para que el fondo gris no tape las líneas de las horas */}
+      <style>{`
+        .fc-bg-event {
+          opacity: 0.6 !important;
+        }
+      `}</style>
     </div>
   );
 };

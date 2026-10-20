@@ -1,8 +1,9 @@
 /** @format */
 
 import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import api from "../../services/api";
-import { DollarSign, Plus, Edit, Trash2, Wallet } from "lucide-react";
+import { DollarSign, Plus, Trash2, Wallet } from "lucide-react";
 
 import Header from "../../components/common/Header";
 import Tabla from "../../components/common/Tabla/Tabla";
@@ -11,8 +12,8 @@ import TablaPaginacion from "../../components/common/Tabla/TablaPaginacion";
 import PageLayout from "../../components/layout/PageLayout";
 
 //* HOOKS Y UTILS
-import { useCRUDModal } from "../../hooks/useCRUDModal";
 import { usePaginationSearch } from "../../hooks/usePaginationSearch";
+import { useCRUDModal } from "../../hooks/useCRUDModal";
 import { useCobroActions } from "./hooks/useCobroActions";
 import { calcularEstadoYSaldo } from "./utils/calcularEstadoYSaldo";
 import { formatFechaTabla, formatSoloHora } from "../../utils/index";
@@ -21,7 +22,7 @@ import { formatFechaTabla, formatSoloHora } from "../../utils/index";
 import { FormularioCrearEditarCobro, FormularioEliminarCobro } from "./components/FormulariosCobro";
 import FormularioCuotas from "./components/FormulariosCuota";
 
-const ESTADO_INICIAL = {
+const ESTADO_INICIAL_COBRO = {
   id_turno: "",
   id_paciente: "",
   monto_a_cobrar: "",
@@ -33,10 +34,12 @@ const ESTADO_INICIAL = {
 };
 
 export default function GestionCobros() {
+  const location = useLocation();
   const [turnosAtendidos, setTurnosAtendidos] = useState([]);
   const [modalCuotas, setModalCuotas] = useState(false);
+  const [cobroVerCuotas, setCobroVerCuotas] = useState(null);
 
-  // 1. Hook de Paginación y Búsqueda
+  // 1. Paginación
   const {
     datos: cobros,
     cargando,
@@ -51,24 +54,24 @@ export default function GestionCobros() {
     recargar,
   } = usePaginationSearch("/cobros", 10);
 
-  // 2. Hook CRUD para Modales
+  // 2. ÚNICO Hook de CRUD Modal reutilizado (reemplaza a useCobroModal)
   const {
-    modalAbierto,
+    modalAbierto: modalCobroAbierto,
     modalEliminar,
     editando,
     itemSeleccionado: cobroSeleccionado,
-    setItemSeleccionado,
-    datosFormulario,
+    datosFormulario: datosCobro,
     abrirParaCrear,
+    abrirParaEditar,
     abrirParaEliminar,
-    cerrarModal: cerrarModalCRUD,
-    actualizarDatos,
-  } = useCRUDModal(ESTADO_INICIAL);
+    cerrarModal,
+    actualizarDatos: actualizarDatosCobro,
+  } = useCRUDModal(ESTADO_INICIAL_COBRO);
 
-  // 3. Hook de Acciones API
-  const { guardarCobro, ejecutarEliminacion } = useCobroActions(recargar, cerrarModalCRUD);
+  // 3. Acciones API
+  const { guardarCobro, ejecutarEliminacion } = useCobroActions(recargar, cerrarModal);
 
-  // Cargar catálogo de turnos atendidos para el selector
+  // Cargar catálogo de turnos atendidos
   useEffect(() => {
     const buscarTurnosAtendidos = async () => {
       try {
@@ -81,27 +84,35 @@ export default function GestionCobros() {
     buscarTurnosAtendidos();
   }, []);
 
-  const abrirModalEditarCobro = (cobro) => {
-    setItemSeleccionado(cobro);
-    useCRUDModal.abrirParaEditar;
-    // Seteamos el estado formateado para edición
-    actualizarDatos({
-      target: { name: "modalidad", value: cobro.cant_cuotas > 1 ? "cuotas" : "inmediato" },
-    });
-  };
+  // Manejo de la navegación directa desde Turnos/Agenda
+  useEffect(() => {
+    const idTurnoNavegado = location.state?.id_turno_cobrar;
+
+    if (idTurnoNavegado && turnosAtendidos.length > 0) {
+      const turnoEncontrado = turnosAtendidos.find((t) => String(t.id_turno) === String(idTurnoNavegado));
+
+      abrirParaCrear({
+        id_turno: String(idTurnoNavegado),
+        id_paciente: turnoEncontrado?.id_paciente || "",
+        monto_a_cobrar: turnoEncontrado?.precio_final || "",
+      });
+
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state, turnosAtendidos, abrirParaCrear]);
 
   const abrirModalCuotas = (cobro) => {
-    setItemSeleccionado(cobro);
+    setCobroVerCuotas(cobro);
     setModalCuotas(true);
   };
 
-  const cerrarTodoModal = () => {
+  const cerrarTodoModalCuotas = () => {
     setModalCuotas(false);
-    cerrarModalCRUD();
+    setCobroVerCuotas(null);
   };
 
   return (
-    <PageLayout onAdd={abrirParaCrear}>
+    <PageLayout onAdd={() => abrirParaCrear()}>
       <div className="w-full flex-1 flex flex-col gap-4 pb-24">
         <Header
           icono={DollarSign}
@@ -111,7 +122,7 @@ export default function GestionCobros() {
           botonAccion={
             <button
               type="button"
-              onClick={abrirParaCrear}
+              onClick={() => abrirParaCrear()}
               className="hidden sm:flex items-center justify-center gap-2 bg-[#2eb086] hover:bg-[#259370] text-white px-4 py-2.5 rounded-xl font-semibold text-sm transition-all shadow-sm shrink-0"
             >
               <Plus size={18} />
@@ -127,7 +138,10 @@ export default function GestionCobros() {
               finRegistro={finRegistro}
               total={totalCobros}
               search={search}
-              setSearch={setSearch}
+              setSearch={(val) => {
+                setSearch(val);
+                setPage(1);
+              }}
               placeholder="Buscar cobros por paciente..."
             />
 
@@ -150,7 +164,6 @@ export default function GestionCobros() {
 
                   return (
                     <tr key={cobro.id_cobro} className="hover:bg-gray-50/60 transition-colors">
-                      {/* Paciente */}
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <div className="hidden md:flex w-9 h-9 rounded-full bg-[#e8f7f1] text-[#2eb086] items-center justify-center font-bold text-sm shrink-0">
@@ -160,7 +173,7 @@ export default function GestionCobros() {
                           <div className="flex flex-col">
                             <span className="font-semibold text-gray-800 text-sm">
                               {cobro.Paciente
-                                ? `${cobro.Paciente.nombre} ${cobro.Paciente.apellido}`
+                                ? `${cobro.Paciente.nombre}${cobro.Paciente.apellido}`
                                 : `Paciente #${cobro.id_paciente}`}
                             </span>
                             {cobro.Paciente?.dni && (
@@ -170,7 +183,6 @@ export default function GestionCobros() {
                         </div>
                       </td>
 
-                      {/* Turno */}
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex flex-col space-y-0.5">
                           <span className="text-sm font-semibold text-gray-900">
@@ -185,19 +197,16 @@ export default function GestionCobros() {
                         </div>
                       </td>
 
-                      {/* Monto Acordado */}
                       <td className="px-6 py-4 font-bold text-gray-800 text-sm">
                         ${Number(cobro.monto_a_cobrar).toLocaleString("es-AR", { minimumFractionDigits: 2 })}
                       </td>
 
-                      {/* Saldo Pendiente */}
                       <td className="px-6 py-4 font-bold text-sm">
                         <span className={saldo > 0 ? "text-rose-600" : "text-emerald-600"}>
                           ${saldo.toLocaleString("es-AR", { minimumFractionDigits: 2 })}
                         </span>
                       </td>
 
-                      {/* Estado */}
                       <td className="px-6 py-4">
                         <span
                           className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${
@@ -212,7 +221,6 @@ export default function GestionCobros() {
                         </span>
                       </td>
 
-                      {/* Acciones */}
                       <td className="px-6 py-4">
                         <div className="flex items-center justify-center gap-2">
                           <button
@@ -245,27 +253,26 @@ export default function GestionCobros() {
         </div>
 
         {/* MODALES */}
-        {modalAbierto && (
+        {modalCobroAbierto && (
           <FormularioCrearEditarCobro
             procesarFormulario={(e) => {
               e.preventDefault();
-              guardarCobro(datosFormulario, editando, cobroSeleccionado);
+              guardarCobro(datosCobro, editando, cobroSeleccionado);
             }}
-            modalAbierto={modalAbierto}
-            cerrarModal={cerrarTodoModal}
+            modalAbierto={modalCobroAbierto}
+            cerrarModal={cerrarModal}
             editando={editando}
-            datosFormulario={datosFormulario}
-            actualizarDatos={actualizarDatos}
+            datosFormulario={datosCobro}
+            actualizarDatos={actualizarDatosCobro}
             turnosAtendidos={turnosAtendidos}
-            setDatosFormulario={useCRUDModal.setDatosFormulario}
           />
         )}
 
         {modalCuotas && (
           <FormularioCuotas
             modalCuotas={modalCuotas}
-            cerrarModal={cerrarTodoModal}
-            cobroSeleccionado={cobroSeleccionado}
+            cerrarModal={cerrarTodoModalCuotas}
+            cobroSeleccionado={cobroVerCuotas}
             recarcarCobros={recargar}
           />
         )}
@@ -273,7 +280,7 @@ export default function GestionCobros() {
         {modalEliminar && (
           <FormularioEliminarCobro
             modalEliminar={modalEliminar}
-            cerrarModal={cerrarTodoModal}
+            cerrarModal={cerrarModal}
             cobroSeleccionado={cobroSeleccionado}
             ejecutarEliminacion={() => ejecutarEliminacion(cobroSeleccionado)}
           />

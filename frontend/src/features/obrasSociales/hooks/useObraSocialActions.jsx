@@ -9,7 +9,6 @@ export function useObraSocialActions(recargar, cerrarModal) {
   const guardarObraSocial = async (datosFormulario, editando, obraSocialSeleccionada) => {
     setCargandoAccion(true);
     try {
-        console.log("A")
       const payload = { nombre: datosFormulario.nombre.trim() };
       if (editando) {
         await api.put(`/obras-sociales/${obraSocialSeleccionada.id_obra_social}`, payload);

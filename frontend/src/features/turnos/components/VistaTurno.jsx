@@ -4,12 +4,50 @@ import { useState, useEffect } from "react";
 import Modal from "../../../components/common/Modal";
 import api from "../../../services/api";
 import { formatFechaHoraTabla } from "../../../utils/formatearFecha";
-import { Calendar, Clock, User, FileText, DollarSign, Activity, Shield, History } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import {
+  Calendar,
+  Clock,
+  User,
+  FileText,
+  DollarSign,
+  Activity,
+  Shield,
+  History,
+  CalendarDays,
+  ChevronDown,
+  CheckSquare,
+  UserRoundX,
+  XCircle,
+  Banknote,
+} from "lucide-react";
 
-export function VistaTurno({ isOpen, onClose, turno }) {
+export function VistaTurno({
+  isOpen,
+  onClose,
+  turno,
+  abrirParaReprogramar,
+  abrirParaAtender,
+  abrirParaCancelar,
+  abrirParaInasistente,
+  abrirModalCobrar, // Prop opcional para cobrar si está Atendido
+}) {
+  const navigate = useNavigate();
   const [historial, setHistorial] = useState([]);
   const [practicasTurno, setPracticasTurno] = useState([]);
   const [cargandoDetalles, setCargandoDetalles] = useState(false);
+  const [menuAccionesAbierto, setMenuAccionesAbierto] = useState(false);
+
+  // Cerrar el menú flotante al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuAccionesAbierto && !event.target.closest(".menu-acciones-container")) {
+        setMenuAccionesAbierto(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [menuAccionesAbierto]);
 
   useEffect(() => {
     if (isOpen && turno?.id_turno) {
@@ -41,6 +79,22 @@ export function VistaTurno({ isOpen, onClose, turno }) {
   };
 
   if (!turno) return null;
+
+  // Evaluación de Estados
+  const idEstado = Number(turno.id_estado);
+  const nombreEstado = turno.EstadoTurno?.estado;
+
+  const esProgramado = idEstado === 1 || nombreEstado === "Programado";
+  const esAtendido = idEstado === 2 || nombreEstado === "Atendido";
+  const esCanceladoOInasistente =
+    idEstado === 3 || idEstado === 4 || nombreEstado === "Cancelado" || nombreEstado === "Inasistente";
+
+  const irACobrar = (turnoTarget) => {
+    onClose(); // Cerrar modal de detalles
+    navigate("/cobros", {
+      state: { id_turno_cobrar: turnoTarget.id_turno },
+    });
+  };
 
   return (
     <Modal
@@ -231,11 +285,95 @@ export function VistaTurno({ isOpen, onClose, turno }) {
       </div>
 
       {/* Pie del Modal */}
-      <div className="border-t border-gray-200 mt-4 pt-3 flex justify-end">
+      <div className="border-t border-gray-200 mt-4 pt-3 flex items-center justify-between gap-2">
+        {/* LADO IZQUIERDO: ACCIONES DIRECTAS SEGÚN ESTADO */}
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+          {esProgramado && (
+            <>
+              {/* Acción Principal: Atender */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (abrirParaAtender) abrirParaAtender(turno);
+                }}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs sm:text-sm transition-all shadow-xs"
+                title="Atender Turno"
+              >
+                <CheckSquare size={16} />
+                <span className="hidden sm:inline">Atender</span>
+              </button>
+
+              {/* Reprogramar */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (abrirParaReprogramar) abrirParaReprogramar(turno);
+                }}
+                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl bg-sky-50 hover:bg-sky-100 text-[#3B7A94] font-semibold text-xs sm:text-sm transition-all border border-sky-100"
+                title="Reprogramar Turno"
+              >
+                <CalendarDays size={16} />
+                <span className="hidden md:inline">Reprogramar</span>
+              </button>
+
+              {/* Marcar Inasistente */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (abrirParaInasistente) abrirParaInasistente(turno);
+                }}
+                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs sm:text-sm transition-all"
+                title="Marcar Inasistente"
+              >
+                <UserRoundX size={16} />
+                <span className="hidden md:inline">Inasistente</span>
+              </button>
+
+              {/* Cancelar */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (abrirParaCancelar) abrirParaCancelar(turno);
+                }}
+                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 font-semibold text-xs sm:text-sm transition-all border border-red-100"
+                title="Cancelar Turno"
+              >
+                <XCircle size={16} />
+                <span className="hidden md:inline">Cancelar</span>
+              </button>
+            </>
+          )}
+
+          {esCanceladoOInasistente && (
+            <button
+              type="button"
+              onClick={() => {
+                if (abrirParaReprogramar) abrirParaReprogramar(turno);
+              }}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#f0f6f9] hover:bg-[#e1eef4] text-[#3B7A94] font-semibold text-xs sm:text-sm transition-all"
+            >
+              <CalendarDays size={16} />
+              <span>Reprogramar</span>
+            </button>
+          )}
+
+          {esAtendido && (
+            <button
+              type="button"
+              onClick={() => irACobrar(turno)}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs sm:text-sm transition-all"
+            >
+              <Banknote size={16} />
+              <span>Cobrar</span>
+            </button>
+          )}
+        </div>
+
+        {/* LADO DERECHO: BOTÓN CERRAR */}
         <button
           type="button"
           onClick={onClose}
-          className="px-4 py-2 rounded-xl text-white bg-[#2eb086] hover:bg-[#259370] transition-all shadow-sm font-semibold text-xs sm:text-sm"
+          className="px-4 py-2 rounded-xl text-white bg-[#2eb086] hover:bg-[#259370] transition-all shadow-xs font-semibold text-xs sm:text-sm shrink-0"
         >
           Cerrar
         </button>

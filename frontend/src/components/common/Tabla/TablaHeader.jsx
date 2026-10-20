@@ -2,6 +2,8 @@
 
 import { Search } from "lucide-react";
 
+// TODO: A futuro (o si notas que la API sufre peticiones de más), sería ideal implementar un pequeño debounce para esperar que termine de escribir
+
 export default function TablaHeader({
   inicioRegistro,
   finRegistro,

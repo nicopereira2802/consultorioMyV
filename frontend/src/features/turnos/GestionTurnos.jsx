@@ -162,7 +162,6 @@ export default function GestionTurnos() {
     editando,
     itemSeleccionado: turnoSeleccionado,
     datosFormulario,
-    setDatosFormulario,
     abrirParaCrear,
     abrirParaEditar,
     abrirParaEliminar,
@@ -233,12 +232,12 @@ export default function GestionTurnos() {
 
   // Cálculos de hora fin (Creación / Edición)
   useEffect(() => {
-    calcularHoraFin(datosFormulario, setDatosFormulario);
+    calcularHoraFin(datosFormulario, actualizarDatos);
   }, [datosFormulario.fecha_hora_inicio, datosFormulario.duracion_minutos]);
 
   // Cálculos de hora fin (Reprogramación)
   useEffect(() => {
-    calcularHoraFin(datosReprogramacion, setDatosReprogramacion);
+    calcularHoraFin(datosReprogramacion, actualizarDatosReprogramacion);
   }, [datosReprogramacion.fecha_hora_inicio, datosReprogramacion.duracion_minutos]);
 
   // Cargar obras sociales al atender
@@ -436,7 +435,12 @@ export default function GestionTurnos() {
         </div>
 
         {/* MODALES */}
-        <VistaTurno isOpen={modalVer} onClose={() => setModalVer(false)} turno={turnoVer} />
+        <VistaTurno
+          isOpen={modalVer}
+          onClose={() => setModalVer(false)}
+          turno={turnoVer}
+          abrirParaReprogramar={(turno) => abrirParaReprogramar(turno, formatearTurnoParaReprogramar)}
+        />
 
         {modalAbierto && (
           <FormularioCrearEditar
@@ -446,7 +450,10 @@ export default function GestionTurnos() {
             pacientes={pacientes}
             datosFormulario={datosFormulario}
             actualizarDatos={actualizarDatos}
-            procesarFormulario={guardarTurno}
+            guardarTurno={(e) => {
+              e.preventDefault();
+              guardarTurno(datosFormulario, editando, turnoSeleccionado);
+            }}
             abrirModalAtenderDesdeEdicion={() => abrirParaAtender(turnoSeleccionado)}
             abrirModalCancelarDesdeEdicion={() => abrirParaCancelar(turnoSeleccionado)}
             abrirModalInasistenteDesdeEdicion={() => abrirParaInasistente(turnoSeleccionado)}

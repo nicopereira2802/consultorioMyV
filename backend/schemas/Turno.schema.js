@@ -51,20 +51,6 @@ export const updateTurnoSchema = z.object({
     .positive("El ID no es válido")
     .optional(),
 
-  fecha_hora_inicio: z.coerce
-    .date({
-      invalid_type_error: "Formato de fecha inválido",
-    })
-    .min(hoy, { message: "La fecha de inicio no es válida" })
-    .optional(),
-
-  fecha_hora_fin: z.coerce
-    .date({
-      invalid_type_error: "Formato de fecha inválido",
-    })
-    .min(hoy, { message: "La fecha de fin no es válida" })
-    .optional(),
-
   precio_final: z
     .number({
       required_error: "El precio final es obligatorio",

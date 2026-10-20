@@ -1,6 +1,7 @@
 /** @format */
 
 //* useSearchParams E ICONOS
+import { useEffect } from "react";
 import { useSearchParams } from "react-router-dom"; // * PARA PERMITIR COMPLETAR PACIENTE DESDE AGENDA
 import { Users, Plus, Edit, Phone, Ban, RotateCcw } from "lucide-react";
 
@@ -25,6 +26,7 @@ import { formatearPacienteParaEditar } from "./utils/formatearPacienteParaEditar
 
 // * FORMULARIOS
 import { FormularioCrearEditar, FormularioToggle } from "./components/FormulariosPaciente";
+import { verificarCompletarPaciente } from "./utils/verificarCompletarPaciente.js";
 
 const ESTADO_INICIAL = {
   nombre: "",
@@ -63,7 +65,6 @@ export default function GestionPacientes() {
     editando,
     itemSeleccionado: pacienteSeleccionado,
     datosFormulario,
-    setDatosFormulario,
     abrirParaCrear,
     abrirParaEditar,
     abrirParaToggle,
@@ -73,11 +74,15 @@ export default function GestionPacientes() {
 
   // * HOOK PARA OBRAS SOCIALES
   const { obrasSocialesLista, agregarObraSocialForm, actualizarObraSocialForm, eliminarObraSocialForm } =
-    useObrasSocialesCatalogo(setDatosFormulario);
+    useObrasSocialesCatalogo(actualizarDatos);
 
   //* HOOK PETICIONES API
   const { guardarPaciente, togglePaciente } = usePacienteActions(recargar, cerrarModal);
 
+  useEffect(() => {
+    verificarCompletarPaciente(cargando, searchParams, pacientes, abrirParaEditar, setSearchParams);
+  }, [searchParams, pacientes, cargando, abrirParaEditar, setSearchParams]);
+ 
   return (
     <PageLayout onAdd={abrirParaCrear}>
       <div className="w-full flex-1 flex flex-col gap-4 pb-24">

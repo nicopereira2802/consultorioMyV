@@ -66,7 +66,7 @@ const Modal = ({
       }}
     >
       <div
-        className={`bg-oliva rounded-lg shadow-xl w-full ${width} 
+        className={`bg-[#2eb086] rounded-lg shadow-xl w-full ${width} 
               flex flex-col max-h-[90vh] overflow-hidden relative ${customClass}`} // max-h-[90vh] es la clave
       >
         {showCloseButton && (

@@ -7,21 +7,14 @@ import { Cobro, Paciente, Turno } from "../models/index.model.js";
 import { validarExistencia } from "../middleware/validarExistenciaEntidad.js";
 
 import { validateSchema } from "../middleware/validateSchema.js";
-import {
-  createCobroSchema,
-  updateCobroSchema,
-} from "../schemas/Cobro.schema.js";
+import { createCobroSchema, updateCobroSchema } from "../schemas/Cobro.schema.js";
 
 const router = express.Router();
 
 // Rutas para Cobro
 router.get("/", CobroController.getAllCobros);
 
-router.get(
-  "/:id",
-  validarExistencia(Cobro, "id", "params"),
-  CobroController.getCobroById,
-);
+router.get("/:id", validarExistencia(Cobro, "id", "params"), CobroController.getCobroById);
 
 router.post(
   "/",
@@ -31,6 +24,27 @@ router.post(
   CobroController.createCobro,
 );
 
+router.post(
+  "/inmediato",
+  validarExistencia(Turno, "id_turno", "body"),
+  validarExistencia(Paciente, "id_paciente", "body"),
+  CobroController.createCobroInmediato,
+);
+
+router.post(
+  "/cuotas",
+  validarExistencia(Turno, "id_turno", "body"),
+  validarExistencia(Paciente, "id_paciente", "body"),
+  CobroController.createCobroCuotas,
+);
+
+router.post(
+  "/informal",
+  validarExistencia(Turno, "id_turno", "body"),
+  validarExistencia(Paciente, "id_paciente", "body"),
+  CobroController.createCobroInformal,
+);
+
 router.put(
   "/:id",
   validateSchema(updateCobroSchema),
@@ -38,9 +52,5 @@ router.put(
   CobroController.updateCobro,
 );
 
-router.patch(
-  "/:id/delete",
-  validarExistencia(Cobro, "id", "params"),
-  CobroController.deleteCobro,
-);
+router.patch("/:id/delete", validarExistencia(Cobro, "id", "params"), CobroController.deleteCobro);
 export default router;

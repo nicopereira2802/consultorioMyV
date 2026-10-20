@@ -36,10 +36,10 @@ export const getCuotaById = async (req, res) => {
   }
 };
 
-// Crear una nueva cuota
+// En Cuota.controller.js (Función createCuota)
 export const createCuota = async (req, res) => {
   try {
-    const { monto_cuota, fecha_vencimiento } = req.body;
+    const { monto_cuota, monto_cobrado, fecha_vencimiento, fecha_cobro, metodo_pago, estado } = req.body;
     const id_cobro = req.cobro.id_cobro;
 
     const cantCuotas = await Cuota.count({ where: { id_cobro: id_cobro } });
@@ -48,11 +48,11 @@ export const createCuota = async (req, res) => {
       id_cobro: id_cobro,
       nro_cuota: cantCuotas + 1,
       monto_cuota: monto_cuota,
-      monto_cobrado: 0,
+      monto_cobrado: monto_cobrado || 0,
       fecha_vencimiento: fecha_vencimiento,
-      fecha_cobro: null,
-      metodo_pago: null,
-      estado: "Pendiente",
+      fecha_cobro: fecha_cobro || null,
+      metodo_pago: metodo_pago || null,
+      estado: estado || "Pendiente",
     });
 
     res.status(201).json({
@@ -68,14 +68,7 @@ export const createCuota = async (req, res) => {
 // Actualizar una cuota existente
 export const updateCuota = async (req, res) => {
   try {
-    const {
-      id_cobro,
-      monto_cuota,
-      monto_cobrado,
-      fecha_vencimiento,
-      fecha_cobro,
-      metodo_pago,
-    } = req.body;
+    const { id_cobro, monto_cuota, monto_cobrado, fecha_vencimiento, fecha_cobro, metodo_pago } = req.body;
 
     const cuota = req.cuota;
 
@@ -118,9 +111,7 @@ export const deleteCuota = async (req, res) => {
       activo: false,
     });
 
-    res
-      .status(200)
-      .json({ status: "success", message: "Cuota eliminada correctamente" });
+    res.status(200).json({ status: "success", message: "Cuota eliminada correctamente" });
   } catch (error) {
     console.error("Error al eliminar la cuota:", error);
     res.status(500).json({ error: "Error al eliminar la cuota" });

@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import api from "../../../services/api";
 
-export function useObrasSocialesCatalogo(setDatosFormulario) {
+export function useObrasSocialesCatalogo(actualizarDatos) {
   const [obrasSocialesLista, setObrasSocialesLista] = useState([]);
   const [cargandoOS, setCargandoOS] = useState(false);
 
@@ -22,30 +22,39 @@ export function useObrasSocialesCatalogo(setDatosFormulario) {
     buscarObrasSociales();
   }, [buscarObrasSociales]);
 
+  // 1. AGREGAR OBRA SOCIAL
   const agregarObraSocialForm = () => {
-    setDatosFormulario((prev) => ({
+    actualizarDatos((prev) => ({
       ...prev,
-      obrasSociales: [...prev.obrasSociales, { id_obra_social: "", nro_afiliado: "" }],
+      obrasSociales: [...(prev.obrasSociales || []), { id_obra_social: "", nro_afiliado: "" }],
     }));
   };
 
+  // 2. ACTUALIZAR CAMPO DE UNA OBRA SOCIAL ESPECÍFICA
   const actualizarObraSocialForm = (index, campo, valor) => {
-    setDatosFormulario((prev) => {
-      const nuevasOS = [...prev.obrasSociales];
-      nuevasOS[index][campo] = valor;
+    actualizarDatos((prev) => {
+      const nuevasOS = [...(prev.obrasSociales || [])];
+      nuevasOS[index] = { ...nuevasOS[index], [campo]: valor };
       return { ...prev, obrasSociales: nuevasOS };
     });
   };
 
+  // 3. ELIMINAR OBRA SOCIAL
   const eliminarObraSocialForm = (index) => {
-    setDatosFormulario((prev) => {
-      const osAEliminar = prev.obrasSociales[index];
+    actualizarDatos((prev) => {
+      const osAEliminar = prev.obrasSociales?.[index];
       const nuevasOS = prev.obrasSociales.filter((_, i) => i !== index);
       const eliminadas = [...(prev.obrasSocialesEliminadas || [])];
+
       if (osAEliminar && osAEliminar.guardadoEnBD && osAEliminar.id_relacion) {
         eliminadas.push(osAEliminar.id_relacion);
       }
-      return { ...prev, obrasSociales: nuevasOS, obrasSocialesEliminadas: eliminadas };
+
+      return {
+        ...prev,
+        obrasSociales: nuevasOS,
+        obrasSocialesEliminadas: eliminadas,
+      };
     });
   };
 

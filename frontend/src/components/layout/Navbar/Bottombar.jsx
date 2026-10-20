@@ -39,12 +39,12 @@ export const Bottombar = () => {
     location.pathname.startsWith("/practicas");
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-10000 md:hidden bg-[#3B7A94] border-t border-white/15 shadow-[0_-4px_20px_rgba(0,0,0,0.15)]">
+    <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-[#3B7A94] border-t border-white/15 shadow-[0_-4px_20px_rgba(0,0,0,0.15)]">
       {/* Contenedor principal que agrupa el menú flotante y el botón de config bajo la misma referencia */}
       <div ref={configContainerRef} className="relative">
         {/* ─── MENÚ DESPLEGABLE DE CONFIGURACIÓN ─── */}
         {dropdownAbierto && (
-          <div className="absolute bottom-full mb-2 right-2 z-10001 w-52 bg-[#3B7A94] border border-white/20 rounded-2xl shadow-2xl p-2 flex flex-col gap-1 animate-in fade-in slide-in-from-bottom-2 duration-200">
+          <div className="absolute bottom-full mb-2 right-2 z-60 w-52 bg-[#3B7A94] border border-white/20 rounded-2xl shadow-2xl p-2 flex flex-col gap-1 animate-in fade-in slide-in-from-bottom-2 duration-200">
             <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-white/60 border-b border-white/10 mb-1">
               Configuración
             </div>

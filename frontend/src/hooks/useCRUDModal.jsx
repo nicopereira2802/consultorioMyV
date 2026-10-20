@@ -9,12 +9,15 @@ export function useCRUDModal(estadoInicialFormulario) {
   const [itemSeleccionado, setItemSeleccionado] = useState(null);
   const [datosFormulario, setDatosFormulario] = useState(estadoInicialFormulario);
 
-  const abrirParaCrear = useCallback(() => {
-    setEditando(false);
-    setItemSeleccionado(null);
-    setDatosFormulario(estadoInicialFormulario);
-    setModalAbierto(true);
-  }, [estadoInicialFormulario]);
+  const abrirParaCrear = useCallback(
+    (datosExtra = {}) => {
+      setEditando(false);
+      setItemSeleccionado(null);
+      setDatosFormulario({ ...estadoInicialFormulario, ...datosExtra });
+      setModalAbierto(true);
+    },
+    [estadoInicialFormulario],
+  );
 
   const abrirParaEditar = useCallback((item, formateadorDatos = (i) => i) => {
     setEditando(true);
@@ -42,8 +45,12 @@ export function useCRUDModal(estadoInicialFormulario) {
   }, [estadoInicialFormulario]);
 
   const actualizarDatos = useCallback((e) => {
-    const { name, value } = e.target;
-    setDatosFormulario((prev) => ({ ...prev, [name]: value }));
+    if (typeof e === "function") {
+      setDatosFormulario(e);
+    } else if (e?.target) {
+      const { name, value } = e.target;
+      setDatosFormulario((prev) => ({ ...prev, [name]: value }));
+    }
   }, []);
 
   return {
@@ -52,9 +59,7 @@ export function useCRUDModal(estadoInicialFormulario) {
     modalEliminar,
     editando,
     itemSeleccionado,
-    setItemSeleccionado,
     datosFormulario,
-    setDatosFormulario,
     abrirParaCrear,
     abrirParaEditar,
     abrirParaToggle,
