@@ -14,12 +14,12 @@ INSERT INTO estado_turno (id_estado, estado) VALUES
 (3, 'Atendido'),
 (4, 'Inasistente');
 
-INSERT INTO obra_social (id_obra_social, nombre, activo) VALUES
-(1, 'Particular', TRUE),
-(2, 'OSDE', TRUE),
-(3, 'Swiss Medical', TRUE),
-(4, 'Apross', TRUE),
-(5, 'PAMI', TRUE);
+INSERT INTO obra_social (id_obra_social, nombre, razon_social, telefono, activo) VALUES
+(1, 'Particular', 'Atención Particular', '3514000000', TRUE),
+(2, 'OSDE', 'Organización de Servicios Directos Empresarios', '08105556733', TRUE),
+(3, 'Swiss Medical', 'Swiss Medical S.A.', '08104447700', TRUE),
+(4, 'Apross', 'Administración Provincial del Seguro de Salud', '08008882776', TRUE),
+(5, 'PAMI', 'Instituto Nacional de Servicios Sociales para Jubilados y Pensionados', '138', TRUE);
 
 INSERT INTO paciente (id_paciente, nombre, apellido, dni, fecha_nacimiento, telefono, domicilio, activo) VALUES
 (1, 'Juan', 'Pérez', '38450123', '1995-04-12', '3514567890', 'Av. Colón 1234, Córdoba', TRUE),

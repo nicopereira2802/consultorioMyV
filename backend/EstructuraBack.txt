@@ -131,12 +131,15 @@ router.get("/", CobroController.getAllCobros);
  * router.get('/:id', HistorialEstadoTurno.getHistorialTurnoByTurnoId)
  *
 
- /**
+/**
  * MODELO ObraSocial:
  * id_obra_social -> INTEGER ; PK
- * nombre -> STRING ; allowNull: false ; activo -> BOOLEAN ; allowNull: false ; default: true
+ * nombre -> STRING ; allowNull: false
+ * razon_social -> STRING ; allowNull: false
+ * telefono -> STRING ; allowNull: true
+ * email -> STRING ; allowNull: true
  * activo -> BOOLEAN ; allowNull: false ; default: true
- *
+ */
  * router.use("/api/obras-sociales", ObraSocialRoutes);
  *
  * RUTAS:

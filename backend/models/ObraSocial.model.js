@@ -14,6 +14,18 @@ export const ObraSocial = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
     },
+    razon_social: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    telefono: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    email: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
     activo: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
@@ -23,5 +35,12 @@ export const ObraSocial = sequelize.define(
   {
     tableName: "obra_social",
     timestamps: false,
+    hooks: {
+      beforeValidate: (os) => {
+        if (!os.razon_social && os.nombre) {
+          os.razon_social = os.nombre;
+        }
+      },
+    },
   },
 );
