@@ -1,10 +1,18 @@
 /** @format */
-import { useState, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { calcularHoraFin } from "../utils/calcularHoraFin";
 
-export function useTurnoReprogramarModal(estadoInicialReprogramar) {
+const ESTADO_INICIAL_REPROGRAMAR = { fecha_hora_inicio: "", duracion_minutos: 30, fecha_hora_fin: "" };
+
+export function useTurnoReprogramarModal() {
   const [modalReprogramar, setModalReprogramar] = useState(false);
   const [turnoSeleccionado, setTurnoSeleccionado] = useState(null);
-  const [datosReprogramacion, setDatosReprogramacion] = useState(estadoInicialReprogramar);
+  const [datosReprogramacion, setDatosReprogramacion] = useState(ESTADO_INICIAL_REPROGRAMAR);
+
+  // Cálculos de hora fin (Reprogramación)
+  useEffect(() => {
+    calcularHoraFin(datosReprogramacion, actualizarDatosReprogramacion);
+  }, [datosReprogramacion.fecha_hora_inicio, datosReprogramacion.duracion_minutos]);
 
   const abrirParaReprogramar = useCallback((item, formateadorDatos = (i) => i) => {
     setTurnoSeleccionado(item);
@@ -15,8 +23,8 @@ export function useTurnoReprogramarModal(estadoInicialReprogramar) {
   const cerrarModalReprogramar = useCallback(() => {
     setModalReprogramar(false);
     setTurnoSeleccionado(null);
-    setDatosReprogramacion(estadoInicialReprogramar);
-  }, [estadoInicialReprogramar]);
+    setDatosReprogramacion(...ESTADO_INICIAL_REPROGRAMAR);
+  }, []);
 
   const actualizarDatosReprogramacion = (e) => {
     const { name, value } = e.target;

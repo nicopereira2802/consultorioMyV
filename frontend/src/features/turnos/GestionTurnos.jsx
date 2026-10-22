@@ -1,39 +1,37 @@
 /** @format */
+//* ICONOS
+import { Plus, Edit, Trash2, Clock, AlertCircle, CalendarClock, Eye } from "lucide-react";
 
-import { useState, useEffect, useRef } from "react";
-import api from "../../services/api";
-import { formatFechaTabla, formatDateTimeInput, formatSoloHora } from "../../utils/index";
-import {
-  Plus,
-  Edit,
-  Trash2,
-  Clock,
-  CheckCircle2,
-  AlertCircle,
-  XCircle,
-  CalendarClock,
-  CheckSquare,
-  X,
-  UserRoundX,
-  CalendarDays,
-  Eye,
-  MoreVertical,
-} from "lucide-react";
-
+//* COMPONENTES COMUNES
 import Header from "../../components/common/Header";
 import Tabla from "../../components/common/Tabla/Tabla";
 import TablaHeader from "../../components/common/Tabla/TablaHeader";
 import TablaPaginacion from "../../components/common/Tabla/TablaPaginacion";
-import MenuFlotantePortal from "../../components/common/MenuFlotantePortal";
+
+//* COMPONENTES ESPECIFICOS DE TURNO
+import { VistaTurno } from "./components/VistaTurno";
+import { BotonAccionesTurno } from "./components/BotonAcciones";
+
+//* PAGELAYOUT (PARA EL BOTON)
 import PageLayout from "../../components/layout/PageLayout";
 
 //* HOOKS
 import { useCRUDModal } from "../../hooks/useCRUDModal";
-import { useTurnoPaginationSearch } from "./hooks/useTurnoPaginationSearch";
+import { usePaginationSearch } from "../../hooks/usePaginationSearch";
+import { useTurnoDependencies } from "./hooks/useTurnoDependencies";
 import { useTurnoAtenderModal } from "./hooks/useTurnoAtenderModal";
 import { useTurnoCancelarModal } from "./hooks/useTurnoCancelarModal";
 import { useTurnoReprogramarModal } from "./hooks/useTurnoReprogramarModal";
 import { useTurnoActions } from "./hooks/useTurnoActions";
+import { useTurnoVer } from "./hooks/useTurnoVer";
+
+//* FUNCIONES PARA FORMATEAR FECHAS Y UTILS
+import { formatFechaTabla, formatDateTimeInput, formatSoloHora } from "../../utils/index";
+import { formatearTurnoParaReprogramar } from "./utils/formatTurnoParaReprogramar";
+import { estadosMap } from "./utils/estadosMap";
+
+//* CONSTANTES
+import { ESTADO_INICIAL_TURNO } from "./constants/turnosConstants";
 
 //* FORMULARIOS Y VISTAS
 import {
@@ -43,119 +41,27 @@ import {
   FormularioEliminar,
   FormularioReprogramar,
 } from "./components/FormulariosTurno";
-import { VistaTurno } from "./components/VistaTurno";
-import { formatearTurnoParaReprogramar } from "./utils/formatTurnoParaReprogramar";
-import { calcularHoraFin } from "./utils/calcularHoraFin";
 
-const estadosMap = {
-  Programado: { id_estado: 1, color: "bg-amber-50 text-amber-700 border-amber-200/60", icon: Clock },
-  Atendido: {
-    id_estado: 2,
-    color: "bg-emerald-50 text-emerald-700 border-emerald-200/60",
-    icon: CheckCircle2,
-  },
-  Cancelado: { id_estado: 3, color: "bg-red-50 text-red-700 border-red-200/60", icon: XCircle },
-  Inasistente: { id_estado: 4, color: "bg-[#f0f6f9] text-[#2b5d73] border-[#93BBCF]", icon: UserRoundX },
-};
-
-const ESTADO_INICIAL = {
-  id_paciente: "",
-  id_estado: 1,
-  fecha_hora_inicio: "",
-  fecha_hora_fin: "",
-  duracion_minutos: 30,
-  precio_final: 0,
-  notas_consulta: "",
-};
-
-const ESTADO_INICIAL_ATENCION = { notas_consulta: "", precio_final: 0, practicas: [] };
-const ESTADO_INICIAL_REPROGRAMAR = { fecha_hora_inicio: "", duracion_minutos: 30, fecha_hora_fin: "" };
-const ESTADO_INICIAL_CANCELAR = { notas_consulta: "" };
-
-/* ─── SUBCOMPONENTE DE ACCIONES CON PORTAL ─────────────────── */
-function BotonAccionesTurno({
-  turno,
-  menuEstaAbierto,
-  setMenuAbiertoId,
-  abrirParaAtender,
-  abrirParaReprogramar,
-  abrirParaCancelar,
-  abrirParaInasistente,
-}) {
-  const botonRef = useRef(null);
-
-  const ejecutarAccion = (e, callback) => {
-    e.stopPropagation();
-    setMenuAbiertoId(null);
-    setTimeout(() => {
-      if (typeof callback === "function") {
-        callback(turno);
-      }
-    }, 0);
-  };
-
-  return (
-    <div className="relative menu-acciones-container">
-      <button
-        ref={botonRef}
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          setMenuAbiertoId(menuEstaAbierto ? null : turno.id_turno);
-        }}
-        className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
-      >
-        <MoreVertical size={18} />
-      </button>
-
-      <MenuFlotantePortal targetRef={botonRef} isOpen={menuEstaAbierto}>
-        <button
-          type="button"
-          onClick={(e) => ejecutarAccion(e, abrirParaAtender)}
-          className="flex items-center gap-2 px-4 py-2 text-xs font-medium text-emerald-700 hover:bg-emerald-50 text-left transition-colors"
-        >
-          <CheckSquare size={16} />
-          <span>Atender Turno</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={(e) => ejecutarAccion(e, (t) => abrirParaReprogramar(t, formatearTurnoParaReprogramar))}
-          className="flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-[#3B7A94] hover:bg-[#f0f6f9] text-left transition-colors"
-        >
-          <CalendarDays size={16} />
-          <span>Reprogramar</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={(e) => ejecutarAccion(e, abrirParaCancelar)}
-          className="flex items-center gap-2 px-4 py-2 text-xs font-medium text-red-600 hover:bg-red-50 text-left transition-colors"
-        >
-          <X size={16} />
-          <span>Cancelar Turno</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={(e) => ejecutarAccion(e, abrirParaInasistente)}
-          className="flex items-center gap-2 px-4 py-2 text-xs font-medium text-[#2b5d73] hover:bg-[#f0f6f9] text-left transition-colors"
-        >
-          <UserRoundX size={16} />
-          <span>Inasistente</span>
-        </button>
-      </MenuFlotantePortal>
-    </div>
-  );
-}
-
-/* ─── COMPONENTE PRINCIPAL ─────────────────────────────────── */
 export default function GestionTurnos() {
-  const [menuAbiertoId, setMenuAbiertoId] = useState(null);
-  const [modalVer, setModalVer] = useState(false);
-  const [turnoVer, setTurnoVer] = useState(null);
+  //* HOOK DE PAGINACIÓN
+  const {
+    datos: turnos,
+    cargando,
+    page,
+    setPage,
+    total,
+    totalPages,
+    search,
+    setSearch,
+    inicioRegistro,
+    finRegistro,
+    recargar,
+  } = usePaginationSearch("/turnos");
 
-  // 1. Hook CRUD Genérico (Crear, Editar, Eliminar)
+  //* HOOK DE DEPENDENCIAS
+  const { pacientes } = useTurnoDependencies();
+
+  //* HOOK DE CRUD MODAL
   const {
     modalAbierto,
     modalEliminar,
@@ -167,61 +73,48 @@ export default function GestionTurnos() {
     abrirParaEliminar,
     cerrarModal,
     actualizarDatos,
-  } = useCRUDModal(ESTADO_INICIAL);
+  } = useCRUDModal(ESTADO_INICIAL_TURNO);
 
-  // 2. Hooks Modulares Específicos
+  //* HOOK DE MODAL VER
+  const { modalVer, turnoVer, practicasLista, abrirParaVer, cerrarVer } = useTurnoVer();
+
+  //* HOOK DE MODAL ATENCION
   const {
     modalAtender,
     turnoSeleccionadoAtender,
     datosAtencion,
-    setDatosAtencion,
+    obrasSocialesPaciente,
     abrirParaAtender,
     cerrarModalAtender,
     agregarPracticaAtencion,
     actualizarPracticaAtencion,
+    actualizarDatosAtencion,
     eliminarPracticaAtencion,
-  } = useTurnoAtenderModal(ESTADO_INICIAL_ATENCION);
+  } = useTurnoAtenderModal();
 
+  //* HOOK DE MODAL CANCELACION E INASISTENTE
   const {
     modalCancelar,
     inasistente,
     turnoSeleccionadoCancelar,
     datosCancelacion,
-    setDatosCancelacion,
     abrirParaCancelar,
     abrirParaInasistente,
+    actualizarDatosCancelacion,
     cerrarModalCancelar,
-  } = useTurnoCancelarModal(ESTADO_INICIAL_CANCELAR);
+  } = useTurnoCancelarModal();
 
+  //* HOOK DE MODAL REPROGRAMACION
   const {
     modalReprogramar,
     turnoSeleccionadoReprogramar,
     datosReprogramacion,
-    setDatosReprogramacion,
     abrirParaReprogramar,
     cerrarModalReprogramar,
     actualizarDatosReprogramacion,
-  } = useTurnoReprogramarModal(ESTADO_INICIAL_REPROGRAMAR);
+  } = useTurnoReprogramarModal();
 
-  // 3. Hook de Paginación y Búsqueda
-  const {
-    turnos,
-    pacientes,
-    practicasLista,
-    obrasSocialesPaciente,
-    cargando,
-    page,
-    setPage,
-    total,
-    totalPages,
-    search,
-    setSearch,
-    inicioRegistro,
-    finRegistro,
-    recargar,
-    buscarOSPaciente,
-  } = useTurnoPaginationSearch("/turnos");
-
+  //* HOOK DE PETICIONES API
   const {
     guardarTurno,
     procesarAtencionTurno,
@@ -230,49 +123,10 @@ export default function GestionTurnos() {
     ejecutarEliminacion,
   } = useTurnoActions(recargar, cerrarModal);
 
-  // Cálculos de hora fin (Creación / Edición)
-  useEffect(() => {
-    calcularHoraFin(datosFormulario, actualizarDatos);
-  }, [datosFormulario.fecha_hora_inicio, datosFormulario.duracion_minutos]);
-
-  // Cálculos de hora fin (Reprogramación)
-  useEffect(() => {
-    calcularHoraFin(datosReprogramacion, actualizarDatosReprogramacion);
-  }, [datosReprogramacion.fecha_hora_inicio, datosReprogramacion.duracion_minutos]);
-
-  // Cargar obras sociales al atender
-  useEffect(() => {
-    if (turnoSeleccionadoAtender && turnoSeleccionadoAtender.id_paciente && modalAtender) {
-      buscarOSPaciente(turnoSeleccionadoAtender.id_paciente);
-    }
-  }, [modalAtender, turnoSeleccionadoAtender]);
-
-  // Calcular precio final según prácticas
-  useEffect(() => {
-    let totalPrecio = 0;
-    datosAtencion.practicas.forEach((item) => {
-      if (item.id_practica) {
-        const encontrada = practicasLista.find((p) => Number(p.id_practica) === Number(item.id_practica));
-        if (encontrada) totalPrecio += Number(encontrada.precio_referencia || 0);
-      }
-    });
-    setDatosAtencion((prev) => ({ ...prev, precio_final: totalPrecio }));
-  }, [datosAtencion.practicas, practicasLista]);
-
-  // Cerrar menú de acciones al hacer clic fuera
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (menuAbiertoId !== null && !event.target.closest(".menu-acciones-container")) {
-        setMenuAbiertoId(null);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [menuAbiertoId]);
-
   return (
     <PageLayout onAdd={abrirParaCrear}>
       <div className="w-full flex flex-col gap-4 pb-24">
+        {/* //* HEADER PRINCIPAL */}
         <Header
           icono={CalendarClock}
           titulo="Gestión de Turnos"
@@ -290,8 +144,10 @@ export default function GestionTurnos() {
           }
         />
 
+        {/* //* BODY: TABLA */}
         <div className="w-full px-4 flex flex-col gap-4">
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col overflow-hidden">
+            {/* //* TABLA: HEADER */}
             <TablaHeader
               inicioRegistro={inicioRegistro}
               finRegistro={finRegistro}
@@ -305,6 +161,7 @@ export default function GestionTurnos() {
             />
 
             <div className="overflow-x-auto w-full">
+              {/* //* TABLA: TABLA */}
               <Tabla
                 cargando={cargando}
                 sinDatosText="No se encontraron turnos registrados."
@@ -324,13 +181,15 @@ export default function GestionTurnos() {
                     icon: AlertCircle,
                   };
                   const IconoEstado = estadoInfo.icon;
-                  const menuEstaAbierto = menuAbiertoId === turno.id_turno;
 
                   return (
                     <tr key={turno.id_turno} className="hover:bg-gray-50/60 transition-colors">
+                      {/* //* COLUMNAS: ID TURNO */}
                       <td className="hidden md:table-cell px-5 py-4 font-semibold text-gray-500 w-16 text-xs">
                         #{turno.id_turno}
                       </td>
+
+                      {/* //* COLUMNAS: PACIENTE */}
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
                           <div className="hidden md:flex w-8 h-8 rounded-full bg-[#e8f7f1] text-[#2eb086] items-center justify-center font-bold text-xs shrink-0">
@@ -348,6 +207,8 @@ export default function GestionTurnos() {
                           </div>
                         </div>
                       </td>
+
+                      {/* //* COLUMNAS: FECHA INICIO Y FIN */}
                       <td className="px-5 py-4 whitespace-nowrap">
                         <div className="flex flex-col space-y-0.5">
                           <span className="text-sm font-semibold text-gray-900">
@@ -360,9 +221,13 @@ export default function GestionTurnos() {
                           </span>
                         </div>
                       </td>
+
+                      {/* //* COLUMNAS: PRECIO FINAL */}
                       <td className="hidden md:table-cell px-5 py-4 font-semibold text-gray-800 text-sm">
                         ${Number(turno.precio_final).toLocaleString("es-AR", { minimumFractionDigits: 2 })}
                       </td>
+
+                      {/* //* COLUMNAS: ESTADO */}
                       <td className="px-5 py-4">
                         <span
                           className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${estadoInfo.color}`}
@@ -371,16 +236,19 @@ export default function GestionTurnos() {
                           <span>{turno.EstadoTurno.estado}</span>
                         </span>
                       </td>
+
+                      {/* //* COLUMNAS: NOTAS CONSULTA */}
                       <td className="hidden md:table-cell px-5 py-4 text-gray-500 text-xs max-w-50 truncate">
                         {turno.notas_consulta || <span className="text-gray-300 italic">Sin notas</span>}
                       </td>
+
+                      {/* //* COLUMNAS: ACCIONES */}
                       <td className="px-5 py-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             type="button"
                             onClick={() => {
-                              setTurnoVer(turno);
-                              setModalVer(true);
+                              abrirParaVer(turno);
                             }}
                             className="p-2 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors"
                             title="Ver detalle"
@@ -414,10 +282,10 @@ export default function GestionTurnos() {
                           {turno.EstadoTurno.estado === "Programado" && (
                             <BotonAccionesTurno
                               turno={turno}
-                              menuEstaAbierto={menuEstaAbierto}
-                              setMenuAbiertoId={setMenuAbiertoId}
                               abrirParaAtender={abrirParaAtender}
-                              abrirParaReprogramar={abrirParaReprogramar}
+                              abrirParaReprogramar={(t) =>
+                                abrirParaReprogramar(t, formatearTurnoParaReprogramar)
+                              }
                               abrirParaCancelar={abrirParaCancelar}
                               abrirParaInasistente={abrirParaInasistente}
                             />
@@ -430,18 +298,20 @@ export default function GestionTurnos() {
               </Tabla>
             </div>
 
+            {/* //* TABLA: PAGINACION */}
             <TablaPaginacion page={page} setPage={setPage} totalPages={totalPages} />
           </div>
         </div>
 
-        {/* MODALES */}
+        {/* //* MODALES: VISTA TURNO */}
         <VistaTurno
           isOpen={modalVer}
-          onClose={() => setModalVer(false)}
+          onClose={() => cerrarVer()}
           turno={turnoVer}
           abrirParaReprogramar={(turno) => abrirParaReprogramar(turno, formatearTurnoParaReprogramar)}
         />
 
+        {/* //* MODALES: CREAR Y EDITAR */}
         {modalAbierto && (
           <FormularioCrearEditar
             modalAbierto={modalAbierto}
@@ -463,6 +333,48 @@ export default function GestionTurnos() {
           />
         )}
 
+        {/* //* MODALES: ATENDER */}
+        {modalAtender && (
+          <FormularioAtender
+            modalAtenderAbierto={modalAtender}
+            cerrarModal={cerrarModalAtender}
+            turnoSeleccionado={turnoSeleccionadoAtender}
+            datosAtencion={datosAtencion}
+            practicasLista={practicasLista}
+            pacientesObrasSociales={obrasSocialesPaciente}
+            agregarPracticaAtencion={agregarPracticaAtencion}
+            actualizarPracticaAtencion={actualizarPracticaAtencion}
+            actualizarDatosAtencion={actualizarDatosAtencion}
+            eliminarPracticaAtencion={eliminarPracticaAtencion}
+            procesarAtencionTurno={(e) => {
+              e.preventDefault();
+              procesarAtencionTurno(datosAtencion, turnoSeleccionadoAtender, cerrarModalAtender);
+            }}
+          />
+        )}
+
+        {/* //* MODALES: CANCELAR E INASISTENTE */}
+        {modalCancelar && (
+          <FormularioCancelar
+            modalCancelarAbierto={modalCancelar}
+            cerrarModal={cerrarModalCancelar}
+            turnoSeleccionado={turnoSeleccionadoCancelar}
+            inasistente={inasistente}
+            notasCanceladoInasistente={datosCancelacion}
+            actualizarDatosCancelacion={actualizarDatosCancelacion}
+            procesarCancelacionTurno={(e) => {
+              e.preventDefault();
+              procesarCancelacionTurno(
+                inasistente,
+                turnoSeleccionadoCancelar,
+                datosCancelacion,
+                cerrarModalCancelar,
+              );
+            }}
+          />
+        )}
+
+        {/* //* MODALES: REPROGRAMAR */}
         {modalReprogramar && (
           <FormularioReprogramar
             modalReprogramarAbierto={modalReprogramar}
@@ -472,45 +384,16 @@ export default function GestionTurnos() {
             actualizarDatosReprogramacion={actualizarDatosReprogramacion}
             procesarReprogramacionTurno={(e) => {
               e.preventDefault();
-              procesarReprogramacionTurno(datosReprogramacion, turnoSeleccionado);
+              procesarReprogramacionTurno(
+                datosReprogramacion,
+                turnoSeleccionadoReprogramar,
+                cerrarModalReprogramar,
+              );
             }}
           />
         )}
 
-        {modalAtender && (
-          <FormularioAtender
-            modalAtenderAbierto={modalAtender}
-            cerrarModal={cerrarModalAtender}
-            turnoSeleccionado={turnoSeleccionadoAtender}
-            datosAtencion={datosAtencion}
-            setDatosAtencion={setDatosAtencion}
-            practicasLista={practicasLista}
-            pacientesObrasSociales={obrasSocialesPaciente}
-            agregarPracticaAtencion={agregarPracticaAtencion}
-            actualizarPracticaAtencion={actualizarPracticaAtencion}
-            eliminarPracticaAtencion={eliminarPracticaAtencion}
-            procesarAtencionTurno={(e) => {
-              e.preventDefault();
-              procesarAtencionTurno(datosAtencion, turnoSeleccionado);
-            }}
-          />
-        )}
-
-        {modalCancelar && (
-          <FormularioCancelar
-            modalCancelarAbierto={modalCancelar}
-            cerrarModal={cerrarModalCancelar}
-            turnoSeleccionado={turnoSeleccionadoCancelar}
-            inasistente={inasistente}
-            notasCanceladoInasistente={datosCancelacion}
-            setNotasCanceladoInasistente={setDatosCancelacion}
-            procesarCancelacionTurno={(e) => {
-              e.preventDefault();
-              procesarCancelacionTurno(inasistente, turnoSeleccionadoCancelar, datosCancelacion);
-            }}
-          />
-        )}
-
+        {/* //* MODALES: ELIMINAR */}
         {modalEliminar && (
           <FormularioEliminar
             modalEliminar={modalEliminar}

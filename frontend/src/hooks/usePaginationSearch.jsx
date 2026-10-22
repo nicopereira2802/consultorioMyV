@@ -4,6 +4,7 @@ import api from "../services/api";
 import { manejarErrorApi } from "../utils/errorHandler";
 
 export function usePaginationSearch(endpoint, limitPorDefecto = 9) {
+  // * DEFINICION DE ESTADOS GENERALES
   const [datos, setDatos] = useState([]);
   const [cargando, setCargando] = useState(false);
   const [page, setPage] = useState(1);
@@ -12,6 +13,7 @@ export function usePaginationSearch(endpoint, limitPorDefecto = 9) {
   const [search, setSearchState] = useState("");
   const [order, setOrder] = useState({ column: "", direction: "ASC" });
 
+  // * BUSCAR DATOS PARA LA TABLA Y PAGINACION
   const fetchData = async (parametrosExtra = {}) => {
     setCargando(true);
     try {
@@ -39,16 +41,18 @@ export function usePaginationSearch(endpoint, limitPorDefecto = 9) {
     }
   };
 
+  // * RECARGAR DATOS CUANDO CAMBIA PAGINA
   useEffect(() => {
     fetchData();
   }, [page, search, order]);
 
+  // * SETEA LA BUSQUEDA
   const setSearch = (nuevoTermino) => {
     setSearchState(nuevoTermino);
     setPage(1);
   };
 
-  // Cálculos automáticos centralizados
+  // * CALCULA LOS NUMEROS QUE SE MUESTRAN EN EL HEADER
   const inicioRegistro = total === 0 ? 0 : (page - 1) * limitPorDefecto + 1;
   const finRegistro = total === 0 ? 0 : page === totalPages ? total : page * limitPorDefecto;
 

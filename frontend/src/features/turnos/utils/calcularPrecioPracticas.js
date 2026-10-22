@@ -1,3 +1,5 @@
+//* FUNCION QUE CALCULA PRECIO FINAL BASE (RESPECTO A PRACTICAS)
+
 export const calcularPrecioPracticas = (datosAtencion, practicasLista, setDatosAtencion) => {
   let totalPrecio = 0;
   datosAtencion.practicas.forEach((item) => {

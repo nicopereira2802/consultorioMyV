@@ -2,16 +2,23 @@
 
 import { useState, useRef, useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { Calendar, CalendarClock, FileText, Users, Settings, Shield, ChevronUp } from "lucide-react";
+import {
+  Calendar,
+  CalendarClock,
+  FileText,
+  Users,
+  Settings,
+  Shield,
+  ChevronUp,
+  TrendingDown,
+  Wallet,
+} from "lucide-react";
 
 export const Bottombar = () => {
   const location = useLocation();
   const [dropdownAbierto, setDropdownAbierto] = useState(false);
-
-  // Referencia unificada para todo el bloque de configuración (botón + menú)
   const configContainerRef = useRef(null);
 
-  // Cerrar el dropdown si se hace clic fuera del contenedor de configuración
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (configContainerRef.current && !configContainerRef.current.contains(event.target)) {
@@ -22,7 +29,6 @@ export const Bottombar = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Función helper para determinar si un NavLink está activo (contemplando sub-rutas)
   const checkIsActive = (itemTo) => {
     const currentPath = location.pathname;
     if (!itemTo) return false;
@@ -32,7 +38,6 @@ export const Bottombar = () => {
     return currentPath.startsWith(itemTo);
   };
 
-  // Verificar si alguna ruta de configuración está activa para iluminar el botón principal
   const isConfigActive =
     location.pathname.startsWith("/configuracion") ||
     location.pathname.startsWith("/obras-sociales") ||
@@ -40,9 +45,8 @@ export const Bottombar = () => {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-[#3B7A94] border-t border-white/15 shadow-[0_-4px_20px_rgba(0,0,0,0.15)]">
-      {/* Contenedor principal que agrupa el menú flotante y el botón de config bajo la misma referencia */}
       <div ref={configContainerRef} className="relative">
-        {/* ─── MENÚ DESPLEGABLE DE CONFIGURACIÓN ─── */}
+        {/* DROPDOWN CONFIGURACIÓN */}
         {dropdownAbierto && (
           <div className="absolute bottom-full mb-2 right-2 z-60 w-52 bg-[#3B7A94] border border-white/20 rounded-2xl shadow-2xl p-2 flex flex-col gap-1 animate-in fade-in slide-in-from-bottom-2 duration-200">
             <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-white/60 border-b border-white/10 mb-1">
@@ -81,30 +85,30 @@ export const Bottombar = () => {
           </div>
         )}
 
-        {/* ─── BARRA DE NAVEGACIÓN INFERIOR ─── */}
+        {/* BARRA INFERIOR */}
         <nav
           className="w-full px-2 py-1.5 flex items-center justify-around"
           aria-label="Navegación inferior móvil M&V"
         >
-          {/* 1. Cobros */}
+          {/* 1. Caja */}
           <NavLink
-            to="/cobros"
-            aria-label="Cobros"
-            className={`flex flex-col items-center justify-center py-1.5 px-2.5 rounded-xl transition-all duration-200 touch-manipulation select-none active:scale-95 ${
-              checkIsActive("/cobros")
+            to="/caja"
+            aria-label="Caja"
+            className={`flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition-all duration-200 touch-manipulation select-none active:scale-95 ${
+              checkIsActive("/caja")
                 ? "bg-white/20 text-white shadow-sm font-semibold"
                 : "text-white/80 hover:bg-white/10 hover:text-white"
             }`}
           >
-            <FileText size={20} />
-            <span className="text-[10px] font-medium leading-tight mt-1">Cobros</span>
+            <Wallet size={20} />
+            <span className="text-[10px] font-medium leading-tight mt-1">Caja</span>
           </NavLink>
 
           {/* 2. Turnos */}
           <NavLink
             to="/turnos"
             aria-label="Turnos"
-            className={`flex flex-col items-center justify-center py-1.5 px-2.5 rounded-xl transition-all duration-200 touch-manipulation select-none active:scale-95 ${
+            className={`flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition-all duration-200 touch-manipulation select-none active:scale-95 ${
               checkIsActive("/turnos")
                 ? "bg-white/20 text-white shadow-sm font-semibold"
                 : "text-white/80 hover:bg-white/10 hover:text-white"
@@ -114,7 +118,7 @@ export const Bottombar = () => {
             <span className="text-[10px] font-medium leading-tight mt-1">Turnos</span>
           </NavLink>
 
-          {/* 3. Agenda */}
+          {/* 3. Agenda (Central) */}
           <NavLink
             to="/"
             aria-label="Agenda"
@@ -132,7 +136,7 @@ export const Bottombar = () => {
           <NavLink
             to="/pacientes"
             aria-label="Pacientes"
-            className={`flex flex-col items-center justify-center py-1.5 px-2.5 rounded-xl transition-all duration-200 touch-manipulation select-none active:scale-95 ${
+            className={`flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition-all duration-200 touch-manipulation select-none active:scale-95 ${
               checkIsActive("/pacientes")
                 ? "bg-white/20 text-white shadow-sm font-semibold"
                 : "text-white/80 hover:bg-white/10 hover:text-white"
@@ -147,7 +151,7 @@ export const Bottombar = () => {
             type="button"
             onClick={() => setDropdownAbierto((prev) => !prev)}
             aria-label="Configuración"
-            className={`flex flex-col items-center justify-center py-1.5 px-2.5 rounded-xl transition-all duration-200 touch-manipulation select-none active:scale-95 ${
+            className={`flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition-all duration-200 touch-manipulation select-none active:scale-95 ${
               isConfigActive || dropdownAbierto
                 ? "bg-white/20 text-white shadow-sm font-semibold"
                 : "text-white/80 hover:bg-white/10 hover:text-white"

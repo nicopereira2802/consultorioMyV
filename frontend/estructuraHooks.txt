@@ -1,0 +1,30 @@
+  //* HOOK DE PAGINACIÓN
+  const {
+    datos: practicas,
+    cargando,
+    page,
+    setPage,
+    total,
+    totalPages,
+    search,
+    setSearch,
+    inicioRegistro,
+    finRegistro,
+    recargar,
+  } = usePaginationSearch("/practicas");
+
+  //* HOOK DE CRUD MODAL
+  const {
+    modalAbierto,
+    modalToggle,
+    modalEliminar,
+    editando,
+    itemSeleccionado: practicaSeleccionada,
+    datosFormulario,
+    abrirParaCrear,
+    abrirParaEditar,
+    abrirParaToggle,
+    abrirParaEliminar,
+    cerrarModal,
+    actualizarDatos,
+  } = useCRUDModal(ESTADO_INICIAL);

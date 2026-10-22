@@ -7,11 +7,7 @@ import { Turno } from "../models/index.model.js";
 import { validarExistencia } from "../middleware/validarExistenciaEntidad.js";
 
 import { validateSchema } from "../middleware/validateSchema.js";
-import {
-  atenderTurnoSchema,
-  createTurnoSchema,
-  updateTurnoSchema,
-} from "../schemas/Turno.schema.js";
+import { atenderTurnoSchema, createTurnoSchema, updateTurnoSchema } from "../schemas/Turno.schema.js";
 const router = express.Router();
 
 // Rutas básicas de Turno
@@ -20,17 +16,11 @@ router.get("/agenda", TurnoController.getAllTurnosAgenda);
 
 router.get("/atendidos", TurnoController.getAllTurnosAtendidos);
 
-router.get(
-  "/:id",
-  validarExistencia(Turno, "id", "params"),
-  TurnoController.getTurnoById,
-);
+router.get("/paciente/:id_paciente", TurnoController.getTurnosByPacienteId);
 
-router.post(
-  "/",
-  validateSchema(createTurnoSchema),
-  TurnoController.createTurno,
-);
+router.get("/:id", validarExistencia(Turno, "id", "params"), TurnoController.getTurnoById);
+
+router.post("/", validateSchema(createTurnoSchema), TurnoController.createTurno);
 
 router.put(
   "/:id",
@@ -70,10 +60,6 @@ router.patch(
   TurnoController.turnoReprogramado,
 );
 
-router.patch(
-  "/:id/delete",
-  validarExistencia(Turno, "id", "params"),
-  TurnoController.deleteTurno,
-);
+router.patch("/:id/delete", validarExistencia(Turno, "id", "params"), TurnoController.deleteTurno);
 
 export default router;

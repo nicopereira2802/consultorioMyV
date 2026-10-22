@@ -10,6 +10,7 @@ import {
   EstadoTurno,
   Paciente,
   Cobro,
+  Cuota,
 } from "../models/index.model.js";
 import {
   validarEstadoProgramado,
@@ -165,6 +166,47 @@ export const getTurnoById = async (req, res) => {
   } catch (error) {
     console.error("Error al obtener el turno:", error);
     res.status(500).json({ error: "Error al obtener el turno" });
+  }
+};
+
+export const getTurnosByPacienteId = async (req, res) => {
+  try {
+    const { id_paciente } = req.params;
+
+    const turnos = await Turno.findAll({
+      where: {
+        id_paciente: id_paciente,
+        activo: true,
+      },
+      order: [["fecha_hora_inicio", "DESC"]], // Del más reciente al más antiguo
+      include: [
+        {
+          model: EstadoTurno,
+          attributes: ["id_estado", "estado"],
+        },
+        {
+          model: Cobro,
+          attributes: ["id_cobro", "monto_a_cobrar", "cant_cuotas", "fecha_emision"],
+          include: [
+            {
+              model: Cuota,
+              attributes: ["id_cuota", "monto_cobrado", "monto_cuota", "estado", "metodo_pago"],
+            },
+          ],
+        },
+      ],
+    });
+
+    return res.status(200).json({
+      status: "success",
+      data: turnos,
+    });
+  } catch (error) {
+    console.error("Error al obtener los turnos del paciente:", error);
+    return res.status(500).json({
+      status: "error",
+      message: "Error al obtener los turnos del paciente",
+    });
   }
 };
 

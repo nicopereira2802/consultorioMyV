@@ -14,6 +14,8 @@ import { HistorialEstadoTurno } from "./HistorialEstadoTurno.model.js";
 import { Cobro } from "./Cobro.model.js";
 import { Cuota } from "./Cuota.model.js";
 import { Usuario } from "./Usuario.model.js";
+import { Gasto } from "./Gasto.model.js";
+import { CategoriaGasto } from "./CategoriaGasto.model.js";
 
 // Definir relaciones entre modelos
 Paciente.hasMany(Turno, { foreignKey: "id_paciente" });
@@ -53,6 +55,15 @@ Cobro.belongsTo(Paciente, { foreignKey: "id_paciente" });
 Cobro.hasMany(Cuota, { foreignKey: "id_cobro" });
 Cuota.belongsTo(Cobro, { foreignKey: "id_cobro" });
 
+CategoriaGasto.hasMany(Gasto, {
+  foreignKey: "id_categoria_gasto",
+  as: "Gastos",
+});
+
+Gasto.belongsTo(CategoriaGasto, {
+  foreignKey: "id_categoria_gasto",
+  as: "CategoriaGasto",
+});
 
 const sincronizarModelos = async () => {
   try {
@@ -77,5 +88,7 @@ export {
   Cobro,
   Cuota,
   Usuario,
+  Gasto,
+  CategoriaGasto,
   sincronizarModelos,
 };

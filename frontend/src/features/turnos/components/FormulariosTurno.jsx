@@ -170,18 +170,20 @@ export function FormularioCrearEditar({
             )}
 
             {/* Fecha y Hora de Fin (Calculado) */}
-            {!editando && (<div className="col-span-1 md:col-span-2 bg-gray-50 p-3 rounded-xl border border-gray-200">
-              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
-                Fecha y Hora de Fin (Calculado automáticamente)
-              </label>
-              <input
-                type="datetime-local"
-                name="fecha_hora_fin"
-                value={datosFormulario.fecha_hora_fin || ""}
-                disabled
-                className="w-full bg-gray-100 border border-gray-300 p-2 rounded-lg text-sm text-gray-600 cursor-not-allowed font-medium"
-              />
-            </div>)}
+            {!editando && (
+              <div className="col-span-1 md:col-span-2 bg-gray-50 p-3 rounded-xl border border-gray-200">
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                  Fecha y Hora de Fin (Calculado automáticamente)
+                </label>
+                <input
+                  type="datetime-local"
+                  name="fecha_hora_fin"
+                  value={datosFormulario.fecha_hora_fin || ""}
+                  disabled
+                  className="w-full bg-gray-100 border border-gray-300 p-2 rounded-lg text-sm text-gray-600 cursor-not-allowed font-medium"
+                />
+              </div>
+            )}
 
             {/* Notas / Observaciones */}
             <div className="col-span-1 md:col-span-2">
@@ -383,6 +385,7 @@ export function FormularioAtender({
   pacientesObrasSociales,
   agregarPracticaAtencion,
   actualizarPracticaAtencion,
+  actualizarDatosAtencion,
   eliminarPracticaAtencion,
   procesarAtencionTurno,
 }) {
@@ -412,10 +415,10 @@ export function FormularioAtender({
                     step="0.01"
                     value={datosAtencion.precio_final}
                     onChange={(e) =>
-                      setDatosAtencion((prev) => ({
-                        ...prev,
-                        precio_final: e.target.value === "" ? "" : parseFloat(e.target.value),
-                      }))
+                      actualizarDatosAtencion(
+                        "precio_final",
+                        e.target.value === "" ? "" : Number(e.target.value),
+                      )
                     }
                     placeholder="0.00"
                     required
@@ -504,10 +507,7 @@ export function FormularioAtender({
                 rows={3}
                 value={datosAtencion.notas_consulta}
                 onChange={(e) =>
-                  setDatosAtencion((prev) => ({
-                    ...prev,
-                    notas_consulta: e.target.value,
-                  }))
+                  actualizarDatosAtencion("notas_consulta", e.target.value === "" ? "" : e.target.value)
                 }
                 placeholder="Detalles sobre la atención, indicaciones médicas..."
                 className="w-full border border-gray-300 p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2eb086]/50 focus:border-[#2eb086]"
@@ -631,7 +631,7 @@ export function FormularioCancelar({
   turnoSeleccionado,
   inasistente,
   notasCanceladoInasistente,
-  setNotasCanceladoInasistente,
+  actualizarDatosCancelacion,
   procesarCancelacionTurno,
 }) {
   return (
@@ -656,10 +656,7 @@ export function FormularioCancelar({
                 rows={3}
                 value={notasCanceladoInasistente.notas_consulta}
                 onChange={(e) =>
-                  setNotasCanceladoInasistente((prev) => ({
-                    ...prev,
-                    notas_consulta: e.target.value,
-                  }))
+                  actualizarDatosCancelacion("notas_consulta", e.target.value === "" ? "" : e.target.value)
                 }
                 placeholder={`Detalles sobre la ${inasistente ? "inasistencia" : "cancelación"}...`}
                 className="w-full border border-gray-300 p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2eb086]/50 focus:border-[#2eb086]"
