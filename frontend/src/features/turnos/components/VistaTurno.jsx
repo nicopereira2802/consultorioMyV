@@ -236,18 +236,20 @@ export function VistaTurno({
           )}
         </div>
 
-        {/* ─── BLOQUE 4: NOTAS ─── */}
-        <div className="border-t border-gray-200 pt-3">
-          <h3 className="text-xs font-bold text-gray-800 uppercase tracking-wider flex items-center gap-2 mb-1.5">
-            <FileText size={16} className="text-[#2eb086]" />
-            <span>Notas de la Consulta</span>
-          </h3>
-          <div className="bg-gray-50 p-3 rounded-xl border border-gray-200 text-xs text-gray-700">
-            {turno.notas_consulta || <span className="text-gray-400 italic">Sin notas registradas.</span>}
+        {/* ─── BLOQUE 4: NOTAS / EVOLUCIÓN ACTUAL (Solo si está atendido o cancelado) ─── */}
+        {turno.notas_consulta && (
+          <div className="border-t border-gray-200 pt-3">
+            <h3 className="text-xs font-bold text-gray-800 uppercase tracking-wider flex items-center gap-2 mb-1.5">
+              <FileText size={16} className="text-[#2eb086]" />
+              <span>{esAtendido ? "Evolución / Diagnóstico" : "Observaciones"}</span>
+            </h3>
+            <div className="bg-gray-50 p-3 rounded-xl border border-gray-200 text-xs text-gray-700">
+              <p className="font-medium text-gray-800">{turno.notas_consulta}</p>
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* ─── BLOQUE 5: HISTORIAL DE ESTADOS ─── */}
+        {/* ─── BLOQUE 5: HISTORIAL DE ESTADOS (Bitácora limpia) ─── */}
         <div className="border-t border-gray-200 pt-3">
           <h3 className="text-xs font-bold text-gray-800 uppercase tracking-wider flex items-center gap-2 mb-2">
             <History size={16} className="text-[#2eb086]" />
@@ -270,10 +272,17 @@ export function VistaTurno({
                     <Clock size={12} />
                   </div>
                   <div className="flex-1 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                    <span className="font-semibold text-gray-800 leading-none">
-                      {h.EstadoTurno?.estado || h.descripcion || `Estado #${h.id_estado}`}
-                    </span>
-                    <span className="text-[11px] text-gray-400 font-medium leading-none">
+                    <div>
+                      <span className="font-semibold text-gray-800 leading-none block">
+                        {h.EstadoTurno?.estado || `Estado #${h.id_estado}`}
+                      </span>
+                      {h.descripcion && (
+                        <span className="text-[11px] text-gray-500 mt-0.5 block italic">
+                          &quot;{h.descripcion}&quot;
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[11px] text-gray-400 font-medium leading-none self-start sm:self-center">
                       {formatFechaHoraTabla(h.fecha_hora_cambio)}
                     </span>
                   </div>
