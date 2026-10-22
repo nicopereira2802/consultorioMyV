@@ -3,7 +3,9 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import api from "../../services/api";
-import { DollarSign, Plus, Trash2, Wallet } from "lucide-react";
+import { DollarSign, Plus, Trash2, Wallet, Scale } from "lucide-react";
+import ModalBalancePaciente from "./components/ModalBalancePaciente";
+
 
 import Header from "../../components/common/Header";
 import Tabla from "../../components/common/Tabla/Tabla";
@@ -38,6 +40,7 @@ export default function GestionCobros() {
   const [turnosAtendidos, setTurnosAtendidos] = useState([]);
   const [modalCuotas, setModalCuotas] = useState(false);
   const [cobroVerCuotas, setCobroVerCuotas] = useState(null);
+  const [pacienteBalanceId, setPacienteBalanceId] = useState(null);
 
   // 1. Paginación
   const {
@@ -222,26 +225,36 @@ export default function GestionCobros() {
                       </td>
 
                       <td className="px-6 py-4">
-                        <div className="flex items-center justify-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => abrirModalCuotas(cobro)}
-                            className="p-2 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors"
-                            title="Registrar Entrega / Ver Cuenta"
-                          >
-                            <Wallet size={18} />
-                          </button>
+                      <div className="flex items-center justify-center gap-2">
+                        {/* Consultar Balance Global del Paciente */}
+                        <button
+                          type="button"
+                          onClick={() => setPacienteBalanceId(cobro.id_paciente)}
+                          className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
+                          title="Consultar Balance de Cuenta Corriente"
+                        >
+                          <Scale size={18} />
+                        </button>
 
-                          <button
-                            type="button"
-                            onClick={() => abrirParaEliminar(cobro)}
-                            className="p-2 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
-                            title="Desactivar Cobro"
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        </div>
-                      </td>
+                        <button
+                          type="button"
+                          onClick={() => abrirModalCuotas(cobro)}
+                          className="p-2 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors"
+                          title="Registrar Entrega / Ver Cuotas"
+                        >
+                          <Wallet size={18} />
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => abrirParaEliminar(cobro)}
+                          className="p-2 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
+                          title="Desactivar Cobro"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    </td>
                     </tr>
                   );
                 })}
@@ -283,6 +296,14 @@ export default function GestionCobros() {
             cerrarModal={cerrarModal}
             cobroSeleccionado={cobroSeleccionado}
             ejecutarEliminacion={() => ejecutarEliminacion(cobroSeleccionado)}
+          />
+        )}
+        {/*  MODAL DE BALANCE DE CUENTA CORRIENTE (HU C3) */}
+        {pacienteBalanceId && (
+          <ModalBalancePaciente
+            isOpen={Boolean(pacienteBalanceId)}
+            onClose={() => setPacienteBalanceId(null)}
+            idPaciente={pacienteBalanceId}
           />
         )}
       </div>
