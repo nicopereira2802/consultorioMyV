@@ -14,24 +14,24 @@ import {
 } from "lucide-react";
 
 //* COMPONENTES COMUNES
-import Header from "../../components/common/Header";
-import Tabla from "../../components/common/Tabla/Tabla";
-import TablaHeader from "../../components/common/Tabla/TablaHeader";
-import TablaPaginacion from "../../components/common/Tabla/TablaPaginacion";
-import PageLayout from "../../components/layout/PageLayout";
+import Header from "../components/common/Header";
+import Tabla from "../components/common/Tabla/Tabla";
+import TablaHeader from "../components/common/Tabla/TablaHeader";
+import TablaPaginacion from "../components/common/Tabla/TablaPaginacion";
+import PageLayout from "../components/layout/PageLayout";
 
 //* HOOKS
-import { useCRUDModal } from "../../hooks/useCRUDModal";
-import { usePaginationSearch } from "../../hooks/usePaginationSearch";
-import { useGastoActions } from "./hooks/useGastoActions";
-import { useCategoriasGastosCatalogo } from "./hooks/useCategoriasGastosCatalogo";
+import { useCRUDModal } from "../hooks/useCRUDModal";
+import { usePaginationSearch } from "../hooks/usePaginationSearch";
+import { useGastoActions } from "../features/gastos/hooks/useGastoActions";
+import { useCategoriasGastosCatalogo } from "../features/gastos/hooks/useCategoriasGastosCatalogo";
 
 //* UTILS
-import { formatFechaTabla } from "../../utils/index";
-import { formatearGastoParaEditar } from "./utils/formatearGastoParaEditar";
+import { formatFechaTabla } from "../utils/index";
+import { formatearGastoParaEditar } from "../features/gastos/utils/formatearGastoParaEditar";
 
 //* FORMULARIOS
-import { FormularioCrearEditar, FormularioEliminar, FormularioToggle } from "./components/FormulariosGasto";
+import { FormularioCrearEditar, FormularioEliminar, FormularioToggle } from "../features/gastos/components/FormulariosGasto";
 
 const ESTADO_INICIAL = {
   id_categoria_gasto: "",

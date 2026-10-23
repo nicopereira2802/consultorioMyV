@@ -16,6 +16,7 @@ import PracticaTurnoRoutes from "./PracticaTurno.routes.js";
 import TurnoRoutes from "./Turno.routes.js";
 import GastoRoutes from "./Gasto.routes.js";
 import CategoriaGastoRoutes from "./CategoriaGasto.routes.js";
+import CajaRoutes from "./Caja.routes.js";
 
 // Rutas para los diferentes recursos
 router.use("/api/cobros", CobroRoutes);
@@ -30,5 +31,6 @@ router.use("/api/practicas-turnos", PracticaTurnoRoutes);
 router.use("/api/turnos", TurnoRoutes);
 router.use("/api/gastos", GastoRoutes);
 router.use("/api/categorias-gastos", CategoriaGastoRoutes);
+router.use("/api/caja", CajaRoutes);
 
 export default router;
