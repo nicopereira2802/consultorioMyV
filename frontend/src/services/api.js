@@ -9,13 +9,14 @@ const api = axios.create({
   timeout: 10000,
 });
 
-/* api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
+api.interceptors.request.use((config) => {
+  const token =
+    localStorage.getItem("token") || localStorage.getItem("jwt_dispositivo");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
-}); */
+});
 
 /* api.interceptors.response.use(
   (response) => response,
@@ -26,7 +27,8 @@ const api = axios.create({
       originalRequest._retry = true;
 
       try {
-        const token = localStorage.getItem("token");
+        const token =
+          localStorage.getItem("token") || localStorage.getItem("jwt_dispositivo");
 
         const { data } = await axios.post(
           "http://localhost:3000/api/usuarios/refreshToken",

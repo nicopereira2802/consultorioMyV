@@ -2,11 +2,13 @@
 
 import { useState, useRef, useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { Calendar, CalendarClock, FileText, Users, Settings, Shield, ChevronUp } from "lucide-react";
+import { Calendar, CalendarClock, FileText, Users, Settings, Shield, ChevronUp, Lock } from "lucide-react";
+import { usePinLock } from "../../../context/PinLockContext";
 import { BotonFlotanteGlobal } from "./BotonFlotanteGlobal";
 
 export const Bottombar = () => {
   const location = useLocation();
+  const { lock, bloquearTerminal } = usePinLock();
   const [dropdownAbierto, setDropdownAbierto] = useState(false);
 
   // Referencia unificada para todo el bloque de configuración (botón + menú)
@@ -79,6 +81,20 @@ export const Bottombar = () => {
               <FileText size={18} className="shrink-0 text-white/80" />
               <span>Prácticas</span>
             </NavLink>
+
+            <button
+              type="button"
+              onClick={() => {
+                setDropdownAbierto(false);
+                if (bloquearTerminal) bloquearTerminal();
+                else lock();
+              }}
+              title="Cerrar Sesión"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-rose-200 hover:bg-rose-500/20 transition-colors text-left w-full border-t border-white/10 mt-1 cursor-pointer"
+            >
+              <Lock size={16} className="shrink-0 text-rose-300" />
+              <span>Cerrar Sesión</span>
+            </button>
           </div>
         )}
 

@@ -1,154 +1,118 @@
-.login-container{
-    min-height: 100vh;
-    width: 100vw;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: #f8fafc;
-    padding: 1rem;
-    box-sizing: border-box;
+/** @format */
+
+/* Contenedor y casillas para PIN desacoplado */
+.pin-wrapper {
+  position: relative;
+  width: 240px;
+  margin: 0 auto;
 }
 
-.login-card{
-    background: #ffffff;
-    width: 100%;
-    max-width: 360px;
-    padding: 2.5rem 1.5rem;
-    border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-    text-align: center;
-    user-select: none;
+.hidden-pin-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  font-size: 24px;
+  z-index: 2;
 }
 
-.brand-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 54px;
-    height: 54px;
-    background-color: #ccfbf1;
-    color: #0d9488;
-    font-weight: 700;
-    font-size: 1.25rem;
-    border-radius: 12px;
-    margin-bottom: 0.75rem;
+.hidden-pin-input:disabled {
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
-.brand-header h1{
-    font-size: 1.25rem;
-    color: #0f172a;
-    font-weight:600 ;
-    margin: 0;
+.pin-boxes {
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
 }
 
-.brand-header p{
-    font-size: 0.875rem;
-    color: #64748b;
-    margin-top: 0.25rem;
+.pin-box {
+  width: 50px;
+  height: 50px;
+  border: 2px solid #cbd5e1;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  background-color: #ffffff;
 }
 
-.pin-instruction{
-    margin-top: 2rem;
-    margin-bottom: 1.25rem;
-    font-size: 0.9rem;
-    color: #64748b;
+.pin-box.active {
+  border-color: #0d9488;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.18);
 }
 
-.pin-wrapper{
-    position:relative;
-    width: 240px;
-    margin:0 auto;
+.pin-box.filled::before {
+  content: "";
+  display: block;
+  width: 12px;
+  height: 12px;
+  background-color: #0f172a;
+  border-radius: 50%;
 }
 
-.hidden-pin-input{
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    opacity: 0;
-    cursor: pointer;
-    font-size: 24px;
-    z-index: 2;
+.error-msg {
+  min-height: 1.25rem;
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  color: #e11d48;
+  font-weight: 500;
+  text-align: center;
 }
 
-.pin-boxes{
-    display: flex;
-    justify-content: space-between;
-    pointer-events: none;
+.success-msg {
+  min-height: 1.25rem;
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  color: #0d9488;
+  font-weight: 600;
+  text-align: center;
 }
 
-.pin-box{
-    width: 50px;
-    height: 50px;
-    border: 2px solid #cbd5e1;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.15s ease;
-}
-
-.pin-box.active{
-    border-color: #0d9488;
-    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
-}
-
-.pin-box.filled::before{
-    content: "";
-    display: block;
-    width: 12px;
-    height: 12px;
-    background-color: #0f172a;
-    border-radius: 50%;
-}
-
-.error-msg{
-    height: 1.25rem;
-    margin-top: 1.25rem;
-    font-size: 0.85rem;
-    color: #e11d48;
-    font-weight: 500;
-}
-
-.shake{
-    animation: shakeAnim 0.3s ease-in-out;
+.shake {
+  animation: shakeAnim 0.3s ease-in-out;
 }
 
 @keyframes shakeAnim {
-    0%, 100% {transform: translateX(0);}
-    25% {transform: translateX(-8px);}
-    50% {transform: translateX(8px);}
-    75%{transform: translateX(-4px);}
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-8px);
+  }
+  50% {
+    transform: translateX(8px);
+  }
+  75% {
+    transform: translateX(-4px);
+  }
 }
 
-.brand-logo-container{
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 90px;
-    height: 90px;
-    margin-bottom: 0.75rem;
+/* Bloqueo estricto de desplazamiento vertical y rebote táctil en autenticación */
+.auth-container,
+.auth-locked-scroll {
+  height: 100dvh;
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
-.brand-logo-img{
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    display: block;
+/* Evitar zoom automático en inputs en dispositivos móviles */
+@media screen and (max-width: 768px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
 }
 
-.brand-tittle{
-    font-size: 1.35rem;
-    color: #0f172a;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    margin: 0;
-}
 
-.brand-subtittle {
-    font-size: 0.825rem;
-    color: #64748b;
-    margin-top: 0.35rem;
-    font-weight: 500;
-}
+
