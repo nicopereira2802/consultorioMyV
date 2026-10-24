@@ -1,4 +1,4 @@
-﻿/** @format */
+/** @format */
 
 import { useState, useEffect, useRef, useCallback, useId } from "react";
 import {
@@ -13,7 +13,7 @@ import {
   EyeOff,
   KeyRound,
 } from "lucide-react";
-import authService from "../services/auth.service";
+import { authService } from "../../../services/api";
 
 export default function RecuperarPasswordModal({ isOpen, onClose, onSuccess }) {
   const [paso, setPaso] = useState(1); // 1: Pedir correo, 2: Ingresar c├│digo y nueva contrase├▒a, 3: ├ëxito

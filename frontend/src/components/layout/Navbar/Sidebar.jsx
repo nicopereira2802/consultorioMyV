@@ -18,7 +18,7 @@ import {
 import { useSidebar } from "../../../context/SidebarProvider";
 import { usePinLock } from "../../../context/PinLockContext";
 import ToothLogo from "../ToothLogo";
-import RecuperarPinModal from "../../RecuperarPinModal";
+import RecuperarPinModal from "../../../features/auth/components/RecuperarPinModal";
 
 const NAV_ITEMS = [
   {

@@ -1,7 +1,7 @@
 /** @format */
 
 import { createContext, useContext, useState, useCallback, useEffect } from "react";
-import PinLogin from "../components/PinLogin";
+import PinLogin from "../features/auth/PinLogin";
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const PinLockContext = createContext(null);

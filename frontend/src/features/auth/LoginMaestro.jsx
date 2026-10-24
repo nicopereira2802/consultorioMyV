@@ -1,9 +1,9 @@
 /** @format */
 
 import { useState, useEffect, useContext } from "react";
-import "./PinLogin.css";
-import logoImg from "../assets/logo.png";
-import RecuperarPasswordModal from "./RecuperarPasswordModal";
+
+import logoImg from "../../assets/logo.png";
+import RecuperarPasswordModal from "./components/RecuperarPasswordModal";
 import {
   User,
   Lock,
@@ -15,8 +15,8 @@ import {
   Loader2,
   CheckCircle2,
 } from "lucide-react";
-import authService from "../services/auth.service";
-import { PinLockContext } from "../context/PinLockContext";
+import { authService } from "../../services/api";
+import { PinLockContext } from "../../context/PinLockContext";
 
 export default function LoginMaestro({ onLoginSuccess }) {
   const pinLock = useContext(PinLockContext);
@@ -101,7 +101,7 @@ export default function LoginMaestro({ onLoginSuccess }) {
   };
 
   return (
-    <div className="h-[100dvh] w-full overflow-hidden overscroll-none touch-none select-none flex items-center justify-center bg-slate-50 p-4 box-border auth-locked-scroll">
+    <div className="h-[100dvh] w-full overflow-hidden overscroll-none touch-none select-none flex items-center justify-center bg-slate-50 p-4 box-border ">
       <main className="w-full max-w-[380px] bg-white rounded-3xl shadow-xl shadow-slate-200/60 border border-slate-200/80 p-8 text-center text-slate-800 animate-in fade-in zoom-in-95 duration-200">
         {/* Cabecera institucional */}
         <header className="flex flex-col items-center">

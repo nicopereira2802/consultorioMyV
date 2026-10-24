@@ -10,8 +10,8 @@ import { SidebarProvider } from "./context/SidebarProvider";
 import { FloatingButtonProvider } from "./context/BotonFlotanteContext";
 
 // * IMPORTACION DE COMPONENTES DE SEGURIDAD Y AUTENTICACIÓN
-import PinLogin from "./components/PinLogin";
-import LoginMaestro from "./components/LoginMaestro";
+import PinLogin from "./features/auth/PinLogin";
+import LoginMaestro from "./features/auth/LoginMaestro";
 
 // * IMPORTACION DE COMPONENTES Y VISTAS DE NEGOCIO
 import Layout from "./components/layout/Layout";

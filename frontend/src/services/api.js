@@ -18,38 +18,126 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-/* api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
+/**
+ * Login Maestro / Vincular Dispositivo con JWT de 5 días
+ * @param {string} nombre_usuario
+ * @param {string} contraseña
+ * @returns {Promise<{ status: string, mensaje: string, token: string, expiraEn: string, usuario: object }>}
+ */
+export const loginMaestro = async (nombre_usuario, contraseña) => {
+  const res = await api.post("/auth/login-maestro", {
+    nombre_usuario,
+    contraseña,
+    usuario: nombre_usuario,
+    password: contraseña,
+  });
+  return res.data;
+};
 
-      try {
-        const token =
-          localStorage.getItem("token") || localStorage.getItem("jwt_dispositivo");
+/**
+ * Desbloqueo Diario con PIN de 4 dígitos
+ * @param {string} pin
+ * @returns {Promise<{ status: string, mensaje: string, desbloqueado: boolean }>}
+ */
+export const validarPin = async (pin) => {
+  const res = await api.post("/auth/validar-pin", { pin });
+  return res.data;
+};
 
-        const { data } = await axios.post(
-          "http://localhost:3000/api/usuarios/refreshToken",
-          {},
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          },
-        );
+export const verificarPin = validarPin;
 
-        localStorage.setItem("token", data.token);
+/**
+ * Verificar Contraseña Maestra (para autorizar cambio de PIN)
+ * @param {string} contraseña
+ * @param {string} [nombre_usuario]
+ * @returns {Promise<{ status: string, mensaje: string, autorizada: boolean }>}
+ */
+export const verificarPassword = async (contraseña, nombre_usuario) => {
+  const res = await api.post("/auth/verificar-password", {
+    contraseña,
+    password: contraseña,
+    nombre_usuario,
+    usuario: nombre_usuario,
+  });
+  return res.data;
+};
 
-        originalRequest.headers.Authorization = `Bearer ${data.token}`;
-        return api(originalRequest);
-      } catch (refreshError) {
-        localStorage.removeItem("token");
-        window.location.href = "/login";
-        return Promise.reject(refreshError);
-      }
-    }
-    return Promise.reject(error);
-  },
-); */
+/**
+ * Cambiar / Restablecer PIN validando la contraseña maestra
+ * @param {string} contraseña
+ * @param {string} nuevo_pin
+ * @param {string} [nombre_usuario]
+ * @returns {Promise<{ status: string, mensaje: string }>}
+ */
+export const recuperarPin = async (contraseña, nuevo_pin, nombre_usuario) => {
+  const res = await api.post("/auth/recuperar-pin", {
+    contraseña,
+    password: contraseña,
+    nuevo_pin,
+    nuevoPin: nuevo_pin,
+    pin: nuevo_pin,
+    nombre_usuario,
+    usuario: nombre_usuario,
+  });
+  return res.data;
+};
+
+export const cambiarPin = recuperarPin;
+
+/**
+ * Solicitar recuperación de contraseña por email
+ * @param {string} email
+ * @returns {Promise<{ status: string, mensaje: string }>}
+ */
+export const recuperarPassword = async (email) => {
+  const res = await api.post("/auth/recuperar-password", { email });
+  return res.data;
+};
+
+export const solicitarRecuperacion = recuperarPassword;
+
+/**
+ * Restablecer contraseña consumiendo el código PIN de 6 dígitos
+ * @param {string} codigo
+ * @param {string} nueva_contraseña
+ * @returns {Promise<{ status: string, mensaje: string }>}
+ */
+export const restablecerPassword = async (codigo, nueva_contraseña) => {
+  const res = await api.post("/auth/restablecer-password", {
+    codigo,
+    token: codigo,
+    nueva_contraseña,
+    password: nueva_contraseña,
+  });
+  return res.data;
+};
+
+/**
+ * Refresco de token JWT
+ * @returns {Promise<{ status: string, token: string, expiraEn: string }>}
+ */
+export const refreshToken = async () => {
+  const res = await api.post("/auth/refresh-token");
+  return res.data;
+};
+
+/**
+ * Objeto agrupador authService
+ */
+export const authService = {
+  loginMaestro,
+  validarPin,
+  verificarPin,
+  verificarPassword,
+  recuperarPin,
+  cambiarPin,
+  recuperarPassword,
+  solicitarRecuperacion,
+  restablecerPassword,
+  refreshToken,
+};
+
+api.auth = authService;
 
 export default api;

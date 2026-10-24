@@ -1,8 +1,7 @@
 /** @format */
 
 import { useState, useRef, useEffect, useId, useContext } from "react";
-import "./PinLogin.css";
-import logoImg from "../assets/logo.png";
+import logoImg from "../../assets/logo.png";
 import {
   User,
   Lock,
@@ -17,8 +16,8 @@ import {
   ArrowLeft,
   Loader2,
 } from "lucide-react";
-import authService from "../services/auth.service";
-import { PinLockContext } from "../context/PinLockContext";
+import { authService } from "../../services/api";
+import { PinLockContext } from "../../context/PinLockContext";
 
 export default function PinLogin({
   onUnlock,
@@ -606,7 +605,7 @@ export default function PinLogin({
   };
 
   return (
-    <div className="w-full h-[100dvh] overflow-hidden overscroll-none touch-none select-none flex flex-col lg:flex-row bg-white font-sans relative auth-locked-scroll">
+    <div className="w-full h-[100dvh] overflow-hidden overscroll-none touch-none select-none flex flex-col lg:flex-row bg-white font-sans relative ">
       {/* ══════════════════════════════════════════════════════════════
           RESPLANDORES DIFUMINADOS CONTINUOS (AMBIENT GLOW REAL)
           Efecto etéreo sin cortes rectangulares ni divisiones duras
@@ -879,7 +878,7 @@ export default function PinLogin({
 
               {/* Contenedor de Casillas de PIN con Input Oculto */}
               <div
-                className={`pin-wrapper ${isShaking ? "shake" : ""} ${
+                className={`relative w-[240px] mx-auto ${isShaking ? "shake" : ""} ${
                   bloqueado ? "opacity-40 cursor-not-allowed pointer-events-none" : ""
                 }`}
                 onClick={() => {
@@ -912,11 +911,11 @@ export default function PinLogin({
                   onCopy={(e) => e.preventDefault()}
                   onCut={(e) => e.preventDefault()}
                   disabled={bloqueado || isValidatingPin}
-                  className="hidden-pin-input"
+                  className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer text-[24px] z-[2] disabled:cursor-not-allowed disabled:pointer-events-none"
                 />
 
                 <div
-                  className={`pin-boxes ${
+                  className={`flex justify-between pointer-events-none ${
                     bloqueado || isValidatingPin
                       ? "opacity-40 cursor-not-allowed bg-gray-100 pointer-events-none"
                       : ""
@@ -932,8 +931,14 @@ export default function PinLogin({
                     return (
                       <div
                         key={index}
-                        className={`pin-box ${isFilled ? "filled" : ""} ${
-                          isActive ? "active" : ""
+                        className={`w-[50px] h-[50px] border-2 rounded-[12px] flex items-center justify-center transition-all duration-150 ease-out bg-white ${
+                          isFilled
+                            ? "before:content-[''] before:block before:w-[12px] before:h-[12px] before:bg-[#0f172a] before:rounded-full"
+                            : ""
+                        } ${
+                          isActive
+                            ? "border-[#0d9488] shadow-[0_0_0_3px_rgba(13,148,136,0.18)]"
+                            : "border-[#cbd5e1]"
                         } ${bloqueado ? "bg-gray-100 border-gray-200 cursor-not-allowed" : ""}`}
                       />
                     );
@@ -1017,11 +1022,11 @@ export default function PinLogin({
               ) : (
                 <>
                   {errorPin ? (
-                    <p className="error-msg">{errorPin}</p>
+                    <p className="min-h-[1.25rem] mt-4 text-[0.85rem] text-[#e11d48] font-medium text-center">{errorPin}</p>
                   ) : mensajeExitoPin ? (
-                    <p className="success-msg">{mensajeExitoPin}</p>
+                    <p className="min-h-[1.25rem] mt-4 text-[0.85rem] text-[#0d9488] font-semibold text-center">{mensajeExitoPin}</p>
                   ) : (
-                    <p className="error-msg" />
+                    <p className="min-h-[1.25rem] mt-4 text-[0.85rem] text-[#e11d48] font-medium text-center" />
                   )}
 
                   {/* Enlace para cambiar a Vista A (Ingreso con Contraseña) */}
