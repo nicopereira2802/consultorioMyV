@@ -19,6 +19,47 @@ import {
 import { authService } from "../../services/api";
 import { PinLockContext } from "../../context/PinLockContext";
 
+// ─── DETECCIÓN POR HARDWARE DE PC DE ESCRITORIO (WEBGL GPU / POINTER) ──
+const esDispositivoEscritorioReal = () => {
+  try {
+    // 1. Detección por GPU mediante WebGL (infalible frente a DevTools)
+    const canvas = document.createElement("canvas");
+    const gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+    if (gl) {
+      const debugInfo = gl.getExtension("WEBGL_debug_renderer_info");
+      if (debugInfo) {
+        const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL).toLowerCase();
+        // Si el renderizador es una placa típica de PC/Laptop, es un entorno de escritorio
+        const gpuEscritorio = /nvidia|geforce|radeon|intel|direct3d|angle|amd|llvmpipe|swiftshader/i.test(renderer);
+        const gpuMovil = /mali|adreno|apple gpu|powervr/i.test(renderer);
+        if (gpuEscritorio && !gpuMovil) {
+          return true;
+        }
+      }
+    }
+
+    // 2. Comprobación de puntero primario (en PC con mouse siempre es 'fine')
+    if (
+      typeof window !== "undefined" &&
+      window.matchMedia("(any-pointer: fine)").matches &&
+      !window.matchMedia("(any-pointer: coarse)").matches
+    ) {
+      return true;
+    }
+
+    // 3. Plataforma del sistema operativo no emulada
+    if (typeof navigator !== "undefined") {
+      const plataforma = navigator.userAgentData?.platform || navigator.platform || "";
+      if (/Win|MacIntel|Linux x86_64/i.test(plataforma)) {
+        return true;
+      }
+    }
+  } catch (e) {
+    console.warn("[Auth] Error en detección de hardware:", e);
+  }
+  return false;
+};
+
 export default function PinLogin({
   onUnlock,
   onDeviceLinked,
@@ -490,10 +531,12 @@ export default function PinLogin({
   };
 
   const handleFaceIdLogin = async () => {
-    // Si la pantalla es de escritorio, abortar inmediatamente sin tocar WebAuthn
-    if (typeof window !== "undefined" && window.innerWidth >= 768) {
-      console.warn("[Face ID] Deshabilitado en entorno de escritorio");
-      return;
+    // Abortar si es una PC (incluso en modo emulador F12 y aun por clic manual)
+    if (esDispositivoEscritorioReal()) {
+      console.warn(
+        "[Auth] Face ID omitido: función reservada para dispositivos móviles con sensor biométrico."
+      );
+      return; // No llama a navigator.credentials.get ni abre Windows Hello
     }
 
     if (
@@ -509,21 +552,27 @@ export default function PinLogin({
     setMensajeExitoPin("");
 
     try {
+      // 2. Verificar soporte de credenciales de plataforma
       if (
         !window.PublicKeyCredential ||
         !window.isSecureContext ||
         typeof window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable !==
           "function"
       ) {
-        throw new Error("Biometría no disponible en este dispositivo o navegador");
+        console.warn("[Auth] Biometría no disponible en este dispositivo o navegador");
+        setIsScanningFaceId(false);
+        return;
       }
 
-      const hasAuthenticator =
+      const tienePlataforma =
         await window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-      if (!hasAuthenticator) {
-        throw new Error("Autenticador de plataforma no disponible");
+      if (!tienePlataforma) {
+        console.warn("[Auth] No hay autenticador de plataforma disponible.");
+        setIsScanningFaceId(false);
+        return;
       }
 
+      // 3. Ejecutar SOLO con autenticador de plataforma obligatorio
       const challenge = new Uint8Array(32);
       window.crypto.getRandomValues(challenge);
 
@@ -531,7 +580,11 @@ export default function PinLogin({
         publicKey: {
           challenge,
           timeout: 10000,
-          userVerification: "preferred",
+          userVerification: "required",
+          authenticatorSelection: {
+            authenticatorAttachment: "platform", // OBLIGATORIO: prohíbe pedir llaves USB externas
+            userVerification: "required",
+          },
         },
       });
 
@@ -561,9 +614,9 @@ export default function PinLogin({
         if (onUnlock) onUnlock();
       }, 400);
     } catch (err) {
-      // Manejo estricto de errores: cancelación voluntaria, abort o rechazo
+      // Silenciar cancelación sin romper la UI
       console.warn(
-        "[Biometría] Autenticación cancelada o rechazada:",
+        "[Auth] Cancelación o error biométrico:",
         err?.name || err?.message
       );
       setIsScanningFaceId(false);
@@ -574,6 +627,49 @@ export default function PinLogin({
       }, 100);
     }
   };
+
+  // ─── DISPARADOR AUTOMÁTICO DE BIOMETRÍA (EXCLUSIVO DISPOSITIVO MÓVIL REAL) ─
+  useEffect(() => {
+    // Si no está en la vista de PIN o está bloqueado o validando, abortar
+    if (vista !== "pin" || bloqueado || isValidatingPin) return;
+
+    // Aborta inmediatamente en PC/DevTools
+    if (esDispositivoEscritorioReal()) {
+      return;
+    }
+
+    let cancelado = false;
+
+    const iniciarBiometriaAutomatica = async () => {
+      try {
+        // Condición estricta 2: Verificar soporte de WebAuthn y autenticador de plataforma
+        if (
+          !window.PublicKeyCredential ||
+          !window.isSecureContext ||
+          typeof window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable !==
+            "function"
+        ) {
+          return;
+        }
+
+        const disponible =
+          await window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+        if (!disponible || cancelado) return;
+
+        // Disparo automático seguro en dispositivo móvil físico
+        handleFaceIdLogin();
+      } catch (err) {
+        console.warn("[Face ID Auto] No disponible:", err?.name || err?.message);
+      }
+    };
+
+    iniciarBiometriaAutomatica();
+
+    return () => {
+      cancelado = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vista, bloqueado]);
 
   // ─── ACCIONES VISTA C: RECUPERAR CONTRASEÑA POR EMAIL ─────────────
   const handleRecuperarPassword = async (e) => {
