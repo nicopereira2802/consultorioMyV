@@ -1,5 +1,6 @@
-import { Plus, Minus, Tag, ChevronDown, ChevronUp, Banknote } from "lucide-react";
+import { Plus, Minus, Tag, ChevronDown, ChevronUp, Banknote,Scale} from "lucide-react";
 import { formatFechaHoraTabla } from "../../../utils";
+
 
 export function VistaCronologica({ movimientosUnificados }) {
   return (
@@ -109,7 +110,7 @@ export function VistaLibroMayor({ egresosPorCategoria, categoriaAbierta, setCate
   );
 }
 
-export function VistaPendientes({ turnosPendientes, abrirCobroParaTurno }) {
+export function VistaPendientes({ turnosPendientes, abrirCobroParaTurno, onVerBalance }) {
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-2xs overflow-hidden divide-y divide-gray-100">
       {turnosPendientes.length === 0 ? (
@@ -128,10 +129,21 @@ export function VistaPendientes({ turnosPendientes, abrirCobroParaTurno }) {
               </span>
             </div>
 
-            <div className="flex items-center gap-3">
-              <span className="font-black text-amber-600 text-sm">
+            <div className="flex items-center gap-2">
+              <span className="font-black text-amber-600 text-sm mr-1">
                 ${Number(t.precio_final || 0).toLocaleString("es-AR", { minimumFractionDigits: 2 })}
               </span>
+
+              {/* 👈 BOTÓN DE BALANCE DE CUENTA CORRIENTE */}
+              <button
+                type="button"
+                onClick={() => onVerBalance && onVerBalance(t.id_paciente || t.Paciente?.id_paciente)}
+                className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors cursor-pointer"
+                title="Consultar Balance de Cuenta Corriente"
+              >
+                <Scale size={16} />
+              </button>
+
               <button
                 type="button"
                 onClick={() => abrirCobroParaTurno(t)}

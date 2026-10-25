@@ -336,3 +336,163 @@ export const deleteCobro = async (req, res) => {
     res.status(500).json({ error: "Error al eliminar el cobro" });
   }
 };
+
+// ==========================================
+// BALANCE DE CUENTA CORRIENTE POR PACIENTE (HU IE-3)
+// ==========================================
+export const getBalancePaciente = async (req, res) => {
+  try {
+    const id_paciente = req.params.id_paciente || req.params.id;
+
+    const paciente = await Paciente.findByPk(id_paciente, {
+      attributes: ["id_paciente", "nombre", "apellido", "dni", "telefono"],
+    });
+
+    if (!paciente) {
+      return res.status(404).json({ status: "error", message: "Paciente no encontrado" });
+    }
+
+    // 1. Obtener todos los cobros del paciente con sus cuotas
+    const cobros = await Cobro.findAll({
+      where: { id_paciente, activo: true },
+      include: [
+        {
+          model: Cuota,
+          attributes: ["id_cuota", "monto_cobrado", "monto_cuota", "estado", "fecha_cobro", "metodo_pago"],
+          required: false,
+        },
+        {
+          model: Turno,
+          attributes: ["id_turno", "fecha_hora_inicio", "precio_final"],
+          required: false,
+        },
+      ],
+      order: [["fecha_emision", "ASC"]],
+    });
+
+    // 2. Calcular acumulados
+    let montoPactadoTotal = 0;
+    let totalPagado = 0;
+    const turnosAtendidos = [];
+    const pagosRealizados = [];
+
+    cobros.forEach((c) => {
+      const deudaCobro = Number(c.monto_a_cobrar) || 0;
+      montoPactadoTotal += deudaCobro;
+
+      if (c.Turno) {
+        turnosAtendidos.push({
+          id_turno: c.Turno.id_turno,
+          fecha: c.Turno.fecha_hora_inicio,
+          precio: deudaCobro,
+        });
+      }
+
+      const cuotas = c.Cuotas || c.Cuota || [];
+      cuotas.forEach((q) => {
+        const pagado = Number(q.monto_cobrado) || 0;
+        if (pagado > 0) {
+          totalPagado += pagado;
+          pagosRealizados.push({
+            id_cuota: q.id_cuota,
+            monto: pagado,
+            metodo_pago: q.metodo_pago || "Efectivo",
+            fecha_cobro: q.fecha_cobro,
+          });
+        }
+      });
+    });
+
+    const saldo = montoPactadoTotal - totalPagado;
+    let estado = "AL_DIA";
+    if (saldo > 0) estado = "DEUDOR";
+    else if (saldo < 0) estado = "A_FAVOR";
+
+    return res.status(200).json({
+      status: "success",
+      data: {
+        paciente: {
+          id_paciente: paciente.id_paciente,
+          nombre_completo: `${paciente.apellido}, ${paciente.nombre}`,
+          dni: paciente.dni,
+          telefono: paciente.telefono,
+        },
+        balance: {
+          monto_pactado_total: montoPactadoTotal,
+          total_pagado: totalPagado,
+          saldo_deudor: saldo > 0 ? saldo : 0,
+          saldo_a_favor: saldo < 0 ? Math.abs(saldo) : 0,
+          estado,
+        },
+        turnos_atendidos: turnosAtendidos,
+        pagos_realizados: pagosRealizados,
+      },
+    });
+  } catch (error) {
+    console.error("Error al obtener balance del paciente:", error);
+    return res.status(500).json({ status: "error", message: "Error al calcular balance del paciente" });
+  }
+};
+
+// ==========================================
+// 6. OBTENER KPIS CONSOLIDADOS DE CAJA
+// ==========================================
+export const getKpisCaja = async (req, res) => {
+  try {
+    // 1. Ingresos totales reales: suma de lo efectivamente cobrado en cuotas
+    const totalIngresos = (await Cuota.sum("monto_cobrado")) || 0;
+
+    // 2. Egresos totales reales: suma de gastos operativos activos
+    // (Importa el modelo Gasto si no está en la cabecera: import { Gasto } from "../models/index.model.js")
+    const GastoModel = sequelize.models.Gasto;
+    const totalEgresos = GastoModel ? ((await GastoModel.sum("monto", { where: { activo: true } })) || 0) : 0;
+
+    // 3. Balance neto en caja (Cash Flow real)
+    const balanceNeto = totalIngresos - totalEgresos;
+
+    // 4. Cartera pendiente: deuda de turnos atendidos no saldados
+    const turnosAtendidos = await Turno.findAll({
+      where: { id_estado: 3, activo: true },
+      attributes: ["id_turno", "precio_final"],
+      include: [
+        {
+          model: Cobro,
+          where: { activo: true },
+          required: false,
+          include: [
+            {
+              model: Cuota,
+              attributes: ["monto_cobrado", "estado"],
+              required: false,
+            },
+          ],
+        },
+      ],
+    });
+
+    let totalPendienteCobro = 0;
+    turnosAtendidos.forEach((t) => {
+      const deudaTurno = Number(t.precio_final) || 0;
+      if (deudaTurno > 0) {
+        const cuotas = t.Cobro?.Cuotas || t.Cobro?.Cuota || [];
+        const pagado = cuotas.reduce((acc, q) => acc + (Number(q.monto_cobrado) || 0), 0);
+        if (pagado < deudaTurno) {
+          totalPendienteCobro += (deudaTurno - pagado);
+        }
+      }
+    });
+
+    return res.status(200).json({
+      status: "success",
+      data: {
+        totalIngresos,
+        totalEgresos,
+        balanceNeto,
+        totalPendienteCobro,
+      },
+    });
+  } catch (error) {
+    console.error("Error al calcular KPIs de caja:", error);
+    return res.status(500).json({ error: "Error al calcular métricas de caja" });
+  }
+};

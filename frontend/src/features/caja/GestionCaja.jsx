@@ -1,9 +1,10 @@
 /** @format */
 //* useState y useMemo
 import { useState, useMemo } from "react";
+import ModalBalancePaciente from "../cobros/components/ModalBalancePaciente";
 
 //* ICONOS
-import { Wallet, TrendingUp, TrendingDown, Clock, Plus, Minus, Search, DollarSign } from "lucide-react";
+import { Wallet, Plus, Minus, Search } from "lucide-react";
 
 //* COMPONENTES COMUNES
 import Header from "../../components/common/Header";
@@ -35,6 +36,7 @@ export default function GestionCaja() {
   //* VARIABLES GENERALES
   const [vistaActiva, setVistaActiva] = useState("cronologico"); // 'cronologico' | 'mayor' | 'pendientes'
   const [categoriaAbierta, setCategoriaAbierta] = useState(null);
+  const [pacienteBalanceId, setPacienteBalanceId] = useState(null);
 
   //* HOOK DE PAGINACIÓN
   const {
@@ -95,17 +97,26 @@ export default function GestionCaja() {
   //* HOOK DE CATEGORIAS PARA GASTOS
   const { categorias, recargarCategorias } = useCategoriasGastosCatalogo();
 
-  //* HOOK DE CALCULOS
-  const { kpis, movimientosUnificados } = useMovimientosCaja(cobros, gastos, turnosPendientes, search);
+  //* HOOK DE CÁLCULOS Y KPIS DESDE EL BACKEND
+  const { kpis, movimientosUnificados, cargarKpis } = useMovimientosCaja(
+    cobros,
+    gastos,
+    turnosPendientes,
+    search
+  );
+
+  //* RECARGA CONJUNTA (LISTAS + MÉTRICAS)
+  const recargarTodo = () => {
+    if (typeof recargar === "function") recargar();
+    if (typeof cargarKpis === "function") cargarKpis();
+  };
 
   //* HOOK DE PETICIONES API
-  const { guardarGasto } = useGastoActions(recargar, () => cerrarModalGasto());
-  const { guardarCobro } = useCobroActions(recargar, () => cerrarModalCobro());
+  const { guardarGasto } = useGastoActions(recargarTodo, () => cerrarModalGasto());
+  const { guardarCobro } = useCobroActions(recargarTodo, () => cerrarModalCobro());
 
   //* ABRIR MODAL PARA COBRAR UN TURNO
   const abrirCobroParaTurno = (turno) => {
-    console.log("Abriendo cobro para turno:", turno);
-    
     const idPaciente = turno.id_paciente || turno.Paciente?.id_paciente || "";
     const idTurno = turno.id_turno;
     const precio = turno.precio_final || turno.total || "";
@@ -137,7 +148,7 @@ export default function GestionCaja() {
   return (
     <PageLayout>
       <div className="w-full flex-1 flex flex-col gap-4 pb-24">
-        {/* //* HEADER PRINCIPAL */}
+        {/* HEADER PRINCIPAL */}
         <Header
           icono={Wallet}
           titulo="Caja y Balance Financiero"
@@ -147,9 +158,7 @@ export default function GestionCaja() {
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => {
-                  abrirParaCrearGasto();
-                }}
+                onClick={() => abrirParaCrearGasto()}
                 className="flex items-center gap-1.5 bg-rose-500 hover:bg-rose-600 text-white px-3.5 py-2 rounded-xl font-bold text-xs transition-all shadow-sm cursor-pointer"
               >
                 <Minus size={16} />
@@ -158,9 +167,7 @@ export default function GestionCaja() {
 
               <button
                 type="button"
-                onClick={() => {
-                  abrirParaCrearCobro();
-                }}
+                onClick={() => abrirParaCrearCobro()}
                 className="flex items-center gap-1.5 bg-[#2eb086] hover:bg-[#259370] text-white px-3.5 py-2 rounded-xl font-bold text-xs transition-all shadow-sm cursor-pointer"
               >
                 <Plus size={16} />
@@ -171,16 +178,16 @@ export default function GestionCaja() {
         />
 
         <div className="w-full px-4 flex flex-col gap-4">
-          {/* //* BODY: KPIS (METRICAS PARA VER EL RENDIMINETO) */}
+          {/* BODY: KPIS */}
           <Kpis kpis={kpis} />
 
-          {/* //* VISTAS: BARRA DE VISTAS */}
+          {/* BARRA DE VISTAS */}
           <div className="bg-white rounded-2xl border border-gray-100 p-3 shadow-2xs flex flex-col md:flex-row justify-between items-center gap-3">
             <div className="flex bg-gray-100 p-1 rounded-xl w-full md:w-auto">
               <button
                 type="button"
                 onClick={() => setVistaActiva("cronologico")}
-                className={`flex-1 md:flex-none px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                className={`flex-1 md:flex-none px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                   vistaActiva === "cronologico" ? "bg-white text-gray-800 shadow-2xs" : "text-gray-500"
                 }`}
               >
@@ -189,7 +196,7 @@ export default function GestionCaja() {
               <button
                 type="button"
                 onClick={() => setVistaActiva("mayor")}
-                className={`flex-1 md:flex-none px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                className={`flex-1 md:flex-none px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                   vistaActiva === "mayor" ? "bg-white text-gray-800 shadow-2xs" : "text-gray-500"
                 }`}
               >
@@ -198,7 +205,7 @@ export default function GestionCaja() {
               <button
                 type="button"
                 onClick={() => setVistaActiva("pendientes")}
-                className={`flex-1 md:flex-none px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                className={`flex-1 md:flex-none px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                   vistaActiva === "pendientes" ? "bg-white text-gray-800 shadow-2xs" : "text-gray-500"
                 }`}
               >
@@ -218,18 +225,15 @@ export default function GestionCaja() {
             </div>
           </div>
 
-          {/* //* VISTAS: CRONOLOGICA */}
+          {/* VISTA: CRONOLÓGICA */}
           {vistaActiva === "cronologico" && (
             <div className="flex flex-col gap-4">
               <VistaCronologica movimientosUnificados={movimientosUnificados} />
-
-              {/* Si el cronológico maneja cobros/gastos combinados, 
-                  puedes elegir qué paginación mostrar o extender tu hook */}
               <TablaPaginacion page={pageCobro} setPage={setPageCobro} totalPages={totalPagesCobro} />
             </div>
           )}
 
-          {/* //* VISTA: LIBRO MAYOR (EGRESOS POR CATEGORÍA) */}
+          {/* VISTA: LIBRO MAYOR */}
           {vistaActiva === "mayor" && (
             <div className="flex flex-col gap-4">
               <VistaLibroMayor
@@ -237,25 +241,39 @@ export default function GestionCaja() {
                 categoriaAbierta={categoriaAbierta}
                 setCategoriaAbierta={setCategoriaAbierta}
               />
-
-              {/* Paginación específica para Gastos */}
               <TablaPaginacion page={pageGasto} setPage={setPageGasto} totalPages={totalPagesGasto} />
             </div>
           )}
 
-          {/* //* VISTAS: PENDIENTES */}
+          {/* VISTA: PENDIENTES */}
           {vistaActiva === "pendientes" && (
             <div className="flex flex-col gap-4">
               <VistaPendientes
                 turnosPendientes={turnosPendientes}
                 abrirCobroParaTurno={abrirCobroParaTurno}
+                onVerBalance={(id) => setPacienteBalanceId(id)}
               />
-              {/* Agregar paginación de pendientes si el hook la soporta */}
             </div>
           )}
         </div>
 
-        {/* //* MODALES: CREAR COBRO */}
+        {/* MODAL: CREAR / EDITAR GASTO */}
+        {modalGastoAbierto && (
+          <FormularioGasto
+            modalAbierto={modalGastoAbierto}
+            cerrarModal={cerrarModalGasto}
+            datosFormulario={datosGasto}
+            actualizarDatos={actualizarDatosGasto}
+            categorias={categorias}
+            recargarCategorias={recargarCategorias}
+            guardarGasto={(e) => {
+              e.preventDefault();
+              guardarGasto(datosGasto, editandoGasto, gastoSeleccionado);
+            }}
+          />
+        )}
+
+        {/* MODAL: CREAR / EDITAR COBRO */}
         {modalCobroAbierto && (
           <FormularioCobro
             modalAbierto={modalCobroAbierto}
@@ -271,19 +289,12 @@ export default function GestionCaja() {
           />
         )}
 
-        {/* //* MODALES: CREAR COBRO */}
-        {modalCobroAbierto && (
-          <FormularioCobro
-            modalAbierto={modalCobroAbierto}
-            cerrarModal={cerrarModalCobro}
-            editando={editandoCobro}
-            datosFormulario={datosCobro}
-            actualizarDatos={actualizarDatosCobro}
-            turnosAtendidos={turnosPendientes}
-            procesarFormulario={(e) => {
-              e.preventDefault();
-              guardarCobro(datosCobro, editandoCobro, cobroSeleccionado);
-            }}
+        {/* MODAL: BALANCE DE CUENTA CORRIENTE (HU IE-3) */}
+        {pacienteBalanceId && (
+          <ModalBalancePaciente
+            isOpen={Boolean(pacienteBalanceId)}
+            onClose={() => setPacienteBalanceId(null)}
+            idPaciente={pacienteBalanceId}
           />
         )}
       </div>

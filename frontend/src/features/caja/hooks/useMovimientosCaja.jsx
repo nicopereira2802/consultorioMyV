@@ -1,27 +1,37 @@
 /** @format */
-import { useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import api from "../../../services/api";
 
 export function useMovimientosCaja(cobros, gastos, turnosPendientes, busqueda) {
-  // ─── CÁLCULOS FINANCIEROS KPI ───
-  const kpis = useMemo(() => {
-    let totalIngresos = 0;
-    cobros.forEach((c) => {
-      const pagado = (c.Cuotas || c.Cuota || []).reduce((acc, q) => acc + (Number(q.monto_cobrado) || 0), 0);
-      totalIngresos += pagado;
-    });
+  const [kpis, setKpis] = useState({
+    totalIngresos: 0,
+    totalEgresos: 0,
+    balanceNeto: 0,
+    totalPendienteCobro: 0,
+  });
+  const [cargandoKpis, setCargandoKpis] = useState(false);
 
-    const totalEgresos = gastos.reduce((acc, g) => acc + (Number(g.monto) || 0), 0);
-    const totalPendienteCobro = turnosPendientes.reduce((acc, t) => acc + (Number(t.precio_final) || 0), 0);
 
-    return {
-      totalIngresos,
-      totalEgresos,
-      balanceNeto: totalIngresos - totalEgresos,
-      totalPendienteCobro,
-    };
-  }, [gastos, cobros, turnosPendientes]);
+  const cargarKpis = useCallback(async () => {
+    setCargandoKpis(true);
+    try {
+      const res = await api.get("/cobros/kpis");
+      if (res.data?.data) {
+        setKpis(res.data.data);
+      }
+    } catch (error) {
+      console.error("Error al cargar KPIs de caja:", error);
+    } finally {
+      setCargandoKpis(false);
+    }
+  }, []);
 
-  // ─── UNIFICACIÓN Y FILTRADO DE MOVIMIENTOS ───
+  // Se recarga al montar o cuando cambian las colecciones por una operación
+  useEffect(() => {
+    cargarKpis();
+  }, [cargarKpis, cobros.length, gastos.length, turnosPendientes.length]);
+
+
   const movimientosUnificados = useMemo(() => {
     const listaIngresos = cobros.map((c) => ({
       id: `ingreso-${c.id_cobro}`,
@@ -60,5 +70,5 @@ export function useMovimientosCaja(cobros, gastos, turnosPendientes, busqueda) {
     );
   }, [cobros, gastos, busqueda]);
 
-  return { kpis, movimientosUnificados };
+  return { kpis, movimientosUnificados, cargarKpis, cargandoKpis };
 }
