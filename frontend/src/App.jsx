@@ -15,11 +15,11 @@ import GestionTurnos from "./features/turnos/GestionTurnos";
 import GestionPacientes from "./features/pacientes/GestionPacientes";
 import GestionObrasSociales from "./features/obrasSociales/GestionObraSocial";
 import GestionPracticas from "./features/practicas/GestionPracticas";
-import GestionCobros from "./features/cobros/GestionCobro";
+import GestionCaja from "./features/caja/GestionCaja";
 
 // * CREACION DEL APP
 function App() {
-  // * useEffect QUE CARGA SLPASHSCREEN
+  // * useEffect QUE CARGA SPLASHSCREEN
   useEffect(() => {
     const splash = document.getElementById("splash-screen");
     if (splash) {
@@ -45,7 +45,7 @@ function App() {
             { path: "", element: <AgendaDiaria /> },
             { path: "/pacientes", element: <GestionPacientes /> },
             { path: "/turnos", element: <GestionTurnos /> },
-            { path: "/cobros", element: <GestionCobros /> },
+            { path: "/caja", element: <GestionCaja /> },
             {
               path: "/configuracion",
               children: [

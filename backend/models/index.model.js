@@ -19,6 +19,8 @@ import { ObraSocialTurno } from "./ObraSocialTurno.model.js";
 // ==========================================
 // DEFINICIÓN DE RELACIONES
 // ==========================================
+import { Gasto } from "./Gasto.model.js";
+import { CategoriaGasto } from "./CategoriaGasto.model.js";
 
 Paciente.hasMany(Turno, { foreignKey: "id_paciente" });
 Turno.belongsTo(Paciente, { foreignKey: "id_paciente" });
@@ -123,6 +125,15 @@ ObraSocialTurno.belongsTo(Turno, { foreignKey: "id_turno" });
 
 Practica.hasMany(ObraSocialTurno, { foreignKey: "id_practica" });
 ObraSocialTurno.belongsTo(Practica, { foreignKey: "id_practica" });
+CategoriaGasto.hasMany(Gasto, {
+  foreignKey: "id_categoria_gasto",
+  as: "Gastos",
+});
+
+Gasto.belongsTo(CategoriaGasto, {
+  foreignKey: "id_categoria_gasto",
+  as: "CategoriaGasto",
+});
 
 const sincronizarModelos = async () => {
   try {
@@ -149,5 +160,7 @@ export {
   Cobro,
   Cuota,
   Usuario,
+  Gasto,
+  CategoriaGasto,
   sincronizarModelos,
 };

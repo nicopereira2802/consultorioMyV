@@ -1,3 +1,4 @@
+/** @format */
 import { useState } from "react";
 import api from "../../../services/api";
 import toast from "react-hot-toast";
@@ -9,42 +10,55 @@ export function useCobroActions(recargar, cerrarModal) {
   const guardarCobro = async (datosFormulario, editando, cobroSeleccionado) => {
     setCargandoAccion(true);
     try {
+      const idTurno = Number(datosFormulario.id_turno);
+      const idPaciente = Number(datosFormulario.id_paciente);
+      const montoTotal = Number(datosFormulario.monto_a_cobrar) || 0;
+      const modalidad = datosFormulario.modalidad || "inmediato";
+
+      // Validación preventiva para no mandar NaN al backend
+      if (!idTurno || isNaN(idTurno) || !idPaciente || isNaN(idPaciente)) {
+        toast.error("Datos incompletos: no se pudo identificar el turno o el paciente.");
+        setCargandoAccion(false);
+        return;
+      }
+
       const payloadBase = {
-        id_turno: Number(datosFormulario.id_turno),
-        id_paciente: Number(datosFormulario.id_paciente),
-        monto_a_cobrar: Number(datosFormulario.monto_a_cobrar),
+        id_turno: idTurno,
+        id_paciente: idPaciente,
+        monto_a_cobrar: montoTotal,
       };
 
-      if (editando) {
+      if (editando && cobroSeleccionado) {
         await api.put(`/cobros/${cobroSeleccionado.id_cobro}`, {
           ...payloadBase,
-          cant_cuotas: datosFormulario.modalidad === "cuotas" ? Number(datosFormulario.cant_cuotas) : 1,
+          cant_cuotas: modalidad === "cuotas" ? Number(datosFormulario.cant_cuotas) || 1 : 1,
         });
         toast.success("Cobro actualizado correctamente");
       } else {
-        if (datosFormulario.modalidad === "inmediato") {
+        if (modalidad === "inmediato") {
           await api.post("/cobros/inmediato", {
             ...payloadBase,
-            metodo_pago: datosFormulario.metodo_pago,
+            metodo_pago: datosFormulario.metodo_pago || "Efectivo",
           });
-        } else if (datosFormulario.modalidad === "cuotas") {
+        } else if (modalidad === "cuotas") {
           await api.post("/cobros/cuotas", {
             ...payloadBase,
-            cant_cuotas: Number(datosFormulario.cant_cuotas),
-            fecha_primer_vencimiento: datosFormulario.fecha_primer_vencimiento,
+            cant_cuotas: Number(datosFormulario.cant_cuotas) || 3,
+            fecha_primer_vencimiento:
+              datosFormulario.fecha_primer_vencimiento || new Date().toISOString().split("T")[0],
           });
-        } else if (datosFormulario.modalidad === "informal") {
+        } else if (modalidad === "informal") {
           await api.post("/cobros/informal", {
             ...payloadBase,
             entrega_inicial: Number(datosFormulario.entrega_inicial) || 0,
-            metodo_pago: datosFormulario.metodo_pago,
+            metodo_pago: datosFormulario.metodo_pago || "Efectivo",
           });
         }
         toast.success("Cobro registrado correctamente");
       }
 
-      recargar();
-      cerrarModal();
+      if (typeof recargar === "function") recargar();
+      if (typeof cerrarModal === "function") cerrarModal();
     } catch (error) {
       console.error("Error al registrar el cobro:", error);
       manejarErrorApi(error, "No se pudo procesar el cobro.");
@@ -59,7 +73,7 @@ export function useCobroActions(recargar, cerrarModal) {
     try {
       await api.patch(`/cobros/${cobroSeleccionado.id_cobro}/delete`);
       toast.success("Registro de cobro desactivado");
-      recargar();
+      if (typeof recargar === "function") recargar();
       if (typeof cerrarModalEliminar === "function") cerrarModalEliminar();
     } catch (error) {
       console.error("Error al desactivar cobro:", error);

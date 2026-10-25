@@ -10,7 +10,8 @@ import {
   Cobro,
   Paciente,
   PacienteObraSocial,
-  EstadoTurno
+  EstadoTurno,
+  Cuota
 } from "../models/index.model.js";
 import { validarSolapaminetoHorarios } from "../validations/Turno.validation.js";
 import { ESTADOS } from "../constants/EstadosTurno.js";
@@ -100,22 +101,57 @@ export const getAllTurnosAtendidos = async (req, res) => {
     const turnos = await Turno.findAll({
       where: { activo: true },
       include: [
-        ...defaultTurnoIncludes, 
+        ...defaultTurnoIncludes,
         {
           model: EstadoTurno,
           where: { estado: "Atendido" },
-          required: true, 
+          required: true,
+        },
+        {
+          model: Cobro,
+          where: { activo: true },
+          required: false, // LEFT JOIN para traer el turno aunque el cobro se haya creado recién
+          include: [
+            {
+              model: Cuota,
+              attributes: ["id_cuota", "monto_cuota", "monto_cobrado", "estado"],
+              required: false,
+            },
+          ],
         },
       ],
       order: [["fecha_hora_inicio", "DESC"]],
     });
 
+    // Filtramos para retornar SOLO los turnos que aún tienen saldo pendiente
+    const turnosPendientesDeCobro = turnos.filter((t) => {
+      // Si no tiene cobro generado, debe cobrarse
+      if (!t.Cobro) return true;
+
+      const totalDeuda = Number(t.Cobro.monto_a_cobrar) || Number(t.precio_final) || 0;
+
+      // Si el turno fue gratuito, no hay nada que cobrar
+      if (totalDeuda <= 0) return false;
+
+      // Sumar lo que efectivamente se cobró en sus cuotas
+      const cuotas = t.Cobro.Cuotas || t.Cobro.Cuota || [];
+      const totalPagado = cuotas.reduce((acc, c) => {
+        if (c.estado === "Pagada" || Number(c.monto_cobrado) > 0) {
+          return acc + Number(c.monto_cobrado || c.monto_cuota || 0);
+        }
+        return acc;
+      }, 0);
+
+      // Si lo pagado es menor a la deuda, sigue pendiente en la pestaña "Por Cobrar"
+      return totalPagado < totalDeuda;
+    });
+
     res.status(200).json({
       status: "success",
-      data: turnos,
+      data: turnosPendientesDeCobro.map(formatearTurnoResponse),
     });
   } catch (error) {
-    console.error("Error al obtener los turnos atendidos:", error);
+    console.error("Error al obtener los turnos atendidos pendientes:", error);
     res.status(500).json({ error: "Error al obtener los turnos atendidos" });
   }
 };
@@ -130,6 +166,46 @@ export const getTurnoById = async (req, res) => {
   }
 };
 
+export const getTurnosByPacienteId = async (req, res) => {
+  try {
+    const { id_paciente } = req.params;
+
+    const turnos = await Turno.findAll({
+      where: {
+        id_paciente: id_paciente,
+        activo: true,
+      },
+      order: [["fecha_hora_inicio", "DESC"]],
+      include: [
+        {
+          model: EstadoTurno,
+          attributes: ["id_estado", "estado"],
+        },
+        {
+          model: Cobro,
+          attributes: ["id_cobro", "monto_a_cobrar", "cant_cuotas", "fecha_emision"],
+          include: [
+            {
+              model: Cuota,
+              attributes: ["id_cuota", "monto_cobrado", "monto_cuota", "estado", "metodo_pago"],
+            },
+          ],
+        },
+      ],
+    });
+
+    return res.status(200).json({
+      status: "success",
+      data: turnos,
+    });
+  } catch (error) {
+    console.error("Error al obtener los turnos del paciente:", error);
+    return res.status(500).json({
+      status: "error",
+      message: "Error al obtener los turnos del paciente",
+    });
+  }
+};
 
 // ==========================================
 // 2. ESCRITURA 
@@ -146,7 +222,6 @@ export const createTurno = async (req, res) => {
     const haySolapamiento = await validarSolapaminetoHorarios(inicioStr, finStr, null);
     if (haySolapamiento) return res.status(409).json({ error: "El horario seleccionado se superpone." });
 
-    // Calculamos el precio en base a las prácticas
     let precioFinal = Number(req.body.precio_final) || 0;
     let practicas = [];
     if (idsPracticas.length > 0) {
@@ -195,7 +270,7 @@ export const updateTurno = async (req, res) => {
     const { id_paciente, precio_final, notas_consulta } = req.body;
 
     if (id_paciente) {
-      const paciente = await Paciente.findByPk(id_paciente); // Bug corregido: añadido await
+      const paciente = await Paciente.findByPk(id_paciente);
       if (!paciente) return res.status(400).json({ error: "El paciente seleccionado no existe." });
     }
 
@@ -251,6 +326,25 @@ export const turnoAtendido = async (req, res) => {
         }, { transaction: t });
       }
 
+      // REGISTRO INICIAL DEL COBRO EN $0 (Deuda generada automáticamente)
+      if (precioFinal > 0) {
+        const cobroExistente = await Cobro.findOne({ 
+          where: { id_turno: turno.id_turno, activo: true }, 
+          transaction: t 
+        });
+
+        if (!cobroExistente) {
+          await Cobro.create({
+            id_turno: turno.id_turno,
+            id_paciente: turno.id_paciente,
+            monto_a_cobrar: precioFinal,
+            cant_cuotas: 1, 
+            fecha_emision: new Date(),
+            activo: true,
+          }, { transaction: t });
+        }
+      }
+
       return await Turno.findByPk(turno.id_turno, { include: defaultTurnoIncludes, transaction: t });
     });
 
@@ -292,30 +386,31 @@ export const turnoInasistido = async (req, res) => {
 export const turnoReprogramado = async (req, res) => {
   try {
     const turno = req.turno;
-    const { fecha_hora_inicio, fecha_hora_fin } = req.body;
+    const { fecha_hora_inicio, fecha_hora_fin, duracion_minutos, motivo } = req.body;
     
     const inicioStr = formatearFechaHoraStr(fecha_hora_inicio);
-    const finStr = fecha_hora_fin ? formatearFechaHoraStr(fecha_hora_fin) : calcularFechaHoraFinStr(inicioStr, 30);
+    const finStr = fecha_hora_fin ? formatearFechaHoraStr(fecha_hora_fin) : calcularFechaHoraFinStr(inicioStr, duracion_minutos || 30);
 
     const haySolapamiento = await validarSolapaminetoHorarios(inicioStr, finStr, turno.id_turno);
     if (haySolapamiento) return res.status(409).json({ error: "El horario seleccionado se superpone." });
 
-    // La reprogramación aquí sigue la idea original de Mateo: actualiza el turno actual a Programado
     const turnoActualizado = await sequelize.transaction(async (t) => {
-      const estadoActual = await obtenerEstadoTurno(turno.id_estado, t);
-      
-      // Forzamos manualmente el estado a programado y guardamos historial (como hacía Mateo)
+      const [estadoProgramado] = await EstadoTurno.findOrCreate({
+        where: { estado: "Programado" },
+        transaction: t,
+      });
+
       await turno.update({
         fecha_hora_inicio: inicioStr,
         fecha_hora_fin: finStr,
-        id_estado: ESTADOS.PROGRAMADO
+        id_estado: estadoProgramado.id_estado
       }, { transaction: t });
 
       await HistorialEstadoTurno.create({
         id_turno: turno.id_turno,
-        id_estado: ESTADOS.PROGRAMADO,
+        id_estado: estadoProgramado.id_estado,
         fecha_hora_cambio: new Date(),
-        descripcion: "Turno reprogramado",
+        descripcion: motivo || "Turno reprogramado",
       }, { transaction: t });
 
       return await Turno.findByPk(turno.id_turno, { include: defaultTurnoIncludes, transaction: t });
@@ -329,11 +424,10 @@ export const turnoReprogramado = async (req, res) => {
 
 export const deleteTurno = async (req, res) => {
   try {
-    await req.turno.update({ activo: !req.turno.activo }); // Enfoque Soft Delete de Mateo
+    await req.turno.update({ activo: !req.turno.activo });
     res.status(200).json({ message: "Turno eliminado correctamente" });
   } catch (error) {
     console.error("Error al eliminar el turno:", error);
     res.status(500).json({ error: "Error al eliminar el turno" });
   }
 };
-

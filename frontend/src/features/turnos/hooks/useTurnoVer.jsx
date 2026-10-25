@@ -1,8 +1,11 @@
 import { useState } from "react";
+import { useTurnoDependencies } from "./useTurnoDependencies";
 
 export function useTurnoVer() {
   const [modalVer, setModalVer] = useState(false);
   const [turnoVer, setTurnoVer] = useState(null);
+
+  const { practicasLista } = useTurnoDependencies();
 
   const abrirParaVer = (turnoEncontrado) => {
     setTurnoVer(turnoEncontrado);
@@ -13,5 +16,5 @@ export function useTurnoVer() {
     setTurnoVer(null);
     setModalVer(false);
   };
-  return { modalVer, turnoVer, abrirParaVer, cerrarVer };
+  return { modalVer, turnoVer, practicasLista, abrirParaVer, cerrarVer };
 }

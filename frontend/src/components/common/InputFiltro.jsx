@@ -131,7 +131,7 @@ const InputFiltro = ({
             {resultados.length > 0 ? (
               resultados.map((item, index) => (
                 <li
-                  key={item.id_paciente || item.id || index}
+                  key={`${item.id}-${index}`}
                   onClick={() => manejarClickOpcion(item)}
                   className="p-2 hover:bg-gray-100 cursor-pointer text-sm border-b border-gray-100 last:border-b-0"
                 >

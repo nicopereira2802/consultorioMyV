@@ -3,7 +3,7 @@
 //* useSearchParams E ICONOS
 import { useEffect } from "react";
 import { useSearchParams } from "react-router-dom"; // * PARA PERMITIR COMPLETAR PACIENTE DESDE AGENDA
-import { Users, Plus, Edit, Phone, Ban, RotateCcw } from "lucide-react";
+import { Users, Plus, Edit, Phone, Ban, RotateCcw, Eye, Shield } from "lucide-react";
 
 //* COMPONENTES COMUNES
 import Header from "../../components/common/Header";
@@ -19,27 +19,19 @@ import { useCRUDModal } from "../../hooks/useCRUDModal";
 import { usePaginationSearch } from "../../hooks/usePaginationSearch";
 import { usePacienteActions } from "./hooks/usePacienteActions";
 import { useObrasSocialesCatalogo } from "./hooks/useObrasSocialesCatalogo";
+import { usePacienteVer } from "./hooks/usePacienteVer.jsx";
 
-// * FUNCIONES PARA FORMATEAR
-import { formatFechaTabla } from "../../utils/index";
+//* FUNCIONES PARA FORMATEAR FECHAS Y UTILIDADES
 import { formatearPacienteParaEditar } from "./utils/formatearPacienteParaEditar.js";
+
+//* CONSTANTES
+import { ESTADO_INICIAL } from "./constants/pacienteConstants.js";
 
 // * FORMULARIOS
 import { FormularioCrearEditar, FormularioToggle } from "./components/FormulariosPaciente";
 import { verificarCompletarPaciente } from "./utils/verificarCompletarPaciente.js";
+import { VistaPaciente } from "./components/VistaPaciente.jsx";
 
-const ESTADO_INICIAL = {
-  nombre: "",
-  apellido: "",
-  dni: "",
-  fecha_nacimiento: "",
-  telefono: "",
-  domicilio: "",
-  obrasSociales: [],
-  obrasSocialesEliminadas: [],
-};
-
-// - INICIO DE COMPONENTE
 export default function GestionPacientes() {
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -72,6 +64,9 @@ export default function GestionPacientes() {
     actualizarDatos,
   } = useCRUDModal(ESTADO_INICIAL);
 
+  // * HOOK DE MODAL VER
+  const { modalCuenta, pacienteVerCuenta, abrirParaVer, cerrarVer } = usePacienteVer();
+
   // * HOOK PARA OBRAS SOCIALES
   const { obrasSocialesLista, agregarObraSocialForm, actualizarObraSocialForm, eliminarObraSocialForm } =
     useObrasSocialesCatalogo(actualizarDatos);
@@ -79,14 +74,15 @@ export default function GestionPacientes() {
   //* HOOK PETICIONES API
   const { guardarPaciente, togglePaciente } = usePacienteActions(recargar, cerrarModal);
 
+  // TODO: VER SI PUEDO SACAR ESTE USEEFECT
   useEffect(() => {
     verificarCompletarPaciente(cargando, searchParams, pacientes, abrirParaEditar, setSearchParams);
   }, [searchParams, pacientes, cargando, abrirParaEditar, setSearchParams]);
- 
+
   return (
     <PageLayout onAdd={abrirParaCrear}>
       <div className="w-full flex-1 flex flex-col gap-4 pb-24">
-        {/* //* HEADER CON TITULO Y BOTON */}
+        {/* //* HEADER PRINCIPAL */}
         <Header
           icono={Users}
           titulo="Gestión de Pacientes"
@@ -107,8 +103,8 @@ export default function GestionPacientes() {
         {/* //* BODY: TABLA */}
         <div className="flex-1 w-full min-h-0 p-4 pt-0 flex flex-col gap-4">
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col overflow-hidden">
-            {/* //* TABLA: BARRA SUPERIOR REUTILIZABLE */}
-            {/* //? PLACEHOLDER EN BUSCAR PACIENTE? O LE AGREGAMOS LOS CAMPOS? */}
+            {/* //* TABLA: HEADER */}
+            {/* // TODO: VER SI PLACEHOLDER EN BUSCAR PACIENTE? O LE AGREGAMOS LOS CAMPOS? */}
             <TablaHeader
               inicioRegistro={inicioRegistro}
               finRegistro={finRegistro}
@@ -131,8 +127,7 @@ export default function GestionPacientes() {
                   { label: "Paciente" },
                   { label: "DNI" },
                   { label: "Teléfono" },
-                  { label: "F. Nac." },
-                  { label: "Domicilio" },
+                  { label: "Obras Sociales" },
                   { label: "Acciones", align: "center" },
                 ]}
               >
@@ -164,20 +159,46 @@ export default function GestionPacientes() {
                       </div>
                     </td>
 
-                    {/* //* COLUMNAS: FECHA NACIMIENTO */}
-                    {/* //? DEMAJOS FEC. NAC. ???? */}
-                    <td className="px-6 py-4 text-gray-600 whitespace-nowrap">
-                      {formatFechaTabla(paciente.fecha_nacimiento)}
-                    </td>
-
-                    {/* //* COLUMNAS: DOMICILIO */}
-                    <td className="px-6 py-4 text-gray-600 max-w-xs truncate">
-                      {paciente.domicilio || <span className="text-gray-400 italic">S/D</span>}
+                    {/* //* COLUMNA 2: BADGES DE OBRAS SOCIALES */}
+                    <td className="hidden md:table-cell px-6 py-4">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {paciente.PacienteObraSocials && paciente.PacienteObraSocials.length > 0 ? (
+                          paciente.PacienteObraSocials.map((pos) => (
+                            <span
+                              key={pos.id_paciente_obra_social || pos.id_obra_social}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-[#e8f7f1] text-[#2eb086] border border-[#2eb086]/20"
+                              title={
+                                pos.nro_afiliado ? `N° Afiliado: ${pos.nro_afiliado}` : "Particular / S/N"
+                              }
+                            >
+                              <Shield size={13} className="shrink-0" />
+                              <span>{pos.ObraSocial?.nombre || "Obra Social"}</span>
+                              {pos.nro_afiliado && (
+                                <span className="text-[10px] opacity-75 font-normal border-l border-[#2eb086]/30 pl-1 ml-0.5">
+                                  #{pos.nro_afiliado}
+                                </span>
+                              )}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-gray-100 text-gray-500 border border-gray-200">
+                            Particular
+                          </span>
+                        )}
+                      </div>
                     </td>
 
                     {/* //* COLUMNAS: ACCIONES */}
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => abrirParaVer(paciente)}
+                          className="p-2 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors"
+                          title="Ver Ficha y Cuenta Corriente"
+                        >
+                          <Eye size={18} />
+                        </button>
                         <button
                           type="button"
                           onClick={() => abrirParaEditar(paciente, formatearPacienteParaEditar)}
@@ -236,6 +257,11 @@ export default function GestionPacientes() {
             pacienteSeleccionado={pacienteSeleccionado}
             togglePaciente={() => togglePaciente(pacienteSeleccionado)}
           />
+        )}
+
+        {/* //* MODALES: VER */}
+        {modalCuenta && (
+          <VistaPaciente isOpen={modalCuenta} onClose={() => cerrarVer()} paciente={pacienteVerCuenta} />
         )}
       </div>
     </PageLayout>

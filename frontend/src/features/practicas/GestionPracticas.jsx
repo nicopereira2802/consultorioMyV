@@ -9,7 +9,7 @@ import Tabla from "../../components/common/Tabla/Tabla";
 import TablaHeader from "../../components/common/Tabla/TablaHeader";
 import TablaPaginacion from "../../components/common/Tabla/TablaPaginacion";
 
-// * PAGELAYOUT (PARA EL BOTON)
+//* PAGELAYOUT (PARA EL BOTON)
 import PageLayout from "../../components/layout/PageLayout";
 
 //* HOOKS
@@ -17,8 +17,11 @@ import { useCRUDModal } from "../../hooks/useCRUDModal";
 import { usePaginationSearch } from "../../hooks/usePaginationSearch";
 import { usePracticaActions } from "./hooks/usePracticasActions";
 
-// * FUNCIONES PARA FORMATEAR FECHAS
+//* FUNCIONES PARA FORMATEAR FECHAS Y UTILIDADES
 import { formatearPracticaParaEditar } from "./utils/formatearPracticaParaEditar";
+
+//* CONSTANTES
+import { ESTADO_INICIAL } from "./constants/practicaConstatns";
 
 //* FORMULARIOS
 import {
@@ -26,14 +29,6 @@ import {
   FormularioEliminar,
   FormularioToggle,
 } from "./components/FormulariosPractica";
-
-const ESTADO_INICIAL = {
-  codigo_nomenclador: "",
-  nombre_nomenclador: "",
-  nombre_referencia: "",
-  especialidad: "",
-  precio_referencia: 0,
-};
 
 export default function GestionPracticas() {
   //* HOOK DE PAGINACIÓN
@@ -73,7 +68,7 @@ export default function GestionPracticas() {
   return (
     <PageLayout onAdd={abrirParaCrear}>
       <div className="w-full flex-1 flex flex-col gap-4 pb-24">
-        {/* //* HEADER CON TITULO Y BOTON */}
+        {/* //* HEADER PRINCIPAL */}
         <Header
           icono={FileText}
           titulo="Catálogo de Prácticas"
@@ -94,8 +89,7 @@ export default function GestionPracticas() {
         {/* //* BODY: TABLA */}
         <div className="flex-1 w-full min-h-0 p-4 pt-0 flex flex-col gap-4">
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col overflow-hidden">
-            {/* //* TABLA: BARRA SUPERIOR REUTILIZABLE */}
-            {/* //? PLACEHOLDER EN BUSCAR PRACTICA? O LE AGREGAMOS LOS CAMPOS? */}
+            {/* //* TABLA: HEADER */}
             <TablaHeader
               inicioRegistro={inicioRegistro}
               finRegistro={finRegistro}
@@ -210,7 +204,7 @@ export default function GestionPracticas() {
               </Tabla>
             </div>
 
-            {/* //* PAGINACION */}
+            {/* //* TABLA: PAGINACION */}
             <TablaPaginacion page={page} setPage={setPage} totalPages={totalPages} />
           </div>
         </div>

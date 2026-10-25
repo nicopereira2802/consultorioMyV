@@ -52,9 +52,17 @@ export function useTurnoActions(recargar, cerrarModal) {
   const procesarAtencionTurno = async (datosAtencion, turnoSeleccionado, cerrarModalAtender) => {
     if (!turnoSeleccionado) return;
     try {
+      // Manejar formato string (ej: "5000", "5000.50", "5000,50") o número
+      const rawPrecio = datosAtencion.precio_final;
+      const precioLimpio = typeof rawPrecio === "string"
+        ? parseFloat(rawPrecio.replace(",", "."))
+        : Number(rawPrecio);
+
+      const precioFinalValido = isNaN(precioLimpio) ? 0 : precioLimpio;
+
       const payloadAtencion = {
-        notas_consulta: datosAtencion.notas_consulta.trim(),
-        precio_final: parseFloat(datosAtencion.precio_final),
+        notas_consulta: datosAtencion.notas_consulta?.trim() || "",
+        precio_final: precioFinalValido,
         practicas_realizadas: datosAtencion.practicas
           .filter((p) => p.id_practica)
           .map((p) => Number(p.id_practica)),

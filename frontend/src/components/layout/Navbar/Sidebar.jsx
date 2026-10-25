@@ -11,6 +11,8 @@ import {
   Settings,
   Shield,
   ChevronDown,
+  TrendingDown,
+  Wallet,
 } from "lucide-react";
 import { useSidebar } from "../../../context/SidebarProvider";
 import ToothLogo from "../ToothLogo";
@@ -32,9 +34,9 @@ const NAV_ITEMS = [
     Icon: Users,
   },
   {
-    to: "/cobros",
-    label: "Cobros",
-    Icon: FileText,
+    to: "/caja",
+    label: "Caja y Balances", 
+    Icon: Wallet,
   },
 ];
 

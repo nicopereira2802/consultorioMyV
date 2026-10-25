@@ -1,11 +1,12 @@
 /** @format */
 import { useState, useCallback } from "react";
+const ESTADO_INICIAL_CANCELAR = { notas_consulta: "" };
 
-export function useTurnoCancelarModal(estadoInicialCancelar) {
+export function useTurnoCancelarModal() {
   const [modalCancelar, setModalCancelar] = useState(false);
   const [inasistente, setInasistente] = useState(false);
   const [turnoSeleccionado, setTurnoSeleccionado] = useState(null);
-  const [datosCancelacion, setDatosCancelacion] = useState(estadoInicialCancelar);
+  const [datosCancelacion, setDatosCancelacion] = useState(ESTADO_INICIAL_CANCELAR);
 
   const abrirParaCancelar = useCallback((item) => {
     setTurnoSeleccionado(item);
@@ -23,17 +24,21 @@ export function useTurnoCancelarModal(estadoInicialCancelar) {
     setModalCancelar(false);
     setInasistente(false);
     setTurnoSeleccionado(null);
-    setDatosCancelacion(estadoInicialCancelar);
-  }, [estadoInicialCancelar]);
+    setDatosCancelacion(...ESTADO_INICIAL_CANCELAR);
+  }, []);
+
+  const actualizarDatosCancelacion = (campo, valor) => {
+    setDatosCancelacion((prev) => ({ ...prev, [campo]: valor }));
+  };
 
   return {
     modalCancelar,
     inasistente,
     turnoSeleccionadoCancelar: turnoSeleccionado,
     datosCancelacion,
-    setDatosCancelacion,
     abrirParaCancelar,
     abrirParaInasistente,
+    actualizarDatosCancelacion,
     cerrarModalCancelar,
   };
 }

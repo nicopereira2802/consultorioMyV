@@ -1,3 +1,5 @@
+//* FUNCION QUE CALCULA LA FECHA DE FIN DEL TURNO
+
 export const calcularHoraFin = (datos, actualizarDatos) => {
   if (datos.fecha_hora_inicio && datos.duracion_minutos) {
     const inicio = new Date(datos.fecha_hora_inicio);

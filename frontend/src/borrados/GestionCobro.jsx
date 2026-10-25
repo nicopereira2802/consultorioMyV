@@ -7,22 +7,22 @@ import { DollarSign, Plus, Trash2, Wallet, Scale } from "lucide-react";
 import ModalBalancePaciente from "./components/ModalBalancePaciente";
 
 
-import Header from "../../components/common/Header";
-import Tabla from "../../components/common/Tabla/Tabla";
-import TablaHeader from "../../components/common/Tabla/TablaHeader";
-import TablaPaginacion from "../../components/common/Tabla/TablaPaginacion";
-import PageLayout from "../../components/layout/PageLayout";
+import Header from "../components/common/Header";
+import Tabla from "../components/common/Tabla/Tabla";
+import TablaHeader from "../components/common/Tabla/TablaHeader";
+import TablaPaginacion from "../components/common/Tabla/TablaPaginacion";
+import PageLayout from "../components/layout/PageLayout";
 
 //* HOOKS Y UTILS
-import { usePaginationSearch } from "../../hooks/usePaginationSearch";
-import { useCRUDModal } from "../../hooks/useCRUDModal";
-import { useCobroActions } from "./hooks/useCobroActions";
-import { calcularEstadoYSaldo } from "./utils/calcularEstadoYSaldo";
-import { formatFechaTabla, formatSoloHora } from "../../utils/index";
+import { usePaginationSearch } from "../hooks/usePaginationSearch";
+import { useCRUDModal } from "../hooks/useCRUDModal";
+import { useCobroActions } from "../features/cobros/hooks/useCobroActions";
+import { calcularEstadoYSaldo } from "../features/cobros/utils/calcularEstadoYSaldo";
+import { formatFechaTabla, formatSoloHora } from "../utils/index";
 
 //* FORMULARIOS
-import { FormularioCrearEditarCobro, FormularioEliminarCobro } from "./components/FormulariosCobro";
-import FormularioCuotas from "./components/FormulariosCuota";
+import { FormularioCrearEditarCobro, FormularioEliminarCobro } from "../features/cobros/components/FormulariosCobro";
+import FormularioCuotas from "../features/cobros/components/FormulariosCuota";
 
 const ESTADO_INICIAL_COBRO = {
   id_turno: "",
