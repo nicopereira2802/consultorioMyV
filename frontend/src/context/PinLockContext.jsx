@@ -107,11 +107,11 @@ export function PinLockProvider({ children }) {
 
   const bloquearTerminal = lock;
 
-  // ─── AUTO-BLOQUEO POR INACTIVIDAD (IDLE TIMEOUT: 15 MINUTOS) ──────
+  // ─── AUTO-BLOQUEO POR INACTIVIDAD (IDLE TIMEOUT: 4 MINUTOS) ──────
   useEffect(() => {
     if (!isUnlocked) return;
 
-    const TIEMPO_INACTIVIDAD_MS = 15 * 60 * 1000; // 15 minutos
+    const TIEMPO_INACTIVIDAD_MS = 4 * 60 * 1000; // 4 minutos
     let timerId = null;
 
     const resetTimer = () => {
