@@ -17,8 +17,11 @@ import TurnoRoutes from "./Turno.routes.js";
 import GastoRoutes from "./Gasto.routes.js";
 import CategoriaGastoRoutes from "./CategoriaGasto.routes.js";
 import CajaRoutes from "./Caja.routes.js";
+import UsuarioRoutes from "./Usuario.routes.js";
 
 // Rutas para los diferentes recursos
+router.use("/api/auth", UsuarioRoutes);
+router.use("/api/usuarios", UsuarioRoutes);
 router.use("/api/cobros", CobroRoutes);
 router.use("/api/cuotas", CuotaRoutes);
 router.use("/api/estados", EstadoRoutes);

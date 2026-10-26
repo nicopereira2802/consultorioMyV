@@ -11,11 +11,15 @@ import {
   Settings,
   Shield,
   ChevronDown,
-  TrendingDown,
   Wallet,
+  Lock,
+  KeyRound,
+  CheckCircle2,
 } from "lucide-react";
 import { useSidebar } from "../../../context/SidebarProvider";
+import { usePinLock } from "../../../context/PinLockContext";
 import ToothLogo from "../ToothLogo";
+import RecuperarPinModal from "../../../features/auth/components/RecuperarPinModal";
 
 const NAV_ITEMS = [
   {
@@ -42,8 +46,11 @@ const NAV_ITEMS = [
 
 export const Sidebar = () => {
   const { isOpen, toggleSidebar } = useSidebar();
+  const { lock, bloquearTerminal } = usePinLock();
 
   const [dropdownAbierto, setDropdownAbierto] = useState(false);
+  const [modalPinAbierto, setModalPinAbierto] = useState(false);
+  const [toastPinExito, setToastPinExito] = useState(false);
   const dropdownRef = useRef(null);
 
   useEffect(() => {
@@ -172,6 +179,38 @@ export const Sidebar = () => {
         </div>
       </nav>
 
+      {/* Acciones de Seguridad: Cambiar PIN y Cerrar Sesión */}
+      <div className="p-3 border-t border-white/15 flex flex-col gap-2">
+        {/* Botón Cambiar PIN (Diseño neutro estándar de la barra lateral, sin tonos rojos) */}
+        <button
+          type="button"
+          onClick={() => setModalPinAbierto(true)}
+          title="Cambiar PIN de Acceso"
+          className={`w-full flex items-center rounded-xl text-sm font-semibold transition-all duration-200 text-white/90 hover:text-white bg-white/10 hover:bg-white/15 border border-white/15 active:scale-95 cursor-pointer ${
+            !isOpen ? "justify-center p-3" : "gap-3 px-4 py-2.5"
+          }`}
+        >
+          <KeyRound size={18} className="shrink-0 text-white/80" />
+          {isOpen && <span>Cambiar PIN</span>}
+        </button>
+
+        {/* Botón de Bloqueo de Terminal / Cerrar Sesión */}
+        <button
+          type="button"
+          onClick={() => {
+            if (bloquearTerminal) bloquearTerminal();
+            else lock();
+          }}
+          title="Cerrar Sesión"
+          className={`w-full flex items-center rounded-xl text-sm font-semibold transition-all duration-200 text-rose-100 hover:text-white bg-rose-500/20 hover:bg-rose-500/30 border border-rose-400/30 active:scale-95 cursor-pointer ${
+            !isOpen ? "justify-center p-3" : "gap-3 px-4 py-2.5"
+          }`}
+        >
+          <Lock size={18} className="shrink-0 text-rose-300" />
+          {isOpen && <span>Cerrar Sesión</span>}
+        </button>
+      </div>
+
       {/* Footer */}
       {isOpen && (
         <div className="p-4 border-t border-white/15 bg-[#2c6177] flex items-center justify-between">
@@ -182,6 +221,42 @@ export const Sidebar = () => {
           <span className="text-xs font-medium text-white/60">v1.0</span>
         </div>
       )}
+
+      {/* Modal para Cambiar PIN */}
+      {modalPinAbierto && (
+        <RecuperarPinModal
+          isOpen={modalPinAbierto}
+          onClose={() => setModalPinAbierto(false)}
+          onSuccess={() => {
+            setModalPinAbierto(false);
+            setToastPinExito(true);
+            setTimeout(() => setToastPinExito(false), 3500);
+          }}
+          usuarioActual={
+            localStorage.getItem("usuario_guardado") ||
+            localStorage.getItem("usuario") ||
+            sessionStorage.getItem("usuario") ||
+            "Odontólogo"
+          }
+          usuarioPredefinido={
+            localStorage.getItem("usuario_guardado") ||
+            localStorage.getItem("usuario") ||
+            sessionStorage.getItem("usuario") ||
+            "Odontólogo"
+          }
+          modo="cambiar"
+        />
+      )}
+
+      {/* Toast Notificación: PIN Actualizado con Éxito */}
+      {toastPinExito && (
+        <div className="fixed bottom-5 right-5 z-[70] flex items-center gap-2.5 px-4 py-3 bg-emerald-600 text-white text-xs font-semibold rounded-2xl shadow-xl shadow-emerald-950/20 border border-emerald-500/30 animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <CheckCircle2 size={18} className="shrink-0 text-emerald-200" />
+          <span>PIN actualizado correctamente.</span>
+        </div>
+      )}
     </aside>
   );
 };
+
+export default Sidebar;

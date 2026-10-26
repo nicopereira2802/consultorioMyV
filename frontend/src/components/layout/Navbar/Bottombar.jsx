@@ -10,13 +10,22 @@ import {
   Settings,
   Shield,
   ChevronUp,
-  TrendingDown,
   Wallet,
+  Lock,
+  KeyRound,
+  CheckCircle2,
 } from "lucide-react";
+import { usePinLock } from "../../../context/PinLockContext";
+import RecuperarPinModal from "../../../features/auth/components/RecuperarPinModal";
 
 export const Bottombar = () => {
   const location = useLocation();
+  const { lock, bloquearTerminal } = usePinLock();
   const [dropdownAbierto, setDropdownAbierto] = useState(false);
+  const [modalPinAbierto, setModalPinAbierto] = useState(false);
+  const [toastPinExito, setToastPinExito] = useState(false);
+
+  // Referencia unificada para todo el bloque de configuración (botón + menú)
   const configContainerRef = useRef(null);
 
   useEffect(() => {
@@ -82,6 +91,34 @@ export const Bottombar = () => {
               <FileText size={18} className="shrink-0 text-white/80" />
               <span>Prácticas</span>
             </NavLink>
+
+            {/* Botón Cambiar PIN */}
+            <button
+              type="button"
+              onClick={() => {
+                setDropdownAbierto(false);
+                setModalPinAbierto(true);
+              }}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-white/80 hover:bg-white/10 hover:text-white transition-colors text-left w-full cursor-pointer"
+            >
+              <KeyRound size={18} className="shrink-0 text-white/80" />
+              <span>Cambiar PIN</span>
+            </button>
+
+            {/* Botón Cerrar Sesión */}
+            <button
+              type="button"
+              onClick={() => {
+                setDropdownAbierto(false);
+                if (bloquearTerminal) bloquearTerminal();
+                else lock();
+              }}
+              title="Cerrar Sesión"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-rose-200 hover:bg-rose-500/20 transition-colors text-left w-full border-t border-white/10 mt-1 cursor-pointer"
+            >
+              <Lock size={16} className="shrink-0 text-rose-300" />
+              <span>Cerrar Sesión</span>
+            </button>
           </div>
         )}
 
@@ -168,6 +205,40 @@ export const Bottombar = () => {
           </button>
         </nav>
       </div>
+
+      {/* Modal para Cambiar PIN */}
+      {modalPinAbierto && (
+        <RecuperarPinModal
+          isOpen={modalPinAbierto}
+          onClose={() => setModalPinAbierto(false)}
+          onSuccess={() => {
+            setModalPinAbierto(false);
+            setToastPinExito(true);
+            setTimeout(() => setToastPinExito(false), 3500);
+          }}
+          usuarioActual={
+            localStorage.getItem("usuario_guardado") ||
+            localStorage.getItem("usuario") ||
+            sessionStorage.getItem("usuario") ||
+            "Odontólogo"
+          }
+          usuarioPredefinido={
+            localStorage.getItem("usuario_guardado") ||
+            localStorage.getItem("usuario") ||
+            sessionStorage.getItem("usuario") ||
+            "Odontólogo"
+          }
+          modo="cambiar"
+        />
+      )}
+
+      {/* Toast Notificación: PIN Actualizado con Éxito */}
+      {toastPinExito && (
+        <div className="fixed bottom-20 left-4 right-4 z-[10002] flex items-center justify-center gap-2.5 px-4 py-3 bg-emerald-600 text-white text-xs font-semibold rounded-2xl shadow-xl border border-emerald-500/30 animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <CheckCircle2 size={18} className="shrink-0 text-emerald-200" />
+          <span>PIN actualizado correctamente.</span>
+        </div>
+      )}
     </div>
   );
 };

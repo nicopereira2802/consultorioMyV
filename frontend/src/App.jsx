@@ -2,13 +2,17 @@
 
 // * IMPORTACION DE RECURSOS DE REACT
 import { useEffect } from "react";
-import { createBrowserRouter } from "react-router-dom";
-import { RouterProvider } from "react-router-dom";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
 // * IMPORTACION DE CONTEXTS
+import { PinLockProvider } from "./context/PinLockContext";
 import { SidebarProvider } from "./context/SidebarProvider";
 
-// * IMPORTACION DE COMPONENTES
+// * IMPORTACION DE COMPONENTES DE SEGURIDAD Y AUTENTICACIÓN
+import PinLogin from "./features/auth/PinLogin";
+import LoginMaestro from "./features/auth/LoginMaestro";
+
+// * IMPORTACION DE COMPONENTES Y VISTAS DE NEGOCIO
 import Layout from "./components/layout/Layout";
 import AgendaDiaria from "./features/turnos/AgendaDiaria";
 import GestionTurnos from "./features/turnos/GestionTurnos";
@@ -34,25 +38,39 @@ function App() {
 
   // * DEFINICION DE RUTAS
   const router = createBrowserRouter([
-    //{ path: "/login", element: <Login />}
     {
-      //element: <ProtectedRoutes />,
+      path: "/login",
+      element: (
+        <LoginMaestro
+          onLoginSuccess={() => {
+            window.location.href = "/";
+          }}
+        />
+      ),
+    },
+    {
+      path: "/pin",
+      element: (
+        <PinLogin
+          onUnlock={() => {
+            window.location.href = "/";
+          }}
+        />
+      ),
+    },
+    {
+      path: "/",
+      element: <Layout />,
       children: [
+        { path: "", element: <AgendaDiaria /> },
+        { path: "/pacientes", element: <GestionPacientes /> },
+        { path: "/turnos", element: <GestionTurnos /> },
+        { path: "/caja", element: <GestionCaja /> },
         {
-          path: "/",
-          element: <Layout />,
+          path: "/configuracion",
           children: [
-            { path: "", element: <AgendaDiaria /> },
-            { path: "/pacientes", element: <GestionPacientes /> },
-            { path: "/turnos", element: <GestionTurnos /> },
-            { path: "/caja", element: <GestionCaja /> },
-            {
-              path: "/configuracion",
-              children: [
-                { path: "obras-sociales", element: <GestionObrasSociales /> },
-                { path: "practicas", element: <GestionPracticas /> },
-              ],
-            },
+            { path: "obras-sociales", element: <GestionObrasSociales /> },
+            { path: "practicas", element: <GestionPracticas /> },
           ],
         },
       ],
@@ -60,11 +78,11 @@ function App() {
   ]);
 
   return (
-    //<AuthProvider>
-    <SidebarProvider>
-      <RouterProvider router={router} />
-    </SidebarProvider>
-    //</AuthProvider>
+    <PinLockProvider>
+      <SidebarProvider>
+        <RouterProvider router={router} />
+      </SidebarProvider>
+    </PinLockProvider>
   );
 }
 
