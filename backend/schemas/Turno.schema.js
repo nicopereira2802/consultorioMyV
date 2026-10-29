@@ -1,8 +1,6 @@
 /** @format */
 
-import { optional, z } from "zod";
-
-const hoy = new Date();
+import { z } from "zod";
 
 export const createTurnoSchema = z.object({
   id_paciente: z
@@ -13,17 +11,21 @@ export const createTurnoSchema = z.object({
     .int("El ID debe ser un número entero")
     .positive("El ID no es válido"),
 
-  fecha_hora_inicio: z.coerce
-    .date({
-      invalid_type_error: "Formato de fecha inválido",
-    })
-    .min(hoy, { message: "La fecha de inicio no es válida" }),
+  fecha_hora_inicio: z.coerce.date({
+    invalid_type_error: "Formato de fecha inválido",
+  }),
+
+  duracion_minutos: z.coerce
+    .number({ invalid_type_error: "La duración debe ser un número" })
+    .int("La duración debe ser un número entero")
+    .positive("La duración debe ser positiva")
+    .optional(),
 
   fecha_hora_fin: z.coerce
     .date({
       invalid_type_error: "Formato de fecha inválido",
     })
-    .min(hoy, { message: "La fecha de fin no es válida" }),
+    .optional(),
 
   precio_final: z
     .number({
@@ -49,6 +51,18 @@ export const updateTurnoSchema = z.object({
     })
     .int("El ID debe ser un número entero")
     .positive("El ID no es válido")
+    .optional(),
+
+  fecha_hora_inicio: z.coerce
+    .date({
+      invalid_type_error: "Formato de fecha inválido",
+    })
+    .optional(),
+
+  fecha_hora_fin: z.coerce
+    .date({
+      invalid_type_error: "Formato de fecha inválido",
+    })
     .optional(),
 
   precio_final: z
@@ -82,14 +96,12 @@ export const atenderTurnoSchema = z.object({
     .date({
       invalid_type_error: "Formato de fecha inválido",
     })
-    .min(hoy, { message: "La fecha de inicio no es válida" })
     .optional(),
 
   fecha_hora_fin: z.coerce
     .date({
       invalid_type_error: "Formato de fecha inválido",
     })
-    .min(hoy, { message: "La fecha de fin no es válida" })
     .optional(),
 
   precio_final: z
@@ -97,7 +109,7 @@ export const atenderTurnoSchema = z.object({
       required_error: "El precio final es obligatorio",
       invalid_type_error: "El precio final debe ser un número",
     })
-    .positive("El precio final debe ser mayor a 0")
+    .nonnegative("El precio final debe ser mayor o igual a 0")
     .refine((val) => Number.isInteger(val * 100), {
       message: "El precio no puede tener más de 2 decimales",
     })

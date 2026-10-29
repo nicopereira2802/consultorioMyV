@@ -22,9 +22,14 @@ export function useCRUDModal(estadoInicialFormulario) {
   // * ABRIR MODAL DE CREAR
   const abrirParaCrear = useCallback(
     (datosExtra = {}) => {
+      // Si se usa directamente como onClick, React pasa el evento: lo ignoramos
+      const esObjetoPlano =
+        datosExtra && typeof datosExtra === "object" && Object.getPrototypeOf(datosExtra) === Object.prototype;
+      const extras = esObjetoPlano ? datosExtra : {};
+
       setEditando(false);
       setItemSeleccionado(null);
-      setDatosFormulario({ ...estadoInicialFormulario, ...datosExtra });
+      setDatosFormulario({ ...estadoInicialFormulario, ...extras });
       setModalAbierto(true);
     },
     [estadoInicialFormulario],

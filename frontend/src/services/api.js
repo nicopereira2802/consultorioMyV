@@ -1,11 +1,28 @@
 import axios from "axios";
 
-const API_URL = import.meta.env.DEV
-  ? "http://localhost:3000/api"
-  : "https://api.espaciocuatrovientos.com/api";
+const getBaseUrl = () => {
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  if (typeof window !== "undefined") {
+    const { hostname } = window.location;
+    if (
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname.startsWith("192.168.") ||
+      hostname.startsWith("10.") ||
+      hostname.endsWith(".local")
+    ) {
+      return `http://${hostname}:3000/api`;
+    }
+  }
+  return import.meta.env.DEV
+    ? "http://localhost:3000/api"
+    : "https://api.espaciocuatrovientos.com/api";
+};
 
 const api = axios.create({
-  baseURL: API_URL,
+  baseURL: getBaseUrl(),
   timeout: 10000,
 });
 
@@ -17,7 +34,6 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
-
 
 /**
  * Login Maestro / Vincular Dispositivo con JWT de 5 días

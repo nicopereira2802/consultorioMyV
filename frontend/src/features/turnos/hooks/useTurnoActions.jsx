@@ -9,13 +9,27 @@ export function useTurnoActions(recargar, cerrarModal) {
   const [cargandoAccion, setCargandoAccion] = useState(false);
 
   const guardarTurno = async (datosFormulario, editando, turnoSeleccionadoCRUD) => {
+    // Validar que se haya seleccionado un paciente de la lista
+    const idPacienteNum = Number(datosFormulario.id_paciente);
+    if (!datosFormulario.id_paciente || isNaN(idPacienteNum) || idPacienteNum <= 0) {
+      toast.error("Por favor, seleccione un paciente de la lista.");
+      return;
+    }
+
+    // Validar fecha de inicio al crear
+    const fechaInicioDate = new Date(datosFormulario.fecha_hora_inicio);
+    if (!editando && isNaN(fechaInicioDate.getTime())) {
+      toast.error("Por favor, indique una fecha y hora de inicio válida.");
+      return;
+    }
+
     setCargandoAccion(true);
     try {
       let payload;
 
       if (editando) {
         payload = {
-          id_paciente: Number(datosFormulario.id_paciente),
+          id_paciente: idPacienteNum,
           id_estado: Number(datosFormulario.id_estado),
           precio_final: parseFloat(datosFormulario.precio_final || 0),
           notas_consulta: datosFormulario.notas_consulta?.trim() || "",
@@ -23,16 +37,20 @@ export function useTurnoActions(recargar, cerrarModal) {
 
         await api.put(`/turnos/${turnoSeleccionadoCRUD.id_turno}`, payload);
       } else {
-        // Al crear, sí requerimos las fechas y la duración completa
-        const { duracion_minutos, ...restoDatos } = datosFormulario;
+        // Al crear: payload explícito (nunca hacer spread del formulario, puede traer objetos no serializables)
+        const durMin = Number(datosFormulario.duracion_minutos) || 30;
+        const fechaFinDate = new Date(datosFormulario.fecha_hora_fin);
+        const fechaFinIso = isNaN(fechaFinDate.getTime())
+          ? new Date(fechaInicioDate.getTime() + durMin * 60000).toISOString()
+          : fechaFinDate.toISOString();
+
         payload = {
-          ...restoDatos,
-          id_paciente: Number(restoDatos.id_paciente),
-          id_estado: Number(restoDatos.id_estado),
-          precio_final: parseFloat(restoDatos.precio_final || 0),
-          fecha_hora_inicio: new Date(restoDatos.fecha_hora_inicio).toISOString(),
-          fecha_hora_fin: new Date(restoDatos.fecha_hora_fin).toISOString(),
-          notas_consulta: restoDatos.notas_consulta?.trim() || "",
+          id_paciente: idPacienteNum,
+          duracion_minutos: durMin,
+          precio_final: parseFloat(datosFormulario.precio_final || 0),
+          fecha_hora_inicio: fechaInicioDate.toISOString(),
+          fecha_hora_fin: fechaFinIso,
+          notas_consulta: datosFormulario.notas_consulta?.trim() || "",
         };
 
         await api.post("/turnos", payload);
@@ -174,11 +192,8 @@ export function useTurnoActions(recargar, cerrarModal) {
         return;
       }
 
-      // Si no había ningún turno para reprogramar, funciona como siempre (Crear Turno)
-      abrirParaCrear();
-      actualizarDatos({
-        target: { name: "fecha_hora_inicio", value: nuevaFechaInicio },
-      });
+      // Si no había ningún turno para reprogramar, abrir creación con la fecha seleccionada
+      abrirParaCrear({ fecha_hora_inicio: nuevaFechaInicio });
     }
   };
 
