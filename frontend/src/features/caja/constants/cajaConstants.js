@@ -13,7 +13,7 @@ export const ESTADO_INICIAL_COBRO = {
   id_turno: "",
   monto_a_cobrar: "",
   monto_abonado: "",
-  modalidad: "inmediato",
+  modalidad: "",
   cant_cuotas: 1,
   fecha_primer_vencimiento: new Date().toISOString().split("T")[0],
   cobrar_primera_cuota: true,

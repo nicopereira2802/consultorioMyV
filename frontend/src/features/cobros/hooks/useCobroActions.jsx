@@ -13,7 +13,13 @@ export function useCobroActions(recargar, cerrarModal) {
       const idTurno = Number(datosFormulario.id_turno);
       const idPaciente = Number(datosFormulario.id_paciente);
       const montoTotal = Number(datosFormulario.monto_a_cobrar) || 0;
-      const modalidad = datosFormulario.modalidad || "inmediato";
+      const modalidad = datosFormulario.modalidad;
+
+      if (!modalidad) {
+        toast.error("Por favor, selecciona una modalidad de cobro.");
+        setCargandoAccion(false);
+        return;
+      }
 
       // Validación preventiva para no mandar NaN al backend
       if (!idTurno || isNaN(idTurno) || !idPaciente || isNaN(idPaciente)) {
@@ -57,7 +63,7 @@ export function useCobroActions(recargar, cerrarModal) {
               datosFormulario.cobrar_primera_cuota !== undefined
                 ? Boolean(datosFormulario.cobrar_primera_cuota)
                 : true,
-            metodo_pago: datosFormulario.metodo_pago || "Efectivo",
+            metodo_pago: "Tarjeta",
           });
         } else if (modalidad === "informal") {
           await api.post("/cobros/informal", {

@@ -223,9 +223,10 @@ export function VistaPendientes({
                     type="button"
                     onClick={() => abrirCobroParaTurno(t)}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#2eb086] hover:bg-[#259370] text-white text-xs font-bold transition-all shadow-2xs cursor-pointer"
+                    title="Registrar cobro para este turno"
                   >
-                    <Banknote size={14} />
-                    <span>Cobrar Ahora</span>
+                    <Plus size={14} />
+                    <span>Registrar Cobro</span>
                   </button>
                 )}
               </div>

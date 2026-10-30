@@ -19,7 +19,7 @@ const InputFiltro = ({
 
   /* ─── MOSTRAR EL VALOR INICIAL CORRECTO AL EDITAR ─── */
   useEffect(() => {
-    if (valorInicial !== undefined && valorInicial !== null && valorInicial !== "" && datos.length > 0) {
+    if (valorInicial !== undefined && valorInicial !== null && valorInicial !== "" && datos && datos.length > 0) {
       // 1. Si valorInicial es directamente un objeto (ej: datosFormulario.Paciente)
       if (typeof valorInicial === "object") {
         const texto = formatoVisual ? formatoVisual(valorInicial) : valorInicial[camposFiltrado[0]];
@@ -27,9 +27,16 @@ const InputFiltro = ({
         return;
       }
 
-      // 2. Si valorInicial es un ID, buscar contemplando id_paciente, id_obra_social, id_practica o id
+      // 2. Si valorInicial es un ID, buscar contemplando el campo principal indicado o IDs comunes (id_turno, id_paciente, etc.)
+      const primerCampo = camposFiltrado && camposFiltrado.length > 0 ? camposFiltrado[0] : null;
       const itemEncontrado = datos.find((d) => {
-        const idItem = d.id_paciente || d.id_obra_social || d.id_practica || d.id;
+        const idItem =
+          (primerCampo && d[primerCampo] !== undefined ? d[primerCampo] : null) ??
+          d.id_turno ??
+          d.id_paciente ??
+          d.id_obra_social ??
+          d.id_practica ??
+          d.id;
         return String(idItem) === String(valorInicial);
       });
 
@@ -40,7 +47,7 @@ const InputFiltro = ({
     } else if (!valorInicial) {
       setBusqueda("");
     }
-  }, [valorInicial, datos]);
+  }, [valorInicial, datos, formatoVisual, camposFiltrado]);
 
   // Actualizar coordenadas para el Portal
   const actualizarPosicion = () => {

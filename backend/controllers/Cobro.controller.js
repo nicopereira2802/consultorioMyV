@@ -273,7 +273,7 @@ export const createCobroCuotas = async (req, res) => {
         monto_cobrado: esPrimeraPagada ? montoEstaCuota : 0,
         fecha_vencimiento: fechaVenc.toISOString().split("T")[0],
         fecha_cobro: esPrimeraPagada ? new Date() : null,
-        metodo_pago: esPrimeraPagada ? (metodo_pago || "Efectivo") : null,
+        metodo_pago: esPrimeraPagada ? "Tarjeta" : null,
         estado: esPrimeraPagada ? "Pagada" : "Pendiente",
       });
     }

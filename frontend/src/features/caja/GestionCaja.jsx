@@ -129,7 +129,7 @@ export default function GestionCaja() {
       id_paciente: String(idPaciente),
       monto_a_cobrar: String(precio),
       monto_abonado: String(precio),
-      modalidad: "inmediato",
+      modalidad: "",
       metodo_pago: "Efectivo",
       cobrar_primera_cuota: true,
     });

@@ -43,6 +43,14 @@ export const createCuota = async (req, res) => {
     const { monto_cuota, monto_cobrado, fecha_vencimiento, fecha_cobro, metodo_pago, estado } = req.body;
     const id_cobro = req.cobro.id_cobro;
 
+    const cobro = req.cobro;
+    if (cobro && cobro.cant_cuotas > 1) {
+      return res.status(400).json({
+        status: "error",
+        message: "No se pueden agregar cuotas manuales a un plan de cuotas fijas ya establecido.",
+      });
+    }
+
     const cantCuotas = await Cuota.count({ where: { id_cobro: id_cobro } });
     const cobrado = Number(monto_cobrado) || 0;
     const cuotaMonto = Number(monto_cuota) || cobrado;
@@ -82,10 +90,20 @@ export const updateCuota = async (req, res) => {
 
     const cuota = req.cuota;
 
-    if (id_cobro) {
-      const cobro = await Cobro.findByPk(id_cobro);
+    const cobro = await Cobro.findByPk(cuota.id_cobro);
+    const esPlanCuotas = cobro && cobro.cant_cuotas > 1;
 
-      if (!cobro) {
+    if (esPlanCuotas && monto_cuota !== undefined && parseFloat(monto_cuota) !== parseFloat(cuota.monto_cuota)) {
+      return res.status(400).json({
+        status: "error",
+        message: "No se puede modificar el monto de una cuota perteneciente a un plan de cuotas fijas.",
+      });
+    }
+
+    if (id_cobro) {
+      const cobroDestino = await Cobro.findByPk(id_cobro);
+
+      if (!cobroDestino) {
         return res.status(400).json({
           status: "error",
           message: "El cobro seleccionado no existe.",
@@ -99,7 +117,7 @@ export const updateCuota = async (req, res) => {
       monto_cobrado: monto_cobrado !== undefined ? monto_cobrado : cuota.monto_cobrado,
       fecha_vencimiento: fecha_vencimiento || cuota.fecha_vencimiento,
       fecha_cobro: fecha_cobro !== undefined ? fecha_cobro : cuota.fecha_cobro,
-      metodo_pago: metodo_pago || cuota.metodo_pago,
+      metodo_pago: esPlanCuotas ? "Tarjeta" : (metodo_pago || cuota.metodo_pago),
       estado: estado || cuota.estado,
     });
 
@@ -118,6 +136,14 @@ export const deleteCuota = async (req, res) => {
   try {
     const cuota = req.cuota;
 
+    const cobro = await Cobro.findByPk(cuota.id_cobro);
+    if (cobro && cobro.cant_cuotas > 1) {
+      return res.status(400).json({
+        status: "error",
+        message: "No se pueden eliminar cuotas pertenecientes a un plan de cuotas fijas.",
+      });
+    }
+
     await cuota.update({
       activo: false,
     });
@@ -135,8 +161,12 @@ export const cobrarCuota = async (req, res) => {
     const { monto_cobrado, fecha_cobro, metodo_pago } = req.body;
     const cuota = req.cuota;
 
+    const cobro = await Cobro.findByPk(cuota.id_cobro);
+    const esPlanCuotas = cobro && cobro.cant_cuotas > 1;
+
     const monto_cuota = parseFloat(cuota.monto_cuota);
-    const cobrado = parseFloat(monto_cobrado);
+    const cobrado = esPlanCuotas ? monto_cuota : parseFloat(monto_cobrado);
+    const metodoFinal = esPlanCuotas ? "Tarjeta" : (metodo_pago || "Efectivo");
 
     let estado;
     if (cobrado >= monto_cuota) {
@@ -150,7 +180,7 @@ export const cobrarCuota = async (req, res) => {
     await cuota.update({
       monto_cobrado: cobrado,
       fecha_cobro: fecha_cobro ? new Date(fecha_cobro) : new Date(),
-      metodo_pago: metodo_pago || "Efectivo",
+      metodo_pago: metodoFinal,
       estado: estado,
     });
 
