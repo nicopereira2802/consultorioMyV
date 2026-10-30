@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import { manejarErrorApi } from "../../../utils/errorHandler";
 import { formatDateTimeInput } from "../../../utils";
 import { formatearTurnoParaReprogramar } from "../utils/formatTurnoParaReprogramar";
+import { HORARIO_ATENCION_DEFAULT } from "../constants/turnosConstants";
 
 export function useTurnoActions(recargar, cerrarModal) {
   const [cargandoAccion, setCargandoAccion] = useState(false);
@@ -44,11 +45,17 @@ export function useTurnoActions(recargar, cerrarModal) {
           ? new Date(fechaInicioDate.getTime() + durMin * 60000)
           : fechaFinDate;
 
-        // Validar horario comercial de atención (09:00 a 20:00 hs)
+        // Validar horario comercial de atención según la configuración activa
         const horaInicio = fechaInicioDate.getHours() + fechaInicioDate.getMinutes() / 60;
         const horaFin = finDate.getHours() + finDate.getMinutes() / 60;
-        if (horaInicio < 9 || horaFin > 20 || horaInicio >= horaFin) {
-          toast.error("El horario de atención es de 09:00 a 20:00 hs. El turno debe comenzar a partir de las 09:00 y finalizar a más tardar a las 20:00 hs.");
+        if (
+          horaInicio < HORARIO_ATENCION_DEFAULT.horaInicio ||
+          horaFin > HORARIO_ATENCION_DEFAULT.horaFin ||
+          horaInicio >= horaFin
+        ) {
+          toast.error(
+            `El horario de atención es de ${HORARIO_ATENCION_DEFAULT.inicioStr} a ${HORARIO_ATENCION_DEFAULT.finStr} hs. El turno debe comenzar a partir de las ${HORARIO_ATENCION_DEFAULT.inicioStr} y finalizar a más tardar a las ${HORARIO_ATENCION_DEFAULT.finStr} hs.`,
+          );
           setCargandoAccion(false);
           return;
         }
@@ -154,11 +161,17 @@ export function useTurnoActions(recargar, cerrarModal) {
       ? new Date(fechaInicioDate.getTime() + durMin * 60000)
       : fechaFinDate;
 
-    // Validar horario comercial de atención (09:00 a 20:00 hs)
+    // Validar horario comercial de atención según la configuración activa
     const horaInicio = fechaInicioDate.getHours() + fechaInicioDate.getMinutes() / 60;
     const horaFin = finDate.getHours() + finDate.getMinutes() / 60;
-    if (horaInicio < 9 || horaFin > 20 || horaInicio >= horaFin) {
-      toast.error("El horario de atención es de 09:00 a 20:00 hs. El turno debe comenzar a partir de las 09:00 y finalizar a más tardar a las 20:00 hs.");
+    if (
+      horaInicio < HORARIO_ATENCION_DEFAULT.horaInicio ||
+      horaFin > HORARIO_ATENCION_DEFAULT.horaFin ||
+      horaInicio >= horaFin
+    ) {
+      toast.error(
+        `El horario de atención es de ${HORARIO_ATENCION_DEFAULT.inicioStr} a ${HORARIO_ATENCION_DEFAULT.finStr} hs. El turno debe comenzar a partir de las ${HORARIO_ATENCION_DEFAULT.inicioStr} y finalizar a más tardar a las ${HORARIO_ATENCION_DEFAULT.finStr} hs.`,
+      );
       return;
     }
 
@@ -205,16 +218,16 @@ export function useTurnoActions(recargar, cerrarModal) {
       // Si fue clickeado desde la vista mensual (allDay) o string de sólo fecha
       if (selectInfo.allDay || selectInfo.startStr.length === 10) {
         const fechaSolo = selectInfo.startStr.slice(0, 10);
-        nuevaFechaInicio = `${fechaSolo}T09:00`;
+        nuevaFechaInicio = `${fechaSolo}T${HORARIO_ATENCION_DEFAULT.inicioStr}`;
       } else {
         const d = new Date(selectInfo.startStr);
         if (!isNaN(d.getTime())) {
           const h = d.getHours();
-          if (h < 9) {
-            d.setHours(9, 0, 0, 0);
+          if (h < HORARIO_ATENCION_DEFAULT.horaInicio) {
+            d.setHours(HORARIO_ATENCION_DEFAULT.horaInicio, 0, 0, 0);
             nuevaFechaInicio = formatDateTimeInput(d);
-          } else if (h >= 20) {
-            d.setHours(19, 30, 0, 0);
+          } else if (h >= HORARIO_ATENCION_DEFAULT.horaFin) {
+            d.setHours(HORARIO_ATENCION_DEFAULT.horaFin - 1, 30, 0, 0);
             nuevaFechaInicio = formatDateTimeInput(d);
           }
         }

@@ -3,6 +3,11 @@
 import { Op } from "sequelize";
 import { Turno, EstadoTurno } from "../models/index.model.js";
 
+export const HORARIO_ATENCION_CONFIG = Object.freeze({
+  HORA_INICIO: 9,
+  HORA_FIN: 20,
+});
+
 export const validarEstadoProgramado = async () => {
   const [estadoProgramado, created] = await EstadoTurno.findOrCreate({
     where: { estado: "Programado" },
@@ -48,7 +53,12 @@ export const validarSolapaminetoHorarios = async (fechaInicio, fechaFin, turnoId
   return !!turnoExistente;
 };
 
-export const validarHorarioAtencion = (inicioInput, finInput) => {
+export const validarHorarioAtencion = (
+  inicioInput,
+  finInput,
+  horaMin = HORARIO_ATENCION_CONFIG.HORA_INICIO,
+  horaMax = HORARIO_ATENCION_CONFIG.HORA_FIN
+) => {
   const extraerHoraMinutos = (val) => {
     if (!val) return null;
     if (typeof val === "string") {
@@ -76,8 +86,8 @@ export const validarHorarioAtencion = (inicioInput, finInput) => {
 
   if (horaInicio === null || horaFin === null) return true;
 
-  // Horario de atención exclusivo: 09:00 a 20:00 hs
-  if (horaInicio < 9 || horaFin > 20 || horaInicio >= horaFin) {
+  // Validar dentro del rango horario de atención configurado (por defecto 09:00 a 20:00 hs)
+  if (horaInicio < horaMin || horaFin > horaMax || horaInicio >= horaFin) {
     return false;
   }
   return true;
