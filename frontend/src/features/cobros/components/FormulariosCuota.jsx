@@ -75,17 +75,16 @@ export default function FormularioCuotas({ modalCuotas, cerrarModal, cobroSelecc
     try {
       const montoIngresado = Number(nuevaCuota.monto_cobrado);
       const nroProximaCuota = cuotas.length + 1;
-      const cobrarInmediato = nuevaCuota.cobrar_inmediato;
 
       const payloadCuota = {
         id_cobro: cobroSeleccionado.id_cobro,
         nro_cuota: nroProximaCuota,
         monto_cuota: montoIngresado,
-        monto_cobrado: cobrarInmediato ? montoIngresado : 0,
+        monto_cobrado: montoIngresado,
         fecha_vencimiento: new Date().toISOString().split("T")[0],
-        fecha_cobro: cobrarInmediato ? new Date().toISOString() : null,
-        metodo_pago: cobrarInmediato ? nuevaCuota.metodo_pago : null,
-        estado: cobrarInmediato ? "Pagada" : "Pendiente",
+        fecha_cobro: new Date().toISOString(),
+        metodo_pago: nuevaCuota.metodo_pago || "Efectivo",
+        estado: "Pagada",
       };
 
       await api.post("/cuotas", payloadCuota);
@@ -292,6 +291,7 @@ export default function FormularioCuotas({ modalCuotas, cerrarModal, cobroSelecc
                     }))
                   }
                   required
+                  placeholder="0.00"
                   className="w-full border border-gray-300 p-2 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#2eb086]/50 font-bold text-[#2eb086]"
                 />
               </div>
@@ -299,55 +299,38 @@ export default function FormularioCuotas({ modalCuotas, cerrarModal, cobroSelecc
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-1">Método de Pago *</label>
                 <select
-                  value={nuevaCuota.metodo_pago}
+                  value={nuevaCuota.metodo_pago || "Efectivo"}
                   onChange={(e) =>
                     setNuevaCuota((p) => ({
                       ...p,
                       metodo_pago: e.target.value,
                     }))
                   }
-                  disabled={!nuevaCuota.cobrar_inmediato}
-                  className="w-full border border-gray-300 p-2 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#2eb086]/50 text-gray-800 font-medium disabled:opacity-50"
+                  className="w-full border border-gray-300 p-2 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#2eb086]/50 text-gray-800 font-medium"
                 >
                   <option value="Efectivo">Efectivo</option>
                   <option value="Transferencia">Transferencia</option>
-                  <option value="Tarjeta">Tarjeta</option>
+                  <option value="Tarjeta">Tarjeta Débito/Crédito</option>
                   <option value="Otro">Otro</option>
                 </select>
               </div>
 
-              <div className="flex items-center justify-between sm:justify-end gap-3 sm:col-span-3 pt-1">
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <span className="text-xs font-semibold text-gray-700">¿Cobrar automáticamente ahora?</span>
-                  <input
-                    type="checkbox"
-                    checked={nuevaCuota.cobrar_inmediato}
-                    onChange={(e) =>
-                      setNuevaCuota((p) => ({
-                        ...p,
-                        cobrar_inmediato: e.target.checked,
-                      }))
-                    }
-                    className="w-4 h-4 text-[#2eb086] rounded border-gray-300 focus:ring-[#2eb086]"
-                  />
-                </label>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    type="submit"
-                    className="bg-[#2eb086] hover:bg-[#259370] text-white px-4 py-2 rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5"
-                  >
-                    <CheckCircle size={15} />
-                    <span>{nuevaCuota.cobrar_inmediato ? "Registrar y Cobrar" : "Registrar Pendiente"}</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setMostrarFormularioNueva(false)}
-                    className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-200"
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
+              <div className="flex items-center justify-end gap-2 pt-1">
+                <button
+                  type="submit"
+                  className="bg-[#2eb086] hover:bg-[#259370] text-white px-4 py-2 rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer active:scale-95"
+                >
+                  <CheckCircle size={15} />
+                  <span>Registrar y Cobrar</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMostrarFormularioNueva(false)}
+                  className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-200 cursor-pointer"
+                  title="Cancelar"
+                >
+                  <X size={16} />
+                </button>
               </div>
             </form>
           )}
