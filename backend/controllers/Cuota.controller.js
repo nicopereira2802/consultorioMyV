@@ -9,6 +9,7 @@ export const getCuotaByCobroId = async (req, res) => {
 
     const cuotas = await Cuota.findAll({
       where: { id_cobro: id_cobro, activo: true },
+      order: [["nro_cuota", "ASC"]],
     });
 
     res.status(200).json({
@@ -43,16 +44,25 @@ export const createCuota = async (req, res) => {
     const id_cobro = req.cobro.id_cobro;
 
     const cantCuotas = await Cuota.count({ where: { id_cobro: id_cobro } });
+    const cobrado = Number(monto_cobrado) || 0;
+    const cuotaMonto = Number(monto_cuota) || cobrado;
+
+    let estadoCalculado = estado;
+    if (!estadoCalculado) {
+      if (cobrado >= cuotaMonto && cuotaMonto > 0) estadoCalculado = "Pagada";
+      else if (cobrado > 0) estadoCalculado = "Parcialmente pagada";
+      else estadoCalculado = "Pendiente";
+    }
 
     const newCuota = await Cuota.create({
       id_cobro: id_cobro,
       nro_cuota: cantCuotas + 1,
-      monto_cuota: monto_cuota,
-      monto_cobrado: monto_cobrado || 0,
-      fecha_vencimiento: fecha_vencimiento,
-      fecha_cobro: fecha_cobro || null,
-      metodo_pago: metodo_pago || null,
-      estado: estado || "Pendiente",
+      monto_cuota: cuotaMonto,
+      monto_cobrado: cobrado,
+      fecha_vencimiento: fecha_vencimiento || new Date().toISOString().split("T")[0],
+      fecha_cobro: fecha_cobro || (cobrado > 0 ? new Date() : null),
+      metodo_pago: metodo_pago || (cobrado > 0 ? "Efectivo" : null),
+      estado: estadoCalculado,
     });
 
     res.status(201).json({
@@ -68,7 +78,7 @@ export const createCuota = async (req, res) => {
 // Actualizar una cuota existente
 export const updateCuota = async (req, res) => {
   try {
-    const { id_cobro, monto_cuota, monto_cobrado, fecha_vencimiento, fecha_cobro, metodo_pago } = req.body;
+    const { id_cobro, monto_cuota, monto_cobrado, fecha_vencimiento, fecha_cobro, metodo_pago, estado } = req.body;
 
     const cuota = req.cuota;
 
@@ -76,7 +86,7 @@ export const updateCuota = async (req, res) => {
       const cobro = await Cobro.findByPk(id_cobro);
 
       if (!cobro) {
-        res.status(400).json({
+        return res.status(400).json({
           status: "error",
           message: "El cobro seleccionado no existe.",
         });
@@ -85,11 +95,12 @@ export const updateCuota = async (req, res) => {
 
     await cuota.update({
       id_cobro: id_cobro || cuota.id_cobro,
-      monto_cuota: monto_cuota || cuota.monto_cuota,
-      monto_cobrado: monto_cobrado || cuota.monto_cobrado,
+      monto_cuota: monto_cuota !== undefined ? monto_cuota : cuota.monto_cuota,
+      monto_cobrado: monto_cobrado !== undefined ? monto_cobrado : cuota.monto_cobrado,
       fecha_vencimiento: fecha_vencimiento || cuota.fecha_vencimiento,
-      fecha_cobro: fecha_cobro || cuota.fecha_cobro,
+      fecha_cobro: fecha_cobro !== undefined ? fecha_cobro : cuota.fecha_cobro,
       metodo_pago: metodo_pago || cuota.metodo_pago,
+      estado: estado || cuota.estado,
     });
 
     res.status(200).json({
@@ -122,33 +133,27 @@ export const deleteCuota = async (req, res) => {
 export const cobrarCuota = async (req, res) => {
   try {
     const { monto_cobrado, fecha_cobro, metodo_pago } = req.body;
-
     const cuota = req.cuota;
 
-    let estado;
-
     const monto_cuota = parseFloat(cuota.monto_cuota);
+    const cobrado = parseFloat(monto_cobrado);
 
-    if (monto_cobrado === monto_cuota) {
+    let estado;
+    if (cobrado >= monto_cuota) {
       estado = "Pagada";
-    } else if (monto_cobrado < monto_cuota) {
+    } else if (cobrado > 0) {
       estado = "Parcialmente pagada";
     } else {
-      // 🛑 ¡Faltaba el return acá para que frene si el monto es mayor!
-      return res.status(400).json({
-        status: "error",
-        message: "El monto cobrado es mayor al monto de la cuota.",
-      });
+      estado = "Pendiente";
     }
 
     await cuota.update({
-      monto_cobrado: monto_cobrado,
-      fecha_cobro: fecha_cobro,
-      metodo_pago: metodo_pago,
+      monto_cobrado: cobrado,
+      fecha_cobro: fecha_cobro ? new Date(fecha_cobro) : new Date(),
+      metodo_pago: metodo_pago || "Efectivo",
       estado: estado,
     });
 
-    // 🛑 Buena práctica agregar return acá también
     return res.status(200).json({
       status: "success",
       data: cuota,

@@ -92,9 +92,10 @@ export function FormularioCrearEditarCobro({
                   <InputFiltro
                     datos={turnosAtendidos}
                     camposFiltrado={["id_turno", "Paciente.nombre", "Paciente.apellido", "Paciente.dni"]}
-                    formatoVisual={(t) =>
-                      `Turno #${t.id_turno} - ${t.Paciente?.nombre || ""} ${t.Paciente?.apellido || ""} ($${t.precio_final || 0})`
-                    }
+                    formatoVisual={(t) => {
+                      const deuda = t.saldo_pendiente !== undefined ? t.saldo_pendiente : (t.precio_final || 0);
+                      return `Turno #${t.id_turno} - ${t.Paciente?.nombre || ""} ${t.Paciente?.apellido || ""} (Pendiente: $${Number(deuda).toLocaleString("es-AR")})`;
+                    }}
                     placeholder="Buscar por ID de turno o nombre de paciente..."
                     valorInicial={datosFormulario.id_turno || ""}
                     alSeleccionar={(t) => {
@@ -104,8 +105,12 @@ export function FormularioCrearEditarCobro({
                       actualizarDatos({
                         target: { name: "id_paciente", value: t.id_paciente },
                       });
+                      const monto = t.saldo_pendiente !== undefined ? t.saldo_pendiente : (t.precio_final || "");
                       actualizarDatos({
-                        target: { name: "monto_a_cobrar", value: t.precio_final || "" },
+                        target: { name: "monto_a_cobrar", value: monto },
+                      });
+                      actualizarDatos({
+                        target: { name: "monto_abonado", value: monto },
                       });
                     }}
                   />
@@ -191,15 +196,15 @@ export function FormularioCrearEditarCobro({
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <SelectorModalidad
-                titulo="Pago Total (Inmediato)"
-                descripcion="Cobro inmediato en 1 pago. El paciente queda al día."
+                titulo="Pago Inmediato (Total o Parcial)"
+                descripcion="Cobro en 1 pago ahora. Si paga menos del total, el saldo queda pendiente."
                 activa={datosFormulario.modalidad === "inmediato"}
                 onClick={() => seleccionarModalidad("inmediato")}
                 Icono={CheckCircle2}
               />
               <SelectorModalidad
                 titulo="Plan de Cuotas Fijas"
-                descripcion="Cuotas mensuales fijas con fechas de vencimiento."
+                descripcion="Financiación en cuotas con opción de cobrar la 1ª ahora."
                 activa={datosFormulario.modalidad === "cuotas"}
                 onClick={() => seleccionarModalidad("cuotas")}
                 Icono={Layers}
@@ -276,6 +281,13 @@ function SelectorModalidad({ titulo, descripcion, activa, onClick, Icono, esAmbe
 
 function DetalleInmediato({ datosFormulario, actualizarDatos }) {
   const costoTotal = Number(datosFormulario.monto_a_cobrar) || 0;
+  const montoAbonado =
+    datosFormulario.monto_abonado !== undefined && datosFormulario.monto_abonado !== ""
+      ? Number(datosFormulario.monto_abonado)
+      : costoTotal;
+  const saldoRestante = Math.max(0, costoTotal - montoAbonado);
+  const esParcial = montoAbonado < costoTotal;
+
   return (
     <div className="bg-gray-50/70 p-3.5 rounded-2xl border border-gray-200/80 space-y-3">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
@@ -284,13 +296,13 @@ function DetalleInmediato({ datosFormulario, actualizarDatos }) {
           3. Detalle del Pago Inmediato
         </h4>
         <span className="text-xs font-bold bg-[#e8f7f1] text-[#2eb086] px-3 py-1 rounded-full border border-[#2eb086]/30 w-fit">
-          Monto a cancelar: ${costoTotal.toFixed(2)}
+          Deuda Total: ${costoTotal.toFixed(2)}
         </span>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <div>
-          <label className="block text-xs font-semibold text-gray-700 mb-1">Monto a Cobrar *</label>
+          <label className="block text-xs font-semibold text-gray-700 mb-1">Total a Cobrar *</label>
           <input
             type="number"
             step="0.01"
@@ -300,6 +312,24 @@ function DetalleInmediato({ datosFormulario, actualizarDatos }) {
             placeholder="0.00"
             required
             className="w-full border border-gray-300 p-2.5 rounded-xl text-xs sm:text-sm bg-white focus:ring-2 focus:ring-[#2eb086]/50"
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold text-gray-700 mb-1">Monto a Abonar Ahora *</label>
+          <input
+            type="number"
+            step="0.01"
+            name="monto_abonado"
+            value={
+              datosFormulario.monto_abonado !== undefined
+                ? datosFormulario.monto_abonado
+                : datosFormulario.monto_a_cobrar
+            }
+            onChange={actualizarDatos}
+            placeholder="0.00"
+            required
+            className="w-full border border-gray-300 p-2.5 rounded-xl text-xs sm:text-sm bg-white focus:ring-2 focus:ring-[#2eb086]/50 font-bold text-[#2eb086]"
           />
         </div>
 
@@ -318,12 +348,34 @@ function DetalleInmediato({ datosFormulario, actualizarDatos }) {
           </select>
         </div>
       </div>
+
+      {esParcial && (
+        <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+          <div>
+            <span className="font-bold block">💡 Cobro Parcial de Deuda</span>
+            <span>
+              Se cobrarán <strong>${montoAbonado.toFixed(2)}</strong> ahora. El turno continuará figurando en{" "}
+              <strong>Por Cobrar</strong> con un saldo pendiente de <strong>${saldoRestante.toFixed(2)}</strong>.
+            </span>
+          </div>
+          <span className="px-2.5 py-1 bg-amber-200/80 text-amber-900 rounded-lg font-bold text-[11px] whitespace-nowrap">
+            Saldo Restante: ${saldoRestante.toFixed(2)}
+          </span>
+        </div>
+      )}
     </div>
   );
 }
 
 function DetalleCuotas({ datosFormulario, actualizarDatos }) {
   const costoTotal = Number(datosFormulario.monto_a_cobrar) || 0;
+  const cantCuotas = Number(datosFormulario.cant_cuotas) || 3;
+  const valorCuota = costoTotal > 0 ? (costoTotal / cantCuotas).toFixed(2) : "0.00";
+  const cobrarPrimera =
+    datosFormulario.cobrar_primera_cuota !== undefined
+      ? Boolean(datosFormulario.cobrar_primera_cuota)
+      : true;
+
   return (
     <div className="bg-gray-50/70 p-3.5 rounded-2xl border border-gray-200/80 space-y-3">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
@@ -361,7 +413,7 @@ function DetalleCuotas({ datosFormulario, actualizarDatos }) {
           >
             {[2, 3, 4, 5, 6, 9, 12].map((num) => (
               <option key={num} value={num}>
-                {num} cuotas fijas
+                {num} cuotas fijas ({costoTotal > 0 ? `$${(costoTotal / num).toFixed(2)} c/u` : ""})
               </option>
             ))}
           </select>
@@ -378,6 +430,62 @@ function DetalleCuotas({ datosFormulario, actualizarDatos }) {
             className="w-full border border-gray-300 p-2.5 rounded-xl text-xs sm:text-sm bg-white focus:ring-2 focus:ring-[#2eb086]/50 text-gray-800"
           />
         </div>
+      </div>
+
+      {/* OPCIÓN: COBRAR LA PRIMERA CUOTA AHORA */}
+      <div className="bg-white p-3 rounded-xl border border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <label className="flex items-center gap-2.5 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            name="cobrar_primera_cuota"
+            checked={cobrarPrimera}
+            onChange={(e) =>
+              actualizarDatos({
+                target: { name: "cobrar_primera_cuota", value: e.target.checked },
+              })
+            }
+            className="w-4 h-4 text-[#2eb086] rounded border-gray-300 focus:ring-[#2eb086]"
+          />
+          <div>
+            <span className="text-xs font-bold text-gray-800 block">¿Cobrar 1ª cuota ahora en caja?</span>
+            <span className="text-[11px] text-gray-500">
+              Registra el ingreso inmediato de ${valorCuota} y asienta el comprobante.
+            </span>
+          </div>
+        </label>
+
+        {cobrarPrimera && (
+          <div className="w-full sm:w-48">
+            <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">
+              Forma de Pago (1ª Cuota)
+            </label>
+            <select
+              name="metodo_pago"
+              value={datosFormulario.metodo_pago}
+              onChange={actualizarDatos}
+              className="w-full border border-gray-300 p-1.5 rounded-lg text-xs bg-gray-50 focus:ring-2 focus:ring-[#2eb086]/50 font-medium text-gray-800"
+            >
+              <option value="Efectivo">Efectivo</option>
+              <option value="Transferencia">Transferencia</option>
+              <option value="Tarjeta">Tarjeta Débito/Crédito</option>
+              <option value="Otro">Otro</option>
+            </select>
+          </div>
+        )}
+      </div>
+
+      <div className="text-xs text-gray-600 bg-emerald-50/70 border border-emerald-200/80 p-2.5 rounded-xl">
+        {cobrarPrimera ? (
+          <span>
+            ✅ Se cobrarán <strong>${valorCuota}</strong> hoy por{" "}
+            <strong>{datosFormulario.metodo_pago || "Efectivo"}</strong> (Cuota #1). Las{" "}
+            <strong>{cantCuotas - 1}</strong> cuotas restantes quedarán pendientes.
+          </span>
+        ) : (
+          <span>
+            ℹ️ Las <strong>{cantCuotas}</strong> cuotas de <strong>${valorCuota}</strong> quedarán pendientes a pagar a partir del 1º vencimiento.
+          </span>
+        )}
       </div>
     </div>
   );

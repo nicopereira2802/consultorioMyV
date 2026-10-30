@@ -162,38 +162,52 @@ export const createCobro = async (req, res) => {
 
 export const createCobroInmediato = async (req, res) => {
   try {
-    const { monto_a_cobrar, metodo_pago } = req.body;
+    const { monto_a_cobrar, monto_abonado, metodo_pago } = req.body;
     const id_turno = req.turno ? req.turno.id_turno : req.body.id_turno;
     const id_paciente = req.paciente ? req.paciente.id_paciente : req.body.id_paciente;
 
+    const turno = await Turno.findByPk(id_turno);
+    const precioTurno = turno ? Number(turno.precio_final) : 0;
+
     let cobro = await Cobro.findOne({ where: { id_turno, activo: true } });
+
+    // La deuda total acordada no debe perderse ante un pago parcial
+    const deudaTotal = Number(monto_a_cobrar) || (cobro ? Number(cobro.monto_a_cobrar) : precioTurno) || precioTurno || 0;
+    const montoPagado = monto_abonado !== undefined && monto_abonado !== null && monto_abonado !== ""
+      ? Number(monto_abonado)
+      : (Number(monto_a_cobrar) || deudaTotal);
 
     if (!cobro) {
       cobro = await Cobro.create({
         id_turno,
         id_paciente,
-        monto_a_cobrar: Number(monto_a_cobrar),
+        monto_a_cobrar: deudaTotal,
         cant_cuotas: 1,
       });
     } else {
       await cobro.update({
-        monto_a_cobrar: Number(monto_a_cobrar) || cobro.monto_a_cobrar,
-        cant_cuotas: 1,
+        monto_a_cobrar: deudaTotal || cobro.monto_a_cobrar,
       });
     }
 
-    const montoFinal = Number(monto_a_cobrar) || Number(cobro.monto_a_cobrar);
+    const cuotasPrevias = await Cuota.findAll({ where: { id_cobro: cobro.id_cobro, activo: true } });
+    const pagadoPrevio = cuotasPrevias.reduce((acc, q) => acc + (Number(q.monto_cobrado) || 0), 0);
+    const saldoRestante = Math.max(0, deudaTotal - pagadoPrevio);
+    const montoCuotaActual = cuotasPrevias.length === 0 ? deudaTotal : saldoRestante;
 
-    // Creamos la cuota pagada
+    const estaTotalmentePagado = (pagadoPrevio + montoPagado) >= deudaTotal;
+    const estadoCuota = montoPagado >= montoCuotaActual ? "Pagada" : "Parcialmente pagada";
+
+    // Creamos la cuota correspondiente a este pago
     await Cuota.create({
       id_cobro: cobro.id_cobro,
-      nro_cuota: 1,
-      monto_cuota: montoFinal,
-      monto_cobrado: montoFinal,
+      nro_cuota: cuotasPrevias.length + 1,
+      monto_cuota: montoCuotaActual,
+      monto_cobrado: montoPagado,
       fecha_vencimiento: new Date().toISOString().split("T")[0],
       fecha_cobro: new Date(),
       metodo_pago: metodo_pago || "Efectivo",
-      estado: "Pagada",
+      estado: estadoCuota,
     });
 
     return res.status(201).json({
@@ -209,13 +223,20 @@ export const createCobroInmediato = async (req, res) => {
 
 export const createCobroCuotas = async (req, res) => {
   try {
-    const { monto_a_cobrar, cant_cuotas, fecha_primer_vencimiento } = req.body;
+    const {
+      monto_a_cobrar,
+      cant_cuotas,
+      fecha_primer_vencimiento,
+      cobrar_primera_cuota,
+      metodo_pago,
+    } = req.body;
     const id_turno = req.turno ? req.turno.id_turno : req.body.id_turno;
     const id_paciente = req.paciente ? req.paciente.id_paciente : req.body.id_paciente;
 
     const total = Number(monto_a_cobrar);
-    const cantidadCuotas = Number(cant_cuotas) || 1;
-    const montoPorCuota = Number((total / cantidadCuotas).toFixed(2));
+    const cantidadCuotas = Math.max(1, Number(cant_cuotas) || 1);
+    const montoBaseCuota = Number((total / cantidadCuotas).toFixed(2));
+    const montoCuotaFinal = Number((total - montoBaseCuota * (cantidadCuotas - 1)).toFixed(2));
 
     let cobro = await Cobro.findOne({ where: { id_turno, activo: true } });
 
@@ -231,20 +252,29 @@ export const createCobroCuotas = async (req, res) => {
         monto_a_cobrar: total || cobro.monto_a_cobrar,
         cant_cuotas: cantidadCuotas,
       });
+      // Si ya existían cuotas pendientes de este cobro, desactivarlas para regenerar el plan limpio
+      await Cuota.update({ activo: false }, { where: { id_cobro: cobro.id_cobro, estado: "Pendiente" } });
     }
 
     const fechaBase = new Date(fecha_primer_vencimiento || Date.now());
+    const cobrarPrimera = Boolean(cobrar_primera_cuota);
+
     for (let i = 1; i <= cantidadCuotas; i++) {
       let fechaVenc = new Date(fechaBase);
       fechaVenc.setMonth(fechaVenc.getMonth() + (i - 1));
 
+      const esPrimeraPagada = i === 1 && cobrarPrimera;
+      const montoEstaCuota = (i === cantidadCuotas) ? montoCuotaFinal : montoBaseCuota;
+
       await Cuota.create({
         id_cobro: cobro.id_cobro,
         nro_cuota: i,
-        monto_cuota: montoPorCuota,
-        monto_cobrado: 0,
+        monto_cuota: montoEstaCuota,
+        monto_cobrado: esPrimeraPagada ? montoEstaCuota : 0,
         fecha_vencimiento: fechaVenc.toISOString().split("T")[0],
-        estado: "Pendiente",
+        fecha_cobro: esPrimeraPagada ? new Date() : null,
+        metodo_pago: esPrimeraPagada ? (metodo_pago || "Efectivo") : null,
+        estado: esPrimeraPagada ? "Pagada" : "Pendiente",
       });
     }
 
@@ -277,13 +307,18 @@ export const createCobroInformal = async (req, res) => {
         monto_a_cobrar: total,
         cant_cuotas: 1,
       });
+    } else {
+      await cobro.update({
+        monto_a_cobrar: total || cobro.monto_a_cobrar,
+      });
     }
 
     if (entrega > 0) {
+      const cuotasCount = await Cuota.count({ where: { id_cobro: cobro.id_cobro } });
       const estadoCuota = entrega >= total ? "Pagada" : "Parcialmente pagada";
       await Cuota.create({
         id_cobro: cobro.id_cobro,
-        nro_cuota: 1,
+        nro_cuota: cuotasCount + 1,
         monto_cuota: total,
         monto_cobrado: entrega,
         fecha_vencimiento: new Date().toISOString().split("T")[0],
@@ -443,7 +478,6 @@ export const getKpisCaja = async (req, res) => {
     const totalIngresos = (await Cuota.sum("monto_cobrado")) || 0;
 
     // 2. Egresos totales reales: suma de gastos operativos activos
-    // (Importa el modelo Gasto si no está en la cabecera: import { Gasto } from "../models/index.model.js")
     const GastoModel = sequelize.models.Gasto;
     const totalEgresos = GastoModel ? ((await GastoModel.sum("monto", { where: { activo: true } })) || 0) : 0;
 
@@ -472,7 +506,7 @@ export const getKpisCaja = async (req, res) => {
 
     let totalPendienteCobro = 0;
     turnosAtendidos.forEach((t) => {
-      const deudaTurno = Number(t.precio_final) || 0;
+      const deudaTurno = Number(t.Cobro?.monto_a_cobrar) || Number(t.precio_final) || 0;
       if (deudaTurno > 0) {
         const cuotas = t.Cobro?.Cuotas || t.Cobro?.Cuota || [];
         const pagado = cuotas.reduce((acc, q) => acc + (Number(q.monto_cobrado) || 0), 0);

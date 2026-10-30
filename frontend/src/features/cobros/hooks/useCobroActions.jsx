@@ -36,8 +36,15 @@ export function useCobroActions(recargar, cerrarModal) {
         toast.success("Cobro actualizado correctamente");
       } else {
         if (modalidad === "inmediato") {
+          const montoAbonado =
+            datosFormulario.monto_abonado !== undefined && datosFormulario.monto_abonado !== ""
+              ? Number(datosFormulario.monto_abonado)
+              : montoTotal;
+
           await api.post("/cobros/inmediato", {
             ...payloadBase,
+            monto_a_cobrar: montoTotal,
+            monto_abonado: montoAbonado,
             metodo_pago: datosFormulario.metodo_pago || "Efectivo",
           });
         } else if (modalidad === "cuotas") {
@@ -46,6 +53,11 @@ export function useCobroActions(recargar, cerrarModal) {
             cant_cuotas: Number(datosFormulario.cant_cuotas) || 3,
             fecha_primer_vencimiento:
               datosFormulario.fecha_primer_vencimiento || new Date().toISOString().split("T")[0],
+            cobrar_primera_cuota:
+              datosFormulario.cobrar_primera_cuota !== undefined
+                ? Boolean(datosFormulario.cobrar_primera_cuota)
+                : true,
+            metodo_pago: datosFormulario.metodo_pago || "Efectivo",
           });
         } else if (modalidad === "informal") {
           await api.post("/cobros/informal", {

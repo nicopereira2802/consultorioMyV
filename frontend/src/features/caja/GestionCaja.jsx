@@ -25,6 +25,7 @@ import { FormularioCrearEditar as FormularioGasto } from "../gastos/components/F
 
 //* HOOKS Y FORMULARIOS COBROS
 import { FormularioCrearEditarCobro as FormularioCobro } from "../cobros/components/FormulariosCobro";
+import FormularioCuotas from "../cobros/components/FormulariosCuota";
 import { useCobroActions } from "../cobros/hooks/useCobroActions";
 import { useCajaSearchPagination } from "./hooks/useCajaSearchPagination";
 
@@ -37,6 +38,7 @@ export default function GestionCaja() {
   const [vistaActiva, setVistaActiva] = useState("cronologico"); // 'cronologico' | 'mayor' | 'pendientes'
   const [categoriaAbierta, setCategoriaAbierta] = useState(null);
   const [pacienteBalanceId, setPacienteBalanceId] = useState(null);
+  const [cobroParaCuotas, setCobroParaCuotas] = useState(null);
 
   //* HOOK DE PAGINACIÓN
   const {
@@ -119,15 +121,17 @@ export default function GestionCaja() {
   const abrirCobroParaTurno = (turno) => {
     const idPaciente = turno.id_paciente || turno.Paciente?.id_paciente || "";
     const idTurno = turno.id_turno;
-    const precio = turno.precio_final || turno.total || "";
+    const precio = turno.saldo_pendiente !== undefined ? turno.saldo_pendiente : (turno.precio_final || turno.total || "");
 
     abrirParaCrearCobro({
       ...ESTADO_INICIAL_COBRO,
       id_turno: String(idTurno),
       id_paciente: String(idPaciente),
       monto_a_cobrar: String(precio),
+      monto_abonado: String(precio),
       modalidad: "inmediato",
       metodo_pago: "Efectivo",
+      cobrar_primera_cuota: true,
     });
   };
 
@@ -228,7 +232,10 @@ export default function GestionCaja() {
           {/* VISTA: CRONOLÓGICA */}
           {vistaActiva === "cronologico" && (
             <div className="flex flex-col gap-4">
-              <VistaCronologica movimientosUnificados={movimientosUnificados} />
+              <VistaCronologica
+                movimientosUnificados={movimientosUnificados}
+                onVerCuotas={(cobro) => setCobroParaCuotas(cobro)}
+              />
               <TablaPaginacion page={pageCobro} setPage={setPageCobro} totalPages={totalPagesCobro} />
             </div>
           )}
@@ -251,6 +258,7 @@ export default function GestionCaja() {
               <VistaPendientes
                 turnosPendientes={turnosPendientes}
                 abrirCobroParaTurno={abrirCobroParaTurno}
+                abrirGestionCuotas={(cobro) => setCobroParaCuotas(cobro)}
                 onVerBalance={(id) => setPacienteBalanceId(id)}
               />
             </div>
@@ -286,6 +294,19 @@ export default function GestionCaja() {
               e.preventDefault();
               guardarCobro(datosCobro, editandoCobro, cobroSeleccionado);
             }}
+          />
+        )}
+
+        {/* MODAL: GESTIÓN DE CUOTAS Y PAGOS */}
+        {cobroParaCuotas && (
+          <FormularioCuotas
+            modalCuotas={Boolean(cobroParaCuotas)}
+            cerrarModal={() => {
+              setCobroParaCuotas(null);
+              recargarTodo();
+            }}
+            cobroSeleccionado={cobroParaCuotas}
+            recarcarCobros={recargarTodo}
           />
         )}
 

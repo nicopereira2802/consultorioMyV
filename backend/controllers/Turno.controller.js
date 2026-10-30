@@ -114,7 +114,16 @@ export const getAllTurnosAtendidos = async (req, res) => {
           include: [
             {
               model: Cuota,
-              attributes: ["id_cuota", "monto_cuota", "monto_cobrado", "estado"],
+              attributes: [
+                "id_cuota",
+                "nro_cuota",
+                "monto_cuota",
+                "monto_cobrado",
+                "estado",
+                "metodo_pago",
+                "fecha_cobro",
+                "fecha_vencimiento",
+              ],
               required: false,
             },
           ],
@@ -136,9 +145,9 @@ export const getAllTurnosAtendidos = async (req, res) => {
       // Sumar lo que efectivamente se cobró en sus cuotas
       const cuotas = t.Cobro.Cuotas || t.Cobro.Cuota || [];
       const totalPagado = cuotas.reduce((acc, c) => {
-        if (c.estado === "Pagada" || Number(c.monto_cobrado) > 0) {
-          return acc + Number(c.monto_cobrado || c.monto_cuota || 0);
-        }
+        const pagado = Number(c.monto_cobrado) || 0;
+        if (pagado > 0) return acc + pagado;
+        if (c.estado === "Pagada") return acc + (Number(c.monto_cuota) || 0);
         return acc;
       }, 0);
 
@@ -146,9 +155,29 @@ export const getAllTurnosAtendidos = async (req, res) => {
       return totalPagado < totalDeuda;
     });
 
+    const data = turnosPendientesDeCobro.map((t) => {
+      const formatted = formatearTurnoResponse(t);
+      const totalDeuda = Number(t.Cobro?.monto_a_cobrar) || Number(t.precio_final) || 0;
+      const cuotas = t.Cobro?.Cuotas || t.Cobro?.Cuota || [];
+      const totalPagado = cuotas.reduce((acc, c) => {
+        const pagado = Number(c.monto_cobrado) || 0;
+        if (pagado > 0) return acc + pagado;
+        if (c.estado === "Pagada") return acc + (Number(c.monto_cuota) || 0);
+        return acc;
+      }, 0);
+      const saldoPendiente = Math.max(0, totalDeuda - totalPagado);
+
+      return {
+        ...formatted,
+        total_deuda: totalDeuda,
+        total_pagado: totalPagado,
+        saldo_pendiente: saldoPendiente,
+      };
+    });
+
     res.status(200).json({
       status: "success",
-      data: turnosPendientesDeCobro.map(formatearTurnoResponse),
+      data,
     });
   } catch (error) {
     console.error("Error al obtener los turnos atendidos pendientes:", error);

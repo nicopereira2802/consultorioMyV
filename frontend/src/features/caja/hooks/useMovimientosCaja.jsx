@@ -11,7 +11,6 @@ export function useMovimientosCaja(cobros, gastos, turnosPendientes, busqueda) {
   });
   const [cargandoKpis, setCargandoKpis] = useState(false);
 
-
   const cargarKpis = useCallback(async () => {
     setCargandoKpis(true);
     try {
@@ -31,18 +30,25 @@ export function useMovimientosCaja(cobros, gastos, turnosPendientes, busqueda) {
     cargarKpis();
   }, [cargarKpis, cobros.length, gastos.length, turnosPendientes.length]);
 
-
   const movimientosUnificados = useMemo(() => {
-    const listaIngresos = cobros.map((c) => ({
-      id: `ingreso-${c.id_cobro}`,
-      tipo: "ingreso",
-      concepto: `Cobro a ${c.Paciente ? `${c.Paciente.apellido}, ${c.Paciente.nombre}` : "Paciente"}`,
-      categoria: "Cobro de Atención",
-      monto: (c.Cuotas || c.Cuota || []).reduce((acc, q) => acc + (Number(q.monto_cobrado) || 0), 0),
-      fecha: c.fecha_emision || c.createdAt,
-      metodo_pago: c.modalidad || "Efectivo",
-      comprobante: `Cobro #${c.id_cobro}`,
-    }));
+    const listaIngresos = cobros.map((c) => {
+      const cuotas = c.Cuotas || c.Cuota || [];
+      const totalPagado = cuotas.reduce((acc, q) => acc + (Number(q.monto_cobrado) || 0), 0);
+      const metodos = [...new Set(cuotas.filter((q) => Number(q.monto_cobrado) > 0).map((q) => q.metodo_pago).filter(Boolean))];
+      const metodoStr = metodos.length > 0 ? metodos.join(", ") : "Efectivo";
+
+      return {
+        id: `ingreso-${c.id_cobro}`,
+        tipo: "ingreso",
+        concepto: `Cobro a ${c.Paciente ? `${c.Paciente.apellido}, ${c.Paciente.nombre}` : "Paciente"}`,
+        categoria: c.cant_cuotas > 1 ? `Plan ${c.cant_cuotas} Cuotas` : "Cobro de Atención",
+        monto: totalPagado,
+        fecha: c.fecha_emision || c.createdAt,
+        metodo_pago: metodoStr,
+        comprobante: `Cobro #${c.id_cobro}`,
+        cobroOriginal: c,
+      };
+    });
 
     const listaEgresos = gastos.map((g) => ({
       id: `egreso-${g.id_gasto}`,
