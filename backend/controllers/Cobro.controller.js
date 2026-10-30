@@ -238,7 +238,23 @@ export const createCobroCuotas = async (req, res) => {
     const montoBaseCuota = Number((total / cantidadCuotas).toFixed(2));
     const montoCuotaFinal = Number((total - montoBaseCuota * (cantidadCuotas - 1)).toFixed(2));
 
+    const turno = await Turno.findByPk(id_turno);
     let cobro = await Cobro.findOne({ where: { id_turno, activo: true } });
+
+    // Validar que el monto total sea igual o mayor al monto acordado
+    let montoMinimo = turno ? Number(turno.precio_final || 0) : 0;
+    if (cobro) {
+      const cuotasPrevias = await Cuota.findAll({ where: { id_cobro: cobro.id_cobro, activo: true } });
+      const pagadoPrevio = cuotasPrevias.reduce((acc, q) => acc + (Number(q.monto_cobrado) || 0), 0);
+      const deudaCobro = Number(cobro.monto_a_cobrar) || montoMinimo;
+      montoMinimo = Math.max(0, deudaCobro - pagadoPrevio);
+    }
+    if (montoMinimo > 0 && total < montoMinimo) {
+      return res.status(400).json({
+        status: "error",
+        message: `El monto total del plan de cuotas fijas ($${total}) debe ser igual o mayor al monto acordado ($${montoMinimo}).`,
+      });
+    }
 
     if (!cobro) {
       cobro = await Cobro.create({

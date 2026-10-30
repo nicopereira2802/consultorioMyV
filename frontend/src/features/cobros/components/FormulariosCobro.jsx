@@ -19,6 +19,18 @@ export function FormularioCrearEditarCobro({
   const [practicasTurno, setPracticasTurno] = useState([]);
   const [cargandoDetalles, setCargandoDetalles] = useState(false);
 
+  // Monto acordado del turno seleccionado (base mínima para planes de cuotas fijas y monto fijo para pago inmediato)
+  const montoAcordado = useMemo(() => {
+    if (turnoSeleccionado) {
+      return Number(
+        turnoSeleccionado.saldo_pendiente !== undefined
+          ? turnoSeleccionado.saldo_pendiente
+          : (turnoSeleccionado.precio_final || 0)
+      );
+    }
+    return 0;
+  }, [turnoSeleccionado]);
+
   useEffect(() => {
     const idTurno = datosFormulario.id_turno;
     if (!idTurno || !turnosAtendidos || turnosAtendidos.length === 0) {
@@ -52,8 +64,15 @@ export function FormularioCrearEditarCobro({
       actualizarDatos((prev) => ({
         ...prev,
         modalidad: mod,
+        monto_a_cobrar:
+          mod === "inmediato" && montoAcordado > 0 ? String(montoAcordado) : prev.monto_a_cobrar,
         cant_cuotas: mod === "cuotas" ? (Number(prev.cant_cuotas) > 1 ? prev.cant_cuotas : 3) : 1,
-        metodo_pago: mod === "cuotas" ? "Tarjeta" : (prev.metodo_pago === "Tarjeta" ? "Efectivo" : (prev.metodo_pago || "Efectivo")),
+        metodo_pago:
+          mod === "cuotas"
+            ? "Tarjeta"
+            : prev.metodo_pago === "Tarjeta"
+            ? "Efectivo"
+            : prev.metodo_pago || "Efectivo",
       }));
     }
   };
@@ -64,6 +83,21 @@ export function FormularioCrearEditarCobro({
       alert("Por favor, selecciona una modalidad de cobro (Pago Inmediato, Plan de Cuotas Fijas o Acuerdo Informal).");
       return;
     }
+
+    if (datosFormulario.modalidad === "cuotas" && montoAcordado > 0) {
+      const montoTotalCuotas = Number(datosFormulario.monto_a_cobrar) || 0;
+      if (montoTotalCuotas < montoAcordado) {
+        alert(
+          `El monto total del plan de cuotas fijas ($${montoTotalCuotas.toLocaleString("es-AR", {
+            minimumFractionDigits: 2,
+          })}) debe ser igual o mayor al monto acordado de la consulta ($${montoAcordado.toLocaleString("es-AR", {
+            minimumFractionDigits: 2,
+          })}).`
+        );
+        return;
+      }
+    }
+
     procesarFormulario(e);
   };
 
@@ -203,8 +237,8 @@ export function FormularioCrearEditarCobro({
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <SelectorModalidad
-                titulo="Pago Inmediato (Total o Parcial)"
-                descripcion="Cobro en 1 pago ahora. Si paga menos del total, el saldo queda pendiente."
+                titulo="Pago Inmediato"
+                descripcion="Pago único en el acto por el monto pactado del turno para saldar la atención."
                 activa={datosFormulario.modalidad === "inmediato"}
                 onClick={() => seleccionarModalidad("inmediato")}
                 Icono={CheckCircle2}
@@ -238,7 +272,11 @@ export function FormularioCrearEditarCobro({
           )}
 
           {datosFormulario.modalidad === "cuotas" && (
-            <DetalleCuotas datosFormulario={datosFormulario} actualizarDatos={actualizarDatos} />
+            <DetalleCuotas
+              datosFormulario={datosFormulario}
+              actualizarDatos={actualizarDatos}
+              montoAcordado={montoAcordado}
+            />
           )}
 
           {datosFormulario.modalidad === "informal" && (
@@ -298,12 +336,6 @@ function SelectorModalidad({ titulo, descripcion, activa, onClick, Icono, esAmbe
 
 function DetalleInmediato({ datosFormulario, actualizarDatos }) {
   const costoTotal = Number(datosFormulario.monto_a_cobrar) || 0;
-  const montoAbonado =
-    datosFormulario.monto_abonado !== undefined && datosFormulario.monto_abonado !== ""
-      ? Number(datosFormulario.monto_abonado)
-      : costoTotal;
-  const saldoRestante = Math.max(0, costoTotal - montoAbonado);
-  const esParcial = montoAbonado < costoTotal;
 
   return (
     <div className="bg-gray-50/70 p-3.5 rounded-2xl border border-gray-200/80 space-y-3">
@@ -313,40 +345,21 @@ function DetalleInmediato({ datosFormulario, actualizarDatos }) {
           3. Detalle del Pago Inmediato
         </h4>
         <span className="text-xs font-bold bg-[#e8f7f1] text-[#2eb086] px-3 py-1 rounded-full border border-[#2eb086]/30 w-fit">
-          Deuda Total: ${costoTotal.toFixed(2)}
+          Monto Fijo: ${costoTotal.toLocaleString("es-AR", { minimumFractionDigits: 2 })}
         </span>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs font-semibold text-gray-700 mb-1">Total a Cobrar *</label>
+          <label className="block text-xs font-semibold text-gray-700 mb-1">Monto a Cobrar (Fijo) *</label>
           <input
             type="number"
             step="0.01"
             name="monto_a_cobrar"
             value={datosFormulario.monto_a_cobrar}
-            onChange={actualizarDatos}
-            placeholder="0.00"
-            required
-            className="w-full border border-gray-300 p-2.5 rounded-xl text-xs sm:text-sm bg-white focus:ring-2 focus:ring-[#2eb086]/50 font-medium"
-          />
-        </div>
-
-        <div>
-          <label className="block text-xs font-semibold text-gray-700 mb-1">Monto a Abonar Ahora *</label>
-          <input
-            type="number"
-            step="0.01"
-            name="monto_abonado"
-            value={
-              datosFormulario.monto_abonado !== undefined
-                ? datosFormulario.monto_abonado
-                : datosFormulario.monto_a_cobrar
-            }
-            onChange={actualizarDatos}
-            placeholder="0.00"
-            required
-            className="w-full border border-gray-300 p-2.5 rounded-xl text-xs sm:text-sm bg-white focus:ring-2 focus:ring-[#2eb086]/50 font-bold text-[#2eb086]"
+            readOnly
+            className="w-full border border-gray-200 p-2.5 rounded-xl text-xs sm:text-sm bg-gray-100 text-gray-700 font-bold cursor-not-allowed select-none"
+            title="El monto corresponde a lo acordado para el turno y se cancela en un pago único"
           />
         </div>
 
@@ -354,7 +367,7 @@ function DetalleInmediato({ datosFormulario, actualizarDatos }) {
           <label className="block text-xs font-semibold text-gray-700 mb-1">Forma de Pago *</label>
           <select
             name="metodo_pago"
-            value={datosFormulario.metodo_pago}
+            value={datosFormulario.metodo_pago || "Efectivo"}
             onChange={actualizarDatos}
             className="w-full border border-gray-300 p-2.5 rounded-xl text-xs sm:text-sm bg-white focus:ring-2 focus:ring-[#2eb086]/50 font-medium text-gray-800"
           >
@@ -366,25 +379,14 @@ function DetalleInmediato({ datosFormulario, actualizarDatos }) {
         </div>
       </div>
 
-      {esParcial && (
-        <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-          <div>
-            <span className="font-bold block">💡 Cobro Parcial de Deuda</span>
-            <span>
-              Se cobrarán <strong>${montoAbonado.toFixed(2)}</strong> ahora. El turno continuará figurando en{" "}
-              <strong>Por Cobrar</strong> con un saldo pendiente de <strong>${saldoRestante.toFixed(2)}</strong>.
-            </span>
-          </div>
-          <span className="px-2.5 py-1 bg-amber-200/80 text-amber-900 rounded-lg font-bold text-[11px] whitespace-nowrap">
-            Saldo Restante: ${saldoRestante.toFixed(2)}
-          </span>
-        </div>
-      )}
+      <p className="text-xs text-gray-500 italic bg-white p-2.5 rounded-xl border border-gray-100">
+        ℹ️ Se cancelará la totalidad de la deuda pactada (<strong>${costoTotal.toLocaleString("es-AR", { minimumFractionDigits: 2 })}</strong>) en un único pago, dejando el turno al día.
+      </p>
     </div>
   );
 }
 
-function DetalleCuotas({ datosFormulario, actualizarDatos }) {
+function DetalleCuotas({ datosFormulario, actualizarDatos, montoAcordado = 0 }) {
   const costoTotal = Number(datosFormulario.monto_a_cobrar) || 0;
   const cantCuotas = Number(datosFormulario.cant_cuotas) || 3;
   const valorCuota = costoTotal > 0 ? (costoTotal / cantCuotas).toFixed(2) : "0.00";
@@ -400,6 +402,8 @@ function DetalleCuotas({ datosFormulario, actualizarDatos }) {
     }
   }, [datosFormulario.metodo_pago, actualizarDatos]);
 
+  const esMenorAlAcordado = montoAcordado > 0 && costoTotal < montoAcordado;
+
   return (
     <div className="bg-gray-50/70 p-3.5 rounded-2xl border border-gray-200/80 space-y-3">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
@@ -413,18 +417,33 @@ function DetalleCuotas({ datosFormulario, actualizarDatos }) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-        {/* MONTO TOTAL NO MODIFICABLE */}
+        {/* MONTO TOTAL MODIFICABLE (IGUAL O MAYOR AL ACORDADO) */}
         <div>
           <label className="block text-xs font-semibold text-gray-700 mb-1">Monto Total *</label>
           <input
             type="number"
             step="0.01"
+            min={montoAcordado > 0 ? montoAcordado : 0}
             name="monto_a_cobrar"
             value={datosFormulario.monto_a_cobrar}
-            readOnly
-            className="w-full border border-gray-200 p-2.5 rounded-xl text-xs sm:text-sm bg-gray-100 text-gray-700 font-bold cursor-not-allowed select-none"
-            title="El monto total a financiar corresponde a la deuda acordada del turno"
+            onChange={actualizarDatos}
+            required
+            className={`w-full border p-2.5 rounded-xl text-xs sm:text-sm bg-white focus:ring-2 font-bold text-gray-800 ${
+              esMenorAlAcordado
+                ? "border-rose-400 focus:ring-rose-400 bg-rose-50/50"
+                : "border-gray-300 focus:ring-[#2eb086]/50"
+            }`}
+            placeholder="0.00"
           />
+          {montoAcordado > 0 && (
+            <span
+              className={`text-[10px] block mt-1 font-medium ${
+                esMenorAlAcordado ? "text-rose-600" : "text-gray-400"
+              }`}
+            >
+              Mínimo acordado: ${montoAcordado.toLocaleString("es-AR", { minimumFractionDigits: 2 })}
+            </span>
+          )}
         </div>
 
         <div>
@@ -443,7 +462,7 @@ function DetalleCuotas({ datosFormulario, actualizarDatos }) {
           </select>
         </div>
 
-        {/* MONTO DE CADA CUOTA NO MODIFICABLE */}
+        {/* MONTO DE CADA CUOTA */}
         <div>
           <label className="block text-xs font-semibold text-gray-700 mb-1">Valor por Cuota</label>
           <div className="w-full border border-blue-200 p-2.5 rounded-xl text-xs sm:text-sm bg-blue-50 text-blue-800 font-bold flex items-center justify-between">
@@ -479,12 +498,7 @@ function DetalleCuotas({ datosFormulario, actualizarDatos }) {
             }
             className="w-4 h-4 text-[#2eb086] rounded border-gray-300 focus:ring-[#2eb086]"
           />
-          <div>
-            <span className="text-xs font-bold text-gray-800 block">¿Cobrar 1ª cuota ahora en caja?</span>
-            <span className="text-[11px] text-gray-500">
-              Registra el cobro inmediato de la Cuota #1 (${valorCuota}) por Tarjeta.
-            </span>
-          </div>
+          <span className="text-xs font-bold text-gray-800 block">¿Cobrar 1ª cuota ahora en caja?</span>
         </label>
 
         <div className="w-full sm:w-56">
@@ -526,7 +540,7 @@ function DetalleInformal({ datosFormulario, actualizarDatos }) {
         3. Costo Acordado y Entrega Inicial
       </h4>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <div>
           <label className="block text-xs font-semibold text-gray-700 mb-1">Costo Acordado Total *</label>
           <input
@@ -554,6 +568,21 @@ function DetalleInformal({ datosFormulario, actualizarDatos }) {
             placeholder="0.00"
             className="w-full border border-gray-300 p-2.5 rounded-xl text-xs sm:text-sm bg-white focus:ring-2 focus:ring-amber-500/50"
           />
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold text-gray-700 mb-1">Método de Pago *</label>
+          <select
+            name="metodo_pago"
+            value={datosFormulario.metodo_pago || "Efectivo"}
+            onChange={actualizarDatos}
+            className="w-full border border-gray-300 p-2.5 rounded-xl text-xs sm:text-sm bg-white focus:ring-2 focus:ring-amber-500/50 font-medium text-gray-800"
+          >
+            <option value="Efectivo">Efectivo</option>
+            <option value="Transferencia">Transferencia</option>
+            <option value="Tarjeta">Tarjeta Débito/Crédito</option>
+            <option value="Otro">Otro</option>
+          </select>
         </div>
       </div>
 

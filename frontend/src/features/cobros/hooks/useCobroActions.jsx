@@ -42,15 +42,10 @@ export function useCobroActions(recargar, cerrarModal) {
         toast.success("Cobro actualizado correctamente");
       } else {
         if (modalidad === "inmediato") {
-          const montoAbonado =
-            datosFormulario.monto_abonado !== undefined && datosFormulario.monto_abonado !== ""
-              ? Number(datosFormulario.monto_abonado)
-              : montoTotal;
-
           await api.post("/cobros/inmediato", {
             ...payloadBase,
             monto_a_cobrar: montoTotal,
-            monto_abonado: montoAbonado,
+            monto_abonado: montoTotal, // Pago único y total de lo pactado del turno
             metodo_pago: datosFormulario.metodo_pago || "Efectivo",
           });
         } else if (modalidad === "cuotas") {
