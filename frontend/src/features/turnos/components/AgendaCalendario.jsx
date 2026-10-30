@@ -149,7 +149,7 @@ export const AgendaCalendar = ({
         finMin = iniMin + duracionFallback;
       }
 
-      // Acotar al rango de atención configurado (ej. 09:00 a 20:00 hs)
+      // Acotar al rango de atención configurado (ej. 09:00 a 19:00 hs)
       const iniEfectivo = Math.max(iniMin, minutosInicioJornada);
       const finEfectivo = Math.min(finMin, minutosFinJornada);
 
@@ -390,9 +390,7 @@ export const AgendaCalendar = ({
               </option>
             ))}
           </select>
-          <span className="text-[11px] text-gray-400 hidden sm:inline">
-            (Horario: {horaInicioHHMM} a {horaFinHHMM} hs)
-          </span>
+
         </div>
 
         {/* Leyenda dinámica de porcentajes según la modalidad activa */}

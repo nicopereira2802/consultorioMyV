@@ -5,7 +5,7 @@ import { Turno, EstadoTurno } from "../models/index.model.js";
 
 export const HORARIO_ATENCION_CONFIG = Object.freeze({
   HORA_INICIO: 9,
-  HORA_FIN: 20,
+  HORA_FIN: 19,
 });
 
 export const validarEstadoProgramado = async () => {
@@ -86,7 +86,7 @@ export const validarHorarioAtencion = (
 
   if (horaInicio === null || horaFin === null) return true;
 
-  // Validar dentro del rango horario de atención configurado (por defecto 09:00 a 20:00 hs)
+  // Validar dentro del rango horario de atención configurado (por defecto 09:00 a 19:00 hs)
   if (horaInicio < horaMin || horaFin > horaMax || horaInicio >= horaFin) {
     return false;
   }

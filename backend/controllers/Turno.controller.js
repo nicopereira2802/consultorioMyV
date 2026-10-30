@@ -250,7 +250,7 @@ export const createTurno = async (req, res) => {
 
     const dentroHorario = validarHorarioAtencion(inicioStr, finStr);
     if (!dentroHorario) {
-      return res.status(400).json({ error: "El horario de atención es de 09:00 a 20:00 hs. El turno debe comenzar a partir de las 09:00 y finalizar a más tardar a las 20:00 hs." });
+      return res.status(400).json({ error: "El horario de atención es de 09:00 a 19:00 hs. El turno debe comenzar a partir de las 09:00 y finalizar a más tardar a las 19:00 hs." });
     }
 
     const haySolapamiento = await validarSolapaminetoHorarios(inicioStr, finStr, null);
@@ -427,7 +427,7 @@ export const turnoReprogramado = async (req, res) => {
 
     const dentroHorario = validarHorarioAtencion(inicioStr, finStr);
     if (!dentroHorario) {
-      return res.status(400).json({ error: "El horario de atención es de 09:00 a 20:00 hs. El turno debe comenzar a partir de las 09:00 y finalizar a más tardar a las 20:00 hs." });
+      return res.status(400).json({ error: "El horario de atención es de 09:00 a 19:00 hs. El turno debe comenzar a partir de las 09:00 y finalizar a más tardar a las 19:00 hs." });
     }
 
     const haySolapamiento = await validarSolapaminetoHorarios(inicioStr, finStr, turno.id_turno);

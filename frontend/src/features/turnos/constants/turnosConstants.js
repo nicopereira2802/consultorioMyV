@@ -10,11 +10,11 @@ export const ESTADO_INICIAL_TURNO = {
 
 export const HORARIO_ATENCION_DEFAULT = {
   horaInicio: 9,
-  horaFin: 20,
+  horaFin: 19,
   inicioStr: "09:00",
-  finStr: "20:00",
+  finStr: "19:00",
   slotMinTime: "09:00:00",
-  slotMaxTime: "20:00:00",
+  slotMaxTime: "19:00:00",
 };
 
 export const MODALIDADES_OCUPACION = [

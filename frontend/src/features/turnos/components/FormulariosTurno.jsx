@@ -146,7 +146,7 @@ export function FormularioCrearEditar({
                   required
                   className="w-full border border-gray-300 p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2eb086]/50 focus:border-[#2eb086]"
                 />
-                <p className="text-xs text-gray-500 mt-1 font-medium">Horario de atención: 09:00 a 20:00 hs</p>
+                
               </div>
             )}
 
@@ -569,7 +569,7 @@ export function FormularioReprogramar({
               required
               className="w-full border border-gray-300 p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2eb086]/50 focus:border-[#2eb086]"
             />
-            <p className="text-xs text-gray-500 mt-1 font-medium">Horario de atención: 09:00 a 20:00 hs</p>
+            
           </div>
 
           {/* Duración (Minutos) */}
