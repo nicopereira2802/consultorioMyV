@@ -1,6 +1,6 @@
 /** @format */
 
-import { Cobro, Paciente, Turno, Cuota, Practica } from "../models/index.model.js";
+import { Cobro, Paciente, Turno, Cuota, Practica, EstadoTurno } from "../models/index.model.js";
 import { Op } from "sequelize";
 import sequelize from "../config/database.js";
 
@@ -502,9 +502,14 @@ export const getKpisCaja = async (req, res) => {
 
     // 4. Cartera pendiente: deuda de turnos atendidos no saldados
     const turnosAtendidos = await Turno.findAll({
-      where: { id_estado: 3, activo: true },
+      where: { activo: true },
       attributes: ["id_turno", "precio_final"],
       include: [
+        {
+          model: EstadoTurno,
+          where: { estado: "Atendido" },
+          required: true,
+        },
         {
           model: Cobro,
           where: { activo: true },
@@ -512,7 +517,8 @@ export const getKpisCaja = async (req, res) => {
           include: [
             {
               model: Cuota,
-              attributes: ["monto_cobrado", "estado"],
+              where: { activo: true },
+              attributes: ["monto_cuota", "monto_cobrado", "estado"],
               required: false,
             },
           ],
@@ -525,7 +531,12 @@ export const getKpisCaja = async (req, res) => {
       const deudaTurno = Number(t.Cobro?.monto_a_cobrar) || Number(t.precio_final) || 0;
       if (deudaTurno > 0) {
         const cuotas = t.Cobro?.Cuotas || t.Cobro?.Cuota || [];
-        const pagado = cuotas.reduce((acc, q) => acc + (Number(q.monto_cobrado) || 0), 0);
+        const pagado = cuotas.reduce((acc, q) => {
+          const m = Number(q.monto_cobrado) || 0;
+          if (m > 0) return acc + m;
+          if (q.estado === "Pagada") return acc + (Number(q.monto_cuota) || 0);
+          return acc;
+        }, 0);
         if (pagado < deudaTurno) {
           totalPendienteCobro += (deudaTurno - pagado);
         }

@@ -28,7 +28,21 @@ export function useMovimientosCaja(cobros, gastos, turnosPendientes, busqueda) {
   // Se recarga al montar o cuando cambian las colecciones por una operación
   useEffect(() => {
     cargarKpis();
-  }, [cargarKpis, cobros.length, gastos.length, turnosPendientes.length]);
+  }, [cargarKpis, cobros, gastos, turnosPendientes]);
+
+  // Suma en tiempo real de todos los montos pendientes por cobrar de los turnos atendidos
+  const totalPendienteCobro = useMemo(() => {
+    if (turnosPendientes && turnosPendientes.length > 0) {
+      return turnosPendientes.reduce((acc, t) => {
+        const saldo =
+          t.saldo_pendiente !== undefined
+            ? Number(t.saldo_pendiente)
+            : (Number(t.total_deuda) || Number(t.precio_final) || 0);
+        return acc + (saldo > 0 ? saldo : 0);
+      }, 0);
+    }
+    return Number(kpis.totalPendienteCobro) || 0;
+  }, [turnosPendientes, kpis.totalPendienteCobro]);
 
   const movimientosUnificados = useMemo(() => {
     const listaIngresos = cobros.map((c) => {
@@ -76,5 +90,13 @@ export function useMovimientosCaja(cobros, gastos, turnosPendientes, busqueda) {
     );
   }, [cobros, gastos, busqueda]);
 
-  return { kpis, movimientosUnificados, cargarKpis, cargandoKpis };
+  return {
+    kpis: {
+      ...kpis,
+      totalPendienteCobro,
+    },
+    movimientosUnificados,
+    cargarKpis,
+    cargandoKpis,
+  };
 }
