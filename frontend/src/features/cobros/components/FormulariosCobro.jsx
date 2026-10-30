@@ -1,6 +1,6 @@
 /** @format */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Modal from "../../../components/common/Modal";
 import InputFiltro from "../../../components/common/InputFiltro";
 import api from "../../../services/api";
