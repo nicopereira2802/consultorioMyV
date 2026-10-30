@@ -112,14 +112,31 @@ export const AgendaCalendar = ({ turnos = [], onDateSelect, onEventClick }) => {
     trackMouse: false,
   });
 
-  // Bloquear selección/creación antes de la hora actual exacta
+  // Bloquear selección/creación antes de la hora actual exacta y fuera del horario de atención (09:00 a 20:00)
   const selectAllow = (selectInfo) => {
-    return selectInfo.start >= new Date();
+    if (selectInfo.start < new Date()) return false;
+
+    // Si es una selección con horario específico (vistas de día y semana)
+    if (!selectInfo.allDay && selectInfo.start) {
+      const horaInicio = selectInfo.start.getHours() + selectInfo.start.getMinutes() / 60;
+      const horaFin = selectInfo.end.getHours() + selectInfo.end.getMinutes() / 60;
+      if (horaInicio < 9 || horaFin > 20) {
+        return false;
+      }
+    }
+
+    return true;
   };
 
-  // Forzar estilos de colores en las tarjetas de turnos
+  // Forzar estilos de colores en las tarjetas de turnos y ocultar en vista mensual
   const handleEventDidMount = (info) => {
     if (info.event.display === "background") return;
+
+    // Ocultar tarjetas de turnos en la vista de mes (manteniéndolas en día y semana)
+    if (info.view.type === "dayGridMonth") {
+      info.el.style.setProperty("display", "none", "important");
+      return;
+    }
 
     const { colorBg, colorBorder, colorText } = info.event.extendedProps;
     if (colorBg) {
@@ -150,8 +167,14 @@ export const AgendaCalendar = ({ turnos = [], onDateSelect, onEventClick }) => {
         }
         locale={esLocale}
         firstDay={1}
-        slotMinTime="08:00:00"
-        slotMaxTime="21:30:00"
+        slotMinTime="09:00:00"
+        slotMaxTime="20:00:00"
+        scrollTime="09:00:00"
+        businessHours={{
+          daysOfWeek: [1, 2, 3, 4, 5, 6],
+          startTime: "09:00",
+          endTime: "20:00",
+        }}
         allDaySlot={false}
         selectable={true}
         selectAllow={selectAllow}
@@ -164,10 +187,19 @@ export const AgendaCalendar = ({ turnos = [], onDateSelect, onEventClick }) => {
         eventDidMount={handleEventDidMount}
       />
 
-      {/* Estilos adicionales para que el fondo gris no tape las líneas de las horas */}
+      {/* Estilos adicionales para que el fondo gris no tape las líneas de las horas y ocultar turnos en mes */}
       <style>{`
         .fc-bg-event {
           opacity: 0.6 !important;
+        }
+
+        /* Ocultar visualización de los turnos únicamente en la vista mensual */
+        .fc-dayGridMonth-view .fc-daygrid-day-events,
+        .fc-dayGridMonth-view .fc-daygrid-event-harness,
+        .fc-dayGridMonth-view .fc-daygrid-event,
+        .fc-dayGridMonth-view .fc-daygrid-day-bottom,
+        .fc-dayGridMonth-view .fc-daygrid-more-link {
+          display: none !important;
         }
       `}</style>
     </div>

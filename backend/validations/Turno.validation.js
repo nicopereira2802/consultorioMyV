@@ -47,3 +47,38 @@ export const validarSolapaminetoHorarios = async (fechaInicio, fechaFin, turnoId
 
   return !!turnoExistente;
 };
+
+export const validarHorarioAtencion = (inicioInput, finInput) => {
+  const extraerHoraMinutos = (val) => {
+    if (!val) return null;
+    if (typeof val === "string") {
+      const match = val.match(/(?:T|\s)(\d{2}):(\d{2})/);
+      if (match && !val.includes("Z")) {
+        return Number(match[1]) + Number(match[2]) / 60;
+      }
+    }
+    const d = new Date(val);
+    if (isNaN(d.getTime())) return null;
+    const partes = new Intl.DateTimeFormat("es-AR", {
+      timeZone: "America/Argentina/Buenos_Aires",
+      hour: "numeric",
+      minute: "numeric",
+      hour12: false,
+    }).formatToParts(d);
+    let h = Number(partes.find((p) => p.type === "hour")?.value || 0);
+    if (h === 24) h = 0;
+    const m = Number(partes.find((p) => p.type === "minute")?.value || 0);
+    return h + m / 60;
+  };
+
+  const horaInicio = extraerHoraMinutos(inicioInput);
+  const horaFin = extraerHoraMinutos(finInput);
+
+  if (horaInicio === null || horaFin === null) return true;
+
+  // Horario de atención exclusivo: 09:00 a 20:00 hs
+  if (horaInicio < 9 || horaFin > 20 || horaInicio >= horaFin) {
+    return false;
+  }
+  return true;
+};

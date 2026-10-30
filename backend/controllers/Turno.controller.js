@@ -13,7 +13,7 @@ import {
   EstadoTurno,
   Cuota
 } from "../models/index.model.js";
-import { validarSolapaminetoHorarios } from "../validations/Turno.validation.js";
+import { validarSolapaminetoHorarios, validarHorarioAtencion } from "../validations/Turno.validation.js";
 import { ESTADOS } from "../constants/EstadosTurno.js";
 import { obtenerEstadoTurno } from "../states/TurnoState.js";
 import { defaultTurnoIncludes } from "../constants/TurnoIncludes.js";
@@ -248,6 +248,11 @@ export const createTurno = async (req, res) => {
     const idsPracticas = extraerIdsPracticas(req.body);
     const idObraSocial = obtenerObraSocialBody(req.body);
 
+    const dentroHorario = validarHorarioAtencion(inicioStr, finStr);
+    if (!dentroHorario) {
+      return res.status(400).json({ error: "El horario de atención es de 09:00 a 20:00 hs. El turno debe comenzar a partir de las 09:00 y finalizar a más tardar a las 20:00 hs." });
+    }
+
     const haySolapamiento = await validarSolapaminetoHorarios(inicioStr, finStr, null);
     if (haySolapamiento) return res.status(409).json({ error: "El horario seleccionado se superpone." });
 
@@ -419,6 +424,11 @@ export const turnoReprogramado = async (req, res) => {
     
     const inicioStr = formatearFechaHoraStr(fecha_hora_inicio);
     const finStr = fecha_hora_fin ? formatearFechaHoraStr(fecha_hora_fin) : calcularFechaHoraFinStr(inicioStr, duracion_minutos || 30);
+
+    const dentroHorario = validarHorarioAtencion(inicioStr, finStr);
+    if (!dentroHorario) {
+      return res.status(400).json({ error: "El horario de atención es de 09:00 a 20:00 hs. El turno debe comenzar a partir de las 09:00 y finalizar a más tardar a las 20:00 hs." });
+    }
 
     const haySolapamiento = await validarSolapaminetoHorarios(inicioStr, finStr, turno.id_turno);
     if (haySolapamiento) return res.status(409).json({ error: "El horario seleccionado se superpone." });

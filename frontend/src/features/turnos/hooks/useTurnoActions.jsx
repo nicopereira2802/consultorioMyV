@@ -40,9 +40,20 @@ export function useTurnoActions(recargar, cerrarModal) {
         // Al crear: payload explícito (nunca hacer spread del formulario, puede traer objetos no serializables)
         const durMin = Number(datosFormulario.duracion_minutos) || 30;
         const fechaFinDate = new Date(datosFormulario.fecha_hora_fin);
-        const fechaFinIso = isNaN(fechaFinDate.getTime())
-          ? new Date(fechaInicioDate.getTime() + durMin * 60000).toISOString()
-          : fechaFinDate.toISOString();
+        const finDate = isNaN(fechaFinDate.getTime())
+          ? new Date(fechaInicioDate.getTime() + durMin * 60000)
+          : fechaFinDate;
+
+        // Validar horario comercial de atención (09:00 a 20:00 hs)
+        const horaInicio = fechaInicioDate.getHours() + fechaInicioDate.getMinutes() / 60;
+        const horaFin = finDate.getHours() + finDate.getMinutes() / 60;
+        if (horaInicio < 9 || horaFin > 20 || horaInicio >= horaFin) {
+          toast.error("El horario de atención es de 09:00 a 20:00 hs. El turno debe comenzar a partir de las 09:00 y finalizar a más tardar a las 20:00 hs.");
+          setCargandoAccion(false);
+          return;
+        }
+
+        const fechaFinIso = finDate.toISOString();
 
         payload = {
           id_paciente: idPacienteNum,
@@ -136,6 +147,21 @@ export function useTurnoActions(recargar, cerrarModal) {
   ) => {
     if (!turnoSeleccionado) return;
 
+    const fechaInicioDate = new Date(datosReprogramacion.fecha_hora_inicio);
+    const durMin = Number(datosReprogramacion.duracion_minutos) || 30;
+    const fechaFinDate = new Date(datosReprogramacion.fecha_hora_fin);
+    const finDate = isNaN(fechaFinDate.getTime())
+      ? new Date(fechaInicioDate.getTime() + durMin * 60000)
+      : fechaFinDate;
+
+    // Validar horario comercial de atención (09:00 a 20:00 hs)
+    const horaInicio = fechaInicioDate.getHours() + fechaInicioDate.getMinutes() / 60;
+    const horaFin = finDate.getHours() + finDate.getMinutes() / 60;
+    if (horaInicio < 9 || horaFin > 20 || horaInicio >= horaFin) {
+      toast.error("El horario de atención es de 09:00 a 20:00 hs. El turno debe comenzar a partir de las 09:00 y finalizar a más tardar a las 20:00 hs.");
+      return;
+    }
+
     try {
       await api.patch(`/turnos/${turnoSeleccionado.id_turno}/reprogramado`, {
         fecha_hora_inicio: new Date(datosReprogramacion.fecha_hora_inicio).toISOString(),
@@ -174,7 +200,25 @@ export function useTurnoActions(recargar, cerrarModal) {
     setTurnoReprogramando,
   ) => {
     if (selectInfo && selectInfo.startStr) {
-      const nuevaFechaInicio = formatDateTimeInput(selectInfo.startStr);
+      let nuevaFechaInicio = formatDateTimeInput(selectInfo.startStr);
+
+      // Si fue clickeado desde la vista mensual (allDay) o string de sólo fecha
+      if (selectInfo.allDay || selectInfo.startStr.length === 10) {
+        const fechaSolo = selectInfo.startStr.slice(0, 10);
+        nuevaFechaInicio = `${fechaSolo}T09:00`;
+      } else {
+        const d = new Date(selectInfo.startStr);
+        if (!isNaN(d.getTime())) {
+          const h = d.getHours();
+          if (h < 9) {
+            d.setHours(9, 0, 0, 0);
+            nuevaFechaInicio = formatDateTimeInput(d);
+          } else if (h >= 20) {
+            d.setHours(19, 30, 0, 0);
+            nuevaFechaInicio = formatDateTimeInput(d);
+          }
+        }
+      }
 
       // Si había un turno esperando ser reprogramado:
       if (turnoReprogramando) {
