@@ -5,10 +5,10 @@ import { FileText, Plus, Edit, Trash2, CheckCircle2, XCircle, RotateCcw, Tag, Ba
 
 //* COMPONENTES COMUNES
 import Header from "../../components/common/Header";
+import BadgeInicial from "../../components/common/BadgeInicial";
 import Tabla from "../../components/common/Tabla/Tabla";
 import TablaHeader from "../../components/common/Tabla/TablaHeader";
 import TablaPaginacion from "../../components/common/Tabla/TablaPaginacion";
-import { ListaTarjetas, TarjetaRegistro } from "../../components/common/Tabla/TarjetaRegistro";
 
 //* PAGELAYOUT (PARA EL BOTON)
 import PageLayout from "../../components/layout/PageLayout";
@@ -22,7 +22,7 @@ import { usePracticaActions } from "./hooks/usePracticasActions";
 import { formatearPracticaParaEditar } from "./utils/formatearPracticaParaEditar";
 
 //* CONSTANTES
-import { ESTADO_INICIAL } from "./constants/practicaConstants";
+import { ESTADO_INICIAL } from "./constants/practicaConstatns";
 
 //* FORMULARIOS
 import {
@@ -30,6 +30,10 @@ import {
   FormularioEliminar,
   FormularioToggle,
 } from "./components/FormulariosPractica";
+
+//Fix para mobile
+import { useState } from "react";
+import Modal from "../../components/common/Modal";
 
 export default function GestionPracticas() {
   //* HOOK DE PAGINACIÓN
@@ -66,9 +70,12 @@ export default function GestionPracticas() {
   //* HOOK DE PETICIONES API
   const { guardarPractica, togglePractica, eliminarPractica } = usePracticaActions(recargar, cerrarModal);
 
+  //Fix para mobile
+  const [practicaMenu, setPracticaMenu] = useState(null);
+
   return (
     <PageLayout onAdd={abrirParaCrear}>
-      <div className="w-full flex-1 flex flex-col gap-4">
+      <div className="w-full flex-1 flex flex-col gap-4 pb-24">
         {/* //* HEADER PRINCIPAL */}
         <Header
           icono={FileText}
@@ -109,147 +116,87 @@ export default function GestionPracticas() {
                 cargando={cargando}
                 search={search}
                 sinDatosText="No se encontraron prácticas registradas."
-                vistaMovil={
-                  <ListaTarjetas
-                    cargando={cargando}
-                    search={search}
-                    sinDatosText="No se encontraron prácticas registradas."
-                    page={page}
-                    setPage={setPage}
-                    totalPages={totalPages}
-                  >
-                    {practicas.map((practica) => (
-                      <TarjetaRegistro
-                        key={practica.id_practica}
-                        titulo={practica.nombre_nomenclador}
-                        subtitulo={practica.nombre_referencia}
-                        tituloSheet="Opciones de la Práctica"
-                        badge={
-                          practica.activo ? (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60 shrink-0">
-                              <CheckCircle2 size={13} /> Activa
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-500 border border-gray-200 shrink-0">
-                              <XCircle size={13} /> Inactiva
-                            </span>
-                          )
-                        }
-                        acciones={[
-                          {
-                            key: "editar",
-                            label: "Editar",
-                            icon: Edit,
-                            tono: "azul",
-                            rapida: true,
-                            onClick: () => abrirParaEditar(practica, formatearPracticaParaEditar),
-                          },
-                          {
-                            key: "toggle",
-                            label: practica.activo ? "Desactivar" : "Reactivar",
-                            icon: practica.activo ? Ban : RotateCcw,
-                            tono: practica.activo ? "rojo" : "verde",
-                            rapida: true,
-                            onClick: () => abrirParaToggle(practica),
-                          },
-                          {
-                            key: "eliminar",
-                            label: "Eliminar práctica",
-                            icon: Trash2,
-                            tono: "rojo",
-                            separador: true,
-                            oculto: practica.activo,
-                            onClick: () => abrirParaEliminar(practica),
-                          },
-                        ]}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="inline-flex items-center gap-1 font-mono font-bold text-xs bg-gray-100 text-gray-700 px-2.5 py-1 rounded-lg border border-gray-200">
-                            <Tag size={12} className="text-[#2eb086]" />
-                            {practica.codigo_nomenclador}
-                          </span>
-                          <span className="text-gray-500">{practica.especialidad}</span>
-                        </div>
-                        <div className="flex items-center justify-between pt-2 border-t border-dashed border-gray-200">
-                          <span className="font-medium text-gray-500">Precio ref.</span>
-                          <span className="text-sm font-semibold text-slate-700 tabular-nums">
-                            $
-                            {Number(practica.precio_referencia).toLocaleString("es-AR", {
-                              minimumFractionDigits: 2,
-                            })}
-                          </span>
-                        </div>
-                      </TarjetaRegistro>
-                    ))}
-                  </ListaTarjetas>
-                }
                 columnas={[
                   { label: "Código" },
                   { label: "Tratamiento" },
                   { label: "Especialidad", className: "hidden md:table-cell" },
                   { label: "Precio Ref." },
-                  { label: "Estado" },
-                  { label: "Acciones", align: "center" },
+                  { label: "Estado", className: "hidden md:table-cell" },
+                  { label: "Acciones", align: "center", className: "hidden md:table-cell" },
                 ]}
               >
                 {practicas.map((practica) => (
-                  <tr key={practica.id_practica} className="hover:bg-emerald-50/40 transition-colors">
+                  <tr
+                    key={practica.id_practica}
+                    onClick={() => {
+                      if (window.innerWidth < 768) setPracticaMenu(practica);
+                    }}
+                    className="hover:bg-gray-50/60 transition-colors cursor-pointer md:cursor-default"
+                  >
                     {/* //* COLUMNAS: CODIGO NOMENCLADOR */}
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center gap-1 font-mono font-bold text-xs bg-teal-50 text-teal-800 px-2.5 py-1 rounded-lg border border-teal-200/90 shadow-2xs">
-                        <Tag size={12} className="text-teal-600" />
+                    <td className="px-3 md:px-6 py-4">
+                      <span className="inline-flex items-center gap-1 font-mono font-bold text-xs bg-gray-100 text-gray-700 px-2.5 py-1 rounded-lg border border-gray-200">
+                        <Tag size={12} className="text-[#2eb086]" />
                         {practica.codigo_nomenclador}
                       </span>
                     </td>
 
                     {/* //* COLUMNAS: NOMBRE REFERENCIA */}
-                    <td className="px-6 py-4">
-                      <span className="font-bold text-slate-900 text-sm tracking-tight">
-                        {practica.nombre_nomenclador}
-                      </span>
-                      {practica.nombre_referencia && (
-                        <span className="hidden md:block text-xs text-slate-500 font-medium mt-0.5">
-                          {practica.nombre_referencia}
-                        </span>
-                      )}
+                    <td className="px-3 md:px-6 py-4">
+                      <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                        <BadgeInicial
+                          inicial={(practica.nombre_nomenclador || practica.nombre_referencia || "P").charAt(0).toUpperCase()}
+                          className="hidden md:flex"
+                        />
+                        <div className="flex flex-col min-w-0">
+                          <span className="font-semibold text-gray-800 text-sm break-words">
+                            {practica.nombre_nomenclador}
+                          </span>
+                          <span className="hidden md:block text-xs text-gray-400">
+                            {practica.nombre_referencia}
+                          </span>
+                          {!practica.activo && (
+                            <span className="md:hidden block text-xs text-gray-400 italic">Inactiva</span>
+                          )}
+                        </div>
+                      </div>
                     </td>
 
                     {/* //* COLUMNAS: ESPECIALIDAD */}
-                    <td className="hidden md:table-cell px-6 py-4 text-slate-700 text-xs font-medium">
+                    <td className="hidden md:table-cell px-6 py-4 text-gray-600 font-medium text-sm">
                       {practica.especialidad}
                     </td>
 
                     {/* //* COLUMNAS: PRECIO DE REFERENCIA */}
-                    <td className="px-6 py-4">
-                      <span className="font-semibold text-slate-700 text-xs sm:text-sm tabular-nums">
-                        ${Number(practica.precio_referencia || 0).toLocaleString("es-AR", {
-                          minimumFractionDigits: 2,
-                        })}
-                      </span>
+                    <td className="px-3 md:px-6 py-4 font-semibold text-gray-800 text-sm">
+                      $
+                      {Number(practica.precio_referencia).toLocaleString("es-AR", {
+                        minimumFractionDigits: 2,
+                      })}
                     </td>
 
                     {/* //* COLUMNAS: ESTADO */}
-                    <td className="px-6 py-4">
+                    <td className="hidden md:table-cell px-6 py-4">
                       {practica.activo ? (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100/70 text-emerald-800 border border-emerald-200/90 shadow-2xs">
-                          <CheckCircle2 size={13} />
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+                          <CheckCircle2 size={14} />
                           <span>Activa</span>
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200 shadow-2xs">
-                          <XCircle size={13} />
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500 border border-gray-200">
+                          <XCircle size={14} />
                           <span>Inactiva</span>
                         </span>
                       )}
                     </td>
 
-                    {/* //* COLUMNAS: ACCIONES CON COLOR */}
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-center gap-1.5">
+                    {/* //* COLUMNAS: ACCIONES */}
+                    <td className="hidden md:table-cell px-6 py-4">
+                      <div className="flex items-center justify-center gap-2">
                         <button
                           type="button"
                           onClick={() => abrirParaEditar(practica, formatearPracticaParaEditar)}
-                          className="p-2 rounded-xl text-blue-600 hover:bg-blue-50 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                          className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
                           title="Editar Práctica"
                         >
                           <Edit size={18} />
@@ -257,12 +204,11 @@ export default function GestionPracticas() {
                         <button
                           type="button"
                           onClick={() => abrirParaToggle(practica)}
-                          className={`p-2 rounded-xl hover:scale-105 active:scale-95 transition-all cursor-pointer ${
+                          className={`p-2 rounded-lg transition-colors ${
                             practica.activo
-                              ? "text-rose-600 hover:bg-rose-50"
+                              ? "text-red-500 hover:bg-red-50"
                               : "text-emerald-600 hover:bg-emerald-50"
                           }`}
-                          title={practica.activo ? "Desactivar Práctica" : "Reactivar Práctica"}
                         >
                           {practica.activo ? <Ban size={18} /> : <RotateCcw size={18} />}
                         </button>
@@ -270,8 +216,7 @@ export default function GestionPracticas() {
                           <button
                             type="button"
                             onClick={() => abrirParaEliminar(practica)}
-                            className="p-2 rounded-xl text-rose-600 hover:bg-rose-50 hover:scale-105 active:scale-95 transition-all cursor-pointer"
-                            title="Eliminar Práctica"
+                            className="p-2 rounded-lg transition-colors text-red-500 hover:bg-red-50"
                           >
                             <Trash2 size={18} />
                           </button>
@@ -287,6 +232,46 @@ export default function GestionPracticas() {
             <TablaPaginacion page={page} setPage={setPage} totalPages={totalPages} />
           </div>
         </div>
+
+        {/* //* MENÚ DE ACCIONES (MOBILE) */}
+        {practicaMenu && (
+          <Modal
+            isOpen={!!practicaMenu}
+            onClose={() => setPracticaMenu(null)}
+            title={practicaMenu.nombre_nomenclador}
+            width="max-w-sm"
+          >
+            {(() => {
+              const ejecutar = (accion) => {
+                const p = practicaMenu;
+                setPracticaMenu(null);
+                accion(p);
+              };
+              const btn = "flex items-center gap-3 p-3 rounded-xl font-semibold text-sm";
+
+              return (
+                <div className="flex flex-col gap-2">
+                  <button type="button"
+                    onClick={() => ejecutar((p) => abrirParaEditar(p, formatearPracticaParaEditar))}
+                    className={`${btn} text-blue-700 bg-blue-50`}>
+                    <Edit size={18} /> Editar práctica
+                  </button>
+                  <button type="button" onClick={() => ejecutar(abrirParaToggle)}
+                    className={`${btn} ${practicaMenu.activo ? "text-red-600 bg-red-50" : "text-emerald-700 bg-emerald-50"}`}>
+                    {practicaMenu.activo ? <Ban size={18} /> : <RotateCcw size={18} />}
+                    {practicaMenu.activo ? "Dar de baja" : "Reactivar"}
+                  </button>
+                  {!practicaMenu.activo && (
+                    <button type="button" onClick={() => ejecutar(abrirParaEliminar)}
+                      className={`${btn} text-red-600 bg-red-50`}>
+                      <Trash2 size={18} /> Eliminar
+                    </button>
+                  )}
+                </div>
+              );
+            })()}
+          </Modal>
+        )}
 
         {/* //* MODALES: CREAR Y EDITAR */}
         {modalAbierto && (

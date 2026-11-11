@@ -1,130 +1,172 @@
-/** @format */
-
 import axios from "axios";
 
-// En desarrollo, Vite redirige "/api" al backend (ver vite.config.js).
-// Para producción u otro host, se puede configurar VITE_API_URL en .env.
-const API_URL = import.meta.env.VITE_API_URL || "/api";
+const getBaseUrl = () => {
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  if (typeof window !== "undefined") {
+    const { hostname } = window.location;
+    if (
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname.startsWith("192.168.") ||
+      hostname.startsWith("10.") ||
+      hostname.endsWith(".local")
+    ) {
+      return `http://${hostname}:3000/api`;
+    }
+  }
+  return import.meta.env.DEV
+    ? "http://localhost:3000/api"
+    : "https://api.espaciocuatrovientos.com/api";
+};
 
 const api = axios.create({
-  baseURL: API_URL,
-  timeout: 15000,
+  baseURL: getBaseUrl(),
+  timeout: 10000,
 });
 
-// ─── INTERCEPTOR DE PETICIÓN (INYECTAR ACCESS TOKEN) ────────────────
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+api.interceptors.request.use((config) => {
+  const token =
+    localStorage.getItem("token") || localStorage.getItem("jwt_dispositivo");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
-// ─── CONTROL DE COLA DE REFRESCO CONMUTATIVO ─────────────────────────
-let isRefreshing = false;
-let failedQueue = [];
+/**
+ * Login Maestro / Vincular Dispositivo con JWT de 5 días
+ * Admite únicamente la contraseña o (usuario, contraseña) por retrocompatibilidad
+ * @param {string} param1 - Contraseña (o nombre_usuario si se envían 2 argumentos)
+ * @param {string} [param2] - Contraseña si param1 fue nombre_usuario
+ * @returns {Promise<{ status: string, mensaje: string, token: string, expiraEn: string, usuario: object }>}
+ */
+export const loginMaestro = async (param1, param2) => {
+  const password = param2 !== undefined ? param2 : param1;
+  const payload = {
+    password,
+    contraseña: password,
+  };
+  if (param2 !== undefined && param1) {
+    payload.nombre_usuario = param1;
+    payload.usuario = param1;
+  }
+  const res = await api.post("/auth/login", payload);
+  return res.data;
+};
 
-const processQueue = (error, token = null) => {
-  failedQueue.forEach((prom) => {
-    if (error) {
-      prom.reject(error);
-    } else {
-      prom.resolve(token);
-    }
+export const login = loginMaestro;
+
+/**
+ * Desbloqueo Diario con PIN de 4 dígitos
+ * @param {string} pin
+ * @returns {Promise<{ status: string, mensaje: string, desbloqueado: boolean }>}
+ */
+export const validarPin = async (pin) => {
+  const res = await api.post("/auth/validar-pin", { pin });
+  return res.data;
+};
+
+export const verificarPin = validarPin;
+
+/**
+ * Verificar Contraseña Maestra (para autorizar cambio de PIN)
+ * @param {string} contraseña
+ * @param {string} [nombre_usuario]
+ * @returns {Promise<{ status: string, mensaje: string, autorizada: boolean }>}
+ */
+export const verificarPassword = async (contraseña, nombre_usuario) => {
+  const res = await api.post("/auth/verificar-password", {
+    contraseña,
+    password: contraseña,
+    nombre_usuario,
+    usuario: nombre_usuario,
   });
-  failedQueue = [];
+  return res.data;
 };
 
 /**
- * Limpia el estado de autenticación local y redirige al login si no estamos en él.
+ * Cambiar / Restablecer PIN validando la contraseña maestra
+ * @param {string} contraseña
+ * @param {string} nuevo_pin
+ * @param {string} [nombre_usuario]
+ * @returns {Promise<{ status: string, mensaje: string }>}
  */
-export const limpiarSesion = () => {
-  localStorage.removeItem("token");
-  localStorage.removeItem("refreshToken");
-  localStorage.removeItem("usuario");
-
-  if (typeof window !== "undefined" && window.location.pathname !== "/login") {
-    window.location.href = "/login";
-  }
+export const recuperarPin = async (contraseña, nuevo_pin, nombre_usuario) => {
+  const res = await api.post("/auth/recuperar-pin", {
+    contraseña,
+    password: contraseña,
+    nuevo_pin,
+    nuevoPin: nuevo_pin,
+    pin: nuevo_pin,
+    nombre_usuario,
+    usuario: nombre_usuario,
+  });
+  return res.data;
 };
 
-// ─── INTERCEPTOR DE RESPUESTA (REFRESCO SILENCIOSO DE TOKEN EN 401) ──
-api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
+export const cambiarPin = recuperarPin;
 
-    if (!originalRequest) return Promise.reject(error);
+/**
+ * Solicitar recuperación de contraseña por email
+ * @param {string} email
+ * @returns {Promise<{ status: string, mensaje: string }>}
+ */
+export const recuperarPassword = async (email) => {
+  const payload = email ? { email } : {};
+  const res = await api.post("/auth/recuperar-password", payload);
+  return res.data;
+};
 
-    const esRutaAuth =
-      originalRequest.url?.includes("/auth/login") ||
-      originalRequest.url?.includes("/auth/refresh-token") ||
-      originalRequest.url?.includes("/auth/refreshToken") ||
-      originalRequest.url?.includes("/usuarios/login");
+export const solicitarRecuperacionPin = recuperarPassword;
+export const solicitarRecuperacion = recuperarPassword;
+export const olvidoPassword = recuperarPassword;
 
-    if (error.response?.status === 401 && !originalRequest._retry && !esRutaAuth) {
-      if (isRefreshing) {
-        // Encolar peticiones concurrentes mientras se completa el refresco activo
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        })
-          .then((nuevoToken) => {
-            originalRequest.headers.Authorization = `Bearer ${nuevoToken}`;
-            return api(originalRequest);
-          })
-          .catch((err) => Promise.reject(err));
-      }
+/**
+ * Restablecer contraseña consumiendo el código PIN de 6 dígitos
+ * @param {string} codigo
+ * @param {string} nueva_contraseña
+ * @returns {Promise<{ status: string, mensaje: string }>}
+ */
+export const restablecerPassword = async (codigo, nueva_contraseña) => {
+  const res = await api.post("/auth/restablecer-password", {
+    codigo,
+    token: codigo,
+    nueva_contraseña,
+    password: nueva_contraseña,
+  });
+  return res.data;
+};
 
-      originalRequest._retry = true;
-      isRefreshing = true;
+/**
+ * Refresco de token JWT
+ * @returns {Promise<{ status: string, token: string, expiraEn: string }>}
+ */
+export const refreshToken = async () => {
+  const res = await api.post("/auth/refresh-token");
+  return res.data;
+};
 
-      const storedRefreshToken =
-        localStorage.getItem("refreshToken") || localStorage.getItem("token");
+/**
+ * Objeto agrupador authService
+ */
+export const authService = {
+  login,
+  loginMaestro,
+  validarPin,
+  verificarPin,
+  verificarPassword,
+  recuperarPin,
+  cambiarPin,
+  recuperarPassword,
+  solicitarRecuperacionPin,
+  solicitarRecuperacion,
+  olvidoPassword,
+  restablecerPassword,
+  refreshToken,
+};
 
-      if (!storedRefreshToken) {
-        isRefreshing = false;
-        limpiarSesion();
-        return Promise.reject(error);
-      }
-
-      try {
-        // Renovar token mediante petición directa
-        const { data } = await axios.post(
-          `${API_URL}/auth/refresh-token`,
-          { refreshToken: storedRefreshToken },
-          {
-            headers: {
-              Authorization: `Bearer ${storedRefreshToken}`,
-            },
-          }
-        );
-
-        const nuevoToken = data.token;
-        const nuevoRefreshToken = data.refreshToken || storedRefreshToken;
-
-        localStorage.setItem("token", nuevoToken);
-        if (nuevoRefreshToken) {
-          localStorage.setItem("refreshToken", nuevoRefreshToken);
-        }
-
-        processQueue(null, nuevoToken);
-
-        originalRequest.headers.Authorization = `Bearer ${nuevoToken}`;
-        return api(originalRequest);
-      } catch (refreshErr) {
-        processQueue(refreshErr, null);
-        limpiarSesion();
-        return Promise.reject(refreshErr);
-      } finally {
-        isRefreshing = false;
-      }
-    }
-
-    return Promise.reject(error);
-  }
-);
+api.auth = authService;
 
 export default api;

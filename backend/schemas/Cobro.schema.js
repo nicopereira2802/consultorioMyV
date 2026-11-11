@@ -31,10 +31,11 @@ export const createCobroSchema = z.object({
 
   cant_cuotas: z
     .number({
-      required_error: "La cantidad de cuotas es obligatoria",
       invalid_type_error: "La cantidad de cuotas debe ser un número",
     })
-    .positive("La cantidad de cuotas debe ser mínimo 1"),
+    .positive("La cantidad de cuotas debe ser mínimo 1")
+    .optional()
+    .default(1),
 });
 
 export const updateCobroSchema = z.object({

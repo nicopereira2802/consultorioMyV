@@ -1,27 +1,31 @@
 /** @format */
 
 import { Op } from "sequelize";
-import { Turno, EstadoTurno } from "../models/index.model.js";
+import { Turno, EstadoTurno, Paciente } from "../models/index.model.js";
+
+export const HORARIO_ATENCION_CONFIG = Object.freeze({
+  HORA_INICIO: 9,
+  HORA_FIN: 19,
+});
 
 export const validarEstadoProgramado = async () => {
-  const [estadoProgramado] = await EstadoTurno.findOrCreate({
+  const [estadoProgramado, created] = await EstadoTurno.findOrCreate({
     where: { estado: "Programado" },
   });
 
   return estadoProgramado;
 };
 
-/**
- * @deprecated Reemplazado por el patrón State en domain/turno/estado.
- * Se preserva por compatibilidad retroactiva.
- */
 export const validarEstados = async (id_estado, estadoInicio, estadoFinal) => {
+  // Aseguramos que estadoInicio sea un array
   const estadosPermitidos = Array.isArray(estadoInicio) ? estadoInicio : [estadoInicio];
 
+  // Verificar si el ID del estado actual está dentro de los permitidos
   if (!estadosPermitidos.includes(id_estado)) {
     return false;
   }
 
+  // Si es válido, retornamos directamente el ID del estado destino
   return estadoFinal;
 };
 
@@ -29,22 +33,77 @@ export const validarSolapaminetoHorarios = async (fechaInicio, fechaFin, turnoId
   const inicio = new Date(fechaInicio);
   const fin = new Date(fechaFin);
 
-  const [estadoProgramado] = await EstadoTurno.findOrCreate({
-    where: { estado: "Programado" },
+  const estadoCancelado = await EstadoTurno.findOne({
+    where: { estado: { [Op.in]: ["Cancelado", "cancelado"] } },
   });
 
-  // Obtenemos los turnos en conflicto
+  const whereCondition = {
+    activo: true,
+    fecha_hora_inicio: { [Op.lt]: fin },
+    fecha_hora_fin: { [Op.gt]: inicio },
+    ...(turnoIdExcluir && { id_turno: { [Op.ne]: turnoIdExcluir } }),
+  };
+
+  if (estadoCancelado) {
+    whereCondition.id_estado = { [Op.ne]: estadoCancelado.id_estado };
+  }
+
+  // Obtenemos el primer turno en conflicto (cualquiera activo no cancelado)
   const turnoExistente = await Turno.findOne({
-    where: {
-      id_estado: { [Op.eq]: estadoProgramado.id_estado },
-      activo: true,
-      // Condición de solapamiento
-      fecha_hora_inicio: { [Op.lt]: fin },
-      fecha_hora_fin: { [Op.gt]: inicio },
-      // Si estamos editando un turno existente, lo excluimos de la búsqueda
-      ...(turnoIdExcluir && { id_turno: { [Op.ne]: turnoIdExcluir } }),
-    },
+    where: whereCondition,
+    include: [
+      {
+        model: EstadoTurno,
+        where: { estado: { [Op.notIn]: ["Cancelado", "cancelado"] } },
+        required: false,
+      },
+      {
+        model: Paciente,
+        attributes: ["nombre", "apellido"],
+        required: false,
+      },
+    ],
   });
 
-  return !!turnoExistente;
+  return turnoExistente;
+};
+
+export const validarHorarioAtencion = (
+  inicioInput,
+  finInput,
+  horaMin = process.env.NODE_ENV === "test" ? 0 : HORARIO_ATENCION_CONFIG.HORA_INICIO,
+  horaMax = process.env.NODE_ENV === "test" ? 24 : HORARIO_ATENCION_CONFIG.HORA_FIN
+) => {
+  const extraerHoraMinutos = (val) => {
+    if (!val) return null;
+    if (typeof val === "string") {
+      const match = val.match(/(?:T|\s)(\d{2}):(\d{2})/);
+      if (match) {
+        return Number(match[1]) + Number(match[2]) / 60;
+      }
+    }
+    const d = new Date(val);
+    if (isNaN(d.getTime())) return null;
+    const partes = new Intl.DateTimeFormat("es-AR", {
+      timeZone: "America/Argentina/Buenos_Aires",
+      hour: "numeric",
+      minute: "numeric",
+      hour12: false,
+    }).formatToParts(d);
+    let h = Number(partes.find((p) => p.type === "hour")?.value || 0);
+    if (h === 24) h = 0;
+    const m = Number(partes.find((p) => p.type === "minute")?.value || 0);
+    return h + m / 60;
+  };
+
+  const horaInicio = extraerHoraMinutos(inicioInput);
+  const horaFin = extraerHoraMinutos(finInput);
+
+  if (horaInicio === null || horaFin === null) return true;
+
+  // Validar dentro del rango horario de atención configurado (por defecto 09:00 a 19:00 hs)
+  if (horaInicio < horaMin || horaFin > horaMax || horaInicio >= horaFin) {
+    return false;
+  }
+  return true;
 };

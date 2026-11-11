@@ -5,10 +5,10 @@ import { Shield, Plus, Edit, Trash2, CheckCircle2, XCircle, RotateCcw, Ban } fro
 
 //* IMPORTACION DE COMPONENTES COMUNES REUTILIZABLES
 import Header from "../../components/common/Header";
+import BadgeInicial from "../../components/common/BadgeInicial";
 import Tabla from "../../components/common/Tabla/Tabla";
 import TablaHeader from "../../components/common/Tabla/TablaHeader";
 import TablaPaginacion from "../../components/common/Tabla/TablaPaginacion";
-import { ListaTarjetas, TarjetaRegistro } from "../../components/common/Tabla/TarjetaRegistro";
 
 // * PAGELAYOUT (PARA EL BOTON)
 import PageLayout from "../../components/layout/PageLayout";
@@ -68,7 +68,7 @@ export default function GestionObrasSociales() {
 
   return (
     <PageLayout onAdd={abrirParaCrear}>
-      <div className="w-full flex-1 flex flex-col gap-4">
+      <div className="w-full flex-1 flex flex-col gap-4 pb-24">
         {/* //* HEADER CON TITULO Y BOTON */}
         <Header
           icono={Shield}
@@ -106,126 +106,71 @@ export default function GestionObrasSociales() {
             {/* //* TABLA: TABLA */}
             <div className="overflow-x-auto flex-1">
               <Tabla
+                layoutFijo
                 cargando={cargando}
-                search={search}
                 sinDatosText="No se encontraron obras sociales registradas."
-                vistaMovil={
-                  <ListaTarjetas
-                    cargando={cargando}
-                    search={search}
-                    sinDatosText="No se encontraron obras sociales registradas."
-                    page={page}
-                    setPage={setPage}
-                    totalPages={totalPages}
-                  >
-                    {obrasSociales.map((os) => (
-                      <TarjetaRegistro
-                        key={os.id_obra_social}
-                        avatar={os.nombre?.charAt(0)}
-                        titulo={os.nombre}
-                        subtitulo={`#${os.id_obra_social}`}
-                        tituloSheet="Opciones de la Obra Social"
-                        badge={
-                          os.activo ? (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60 shrink-0">
-                              <CheckCircle2 size={13} /> Activa
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-500 border border-gray-200 shrink-0">
-                              <XCircle size={13} /> Inactiva
-                            </span>
-                          )
-                        }
-                        acciones={[
-                          {
-                            key: "editar",
-                            label: "Editar",
-                            icon: Edit,
-                            tono: "azul",
-                            rapida: true,
-                            onClick: () => abrirParaEditar(os, formatearObraSocialParaEditar),
-                          },
-                          {
-                            key: "toggle",
-                            label: os.activo ? "Desactivar" : "Reactivar",
-                            icon: os.activo ? Ban : RotateCcw,
-                            tono: os.activo ? "rojo" : "verde",
-                            rapida: true,
-                            onClick: () => abrirParaToggle(os),
-                          },
-                          {
-                            key: "eliminar",
-                            label: "Eliminar obra social",
-                            icon: Trash2,
-                            tono: "rojo",
-                            separador: true,
-                            oculto: os.activo,
-                            onClick: () => abrirParaEliminar(os),
-                          },
-                        ]}
-                      >
-                        <span className="text-gray-500">Cobertura médica / mutual</span>
-                      </TarjetaRegistro>
-                    ))}
-                  </ListaTarjetas>
-                }
                 columnas={[
                   { label: "ID", className: "hidden md:table-cell" },
-                  { label: "Obra Social" },
-                  { label: "Estado" },
-                  { label: "Acciones", align: "center" },
+                  { label: "Obra Social", className: "w-[34%] md:w-auto" },
+                  { label: "Estado", align: "center", className: "w-[18%] md:w-auto" },
+                  { label: "Acciones", align: "center", className: "w-[48%] md:w-auto" },
                 ]}
               >
                 {obrasSociales.map((os) => (
-                  <tr key={os.id_obra_social} className="hover:bg-emerald-50/40 transition-colors">
+                  <tr key={os.id_obra_social} className="hover:bg-gray-50/60 transition-colors">
                     {/* //* COLUMNAS: ID OBRA SOCIAL */}
-                    <td className="hidden md:table-cell px-6 py-4 font-mono font-medium text-teal-700/70 w-24 text-xs">
+                    <td className="hidden md:table-cell px-6 py-4 font-semibold text-gray-500 w-24 text-xs">
                       #{os.id_obra_social}
                     </td>
 
                     {/* //* COLUMNAS: NOMBRE */}
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="hidden md:flex w-9 h-9 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200/90 items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
-                          {os.nombre?.charAt(0)}
-                        </div>
-                        <span className="font-bold text-slate-900 text-sm tracking-tight">{os.nombre}</span>
+                    <td className="px-3 md:px-6 py-4">
+                      <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                        <BadgeInicial
+                          inicial={(os.nombre || "O").charAt(0).toUpperCase()}
+                          className="hidden md:flex"
+                        />
+                        <span className="font-semibold text-gray-800 text-sm break-words min-w-0">{os.nombre}</span>
                       </div>
                     </td>
 
                     {/* //* COLUMNAS: ESTADO */}
-                    <td className="px-6 py-4">
+                    <td className="px-3 md:px-6 py-4 text-center">
                       {os.activo ? (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100/70 text-emerald-800 border border-emerald-200/90 shadow-2xs">
-                          <CheckCircle2 size={13} /> Activa
+                        <span
+                          title="Activa"
+                          className="inline-flex items-center gap-1.5 px-2 md:px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/60"
+                        >
+                          <CheckCircle2 size={14} /> <span className="hidden md:inline">Activa</span>
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200 shadow-2xs">
-                          <XCircle size={13} /> Inactiva
+                        <span
+                          title="Inactiva"
+                          className="inline-flex items-center gap-1.5 px-2 md:px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500 border border-gray-200"
+                        >
+                          <XCircle size={14} /> <span className="hidden md:inline">Inactiva</span>
                         </span>
                       )}
                     </td>
 
-                    {/* //* COLUMNAS: ACCIONES CON COLOR */}
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-center gap-1.5">
+                    {/* //* COLUMNAS: ACCIONES */}
+                    <td className="px-3 md:px-6 py-4">
+                      <div className="flex flex-wrap items-center justify-center gap-1 md:gap-2">
                         <button
                           type="button"
                           onClick={() => abrirParaEditar(os, formatearObraSocialParaEditar)}
-                          className="p-2 rounded-xl text-blue-600 hover:bg-blue-50 hover:scale-105 active:scale-95 transition-all cursor-pointer"
-                          title="Editar Obra Social"
+                          className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
                         >
                           <Edit size={18} />
                         </button>
                         <button
                           type="button"
                           onClick={() => abrirParaToggle(os)}
-                          className={`p-2 rounded-xl hover:scale-105 active:scale-95 transition-all cursor-pointer ${
+                          className={`p-2 rounded-lg transition-colors ${
                             os.activo
-                              ? "text-rose-600 hover:bg-rose-50"
+                              ? "text-red-500 hover:bg-red-50"
                               : "text-emerald-600 hover:bg-emerald-50"
                           }`}
-                          title={os.activo ? "Desactivar Obra Social" : "Reactivar Obra Social"}
                         >
                           {os.activo ? <Ban size={18} /> : <RotateCcw size={18} />}
                         </button>
@@ -233,8 +178,7 @@ export default function GestionObrasSociales() {
                           <button
                             type="button"
                             onClick={() => abrirParaEliminar(os)}
-                            className="p-2 rounded-xl text-rose-600 hover:bg-rose-50 hover:scale-105 active:scale-95 transition-all cursor-pointer"
-                            title="Eliminar Obra Social"
+                            className="p-2 rounded-lg transition-colors text-red-500 hover:bg-red-50"
                           >
                             <Trash2 size={18} />
                           </button>

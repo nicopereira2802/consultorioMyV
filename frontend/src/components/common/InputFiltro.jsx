@@ -1,54 +1,55 @@
 /** @format */
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { X } from "lucide-react";
 
 const InputFiltro = ({
-  datos = [],
-  camposFiltrado = [],
+  datos,
+  camposFiltrado,
   formatoVisual,
   alSeleccionar,
   placeholder,
   valorInicial = "",
   className = "",
-  disabled = false,
 }) => {
-  const resolverTexto = (val, lista) => {
-    if (val === undefined || val === null || val === "") return "";
-    if (typeof val === "object") {
-      return formatoVisual ? formatoVisual(val) : val[camposFiltrado[0]] || "";
-    }
-    if (!lista || lista.length === 0) return "";
-    const itemEncontrado = lista.find((d) => {
-      const idItem = d.id_paciente || d.id_obra_social || d.id_practica || d.id;
-      return String(idItem) === String(val);
-    });
-    if (itemEncontrado) {
-      return formatoVisual
-        ? formatoVisual(itemEncontrado)
-        : itemEncontrado[camposFiltrado[0]] || "";
-    }
-    return "";
-  };
-
-  const [busqueda, setBusqueda] = useState(() => resolverTexto(valorInicial, datos));
+  const [busqueda, setBusqueda] = useState("");
   const [mostrarLista, setMostrarLista] = useState(false);
   const [posicion, setPosicion] = useState({ top: 0, left: 0, width: 0 });
 
   const inputRef = useRef(null);
-  const portalRef = useRef(null);
 
-  // Sincronización continua de valorInicial y datos
+  /* ─── MOSTRAR EL VALOR INICIAL CORRECTO AL EDITAR ─── */
   useEffect(() => {
-    const textoResuelto = resolverTexto(valorInicial, datos);
-    if (textoResuelto) {
-      setBusqueda(textoResuelto);
+    if (valorInicial !== undefined && valorInicial !== null && valorInicial !== "" && datos && datos.length > 0) {
+      // 1. Si valorInicial es directamente un objeto (ej: datosFormulario.Paciente)
+      if (typeof valorInicial === "object") {
+        const texto = formatoVisual ? formatoVisual(valorInicial) : valorInicial[camposFiltrado[0]];
+        setBusqueda(texto);
+        return;
+      }
+
+      // 2. Si valorInicial es un ID, buscar contemplando el campo principal indicado o IDs comunes (id_turno, id_paciente, etc.)
+      const primerCampo = camposFiltrado && camposFiltrado.length > 0 ? camposFiltrado[0] : null;
+      const itemEncontrado = datos.find((d) => {
+        const idItem =
+          (primerCampo && d[primerCampo] !== undefined ? d[primerCampo] : null) ??
+          d.id_turno ??
+          d.id_paciente ??
+          d.id_obra_social ??
+          d.id_practica ??
+          d.id;
+        return String(idItem) === String(valorInicial);
+      });
+
+      if (itemEncontrado) {
+        const texto = formatoVisual ? formatoVisual(itemEncontrado) : itemEncontrado[camposFiltrado[0]];
+        setBusqueda(texto);
+      }
     } else if (!valorInicial) {
       setBusqueda("");
     }
-  }, [valorInicial, datos]);
+  }, [valorInicial, datos, formatoVisual, camposFiltrado]);
 
-  // Actualizar coordenadas para el Portal flotante
+  // Actualizar coordenadas para el Portal
   const actualizarPosicion = () => {
     if (inputRef.current) {
       const rect = inputRef.current.getBoundingClientRect();
@@ -60,7 +61,6 @@ const InputFiltro = ({
     }
   };
 
-  // Manejar redimensionamiento y scroll cuando el dropdown está abierto
   useEffect(() => {
     if (mostrarLista) {
       actualizarPosicion();
@@ -72,27 +72,6 @@ const InputFiltro = ({
         window.removeEventListener("scroll", handleScrollResize, true);
       };
     }
-  }, [mostrarLista]);
-
-  // Cerrar al hacer clic o touch fuera del input o de la lista
-  useEffect(() => {
-    if (!mostrarLista) return;
-    const handleClickAfuera = (e) => {
-      if (
-        inputRef.current &&
-        !inputRef.current.contains(e.target) &&
-        portalRef.current &&
-        !portalRef.current.contains(e.target)
-      ) {
-        setMostrarLista(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickAfuera);
-    document.addEventListener("touchstart", handleClickAfuera, { passive: true });
-    return () => {
-      document.removeEventListener("mousedown", handleClickAfuera);
-      document.removeEventListener("touchstart", handleClickAfuera);
-    };
   }, [mostrarLista]);
 
   const obtenerValor = (objeto, ruta) => {
@@ -119,64 +98,33 @@ const InputFiltro = ({
     const textoSeleccionado = formatoVisual ? formatoVisual(item) : item[camposFiltrado[0]];
     setBusqueda(textoSeleccionado);
     setMostrarLista(false);
-    if (alSeleccionar) {
-      alSeleccionar(item);
-    }
-  };
-
-  const limpiarSeleccion = (e) => {
-    e.stopPropagation();
-    setBusqueda("");
-    setMostrarLista(false);
-    if (alSeleccionar) {
-      alSeleccionar(null);
-    }
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
+    alSeleccionar(item);
   };
 
   return (
     <div className={`relative w-full ${className}`}>
-      <div className="relative w-full flex items-center">
-        <input
-          ref={inputRef}
-          type="text"
-          placeholder={placeholder}
-          value={busqueda}
-          disabled={disabled}
-          onChange={(e) => {
-            setBusqueda(e.target.value);
-            setMostrarLista(true);
-          }}
-          onFocus={() => {
-            if (!disabled) {
-              actualizarPosicion();
-              setMostrarLista(true);
-            }
-          }}
-          className={`border-gray-200 rounded-xl bg-gray-50 w-full border p-2 pr-9 text-sm focus:outline-none focus:ring-2 focus:ring-[#2eb086]/50 focus:border-[#2eb086] transition-all ${
-            disabled ? "opacity-60 cursor-not-allowed bg-gray-100" : ""
-          }`}
-        />
-
-        {busqueda && !disabled && (
-          <button
-            type="button"
-            onClick={limpiarSeleccion}
-            className="absolute right-3 text-gray-400 hover:text-gray-600 focus:outline-none transition-colors cursor-pointer"
-            title="Limpiar"
-          >
-            <X size={18} />
-          </button>
-        )}
-      </div>
+      <input
+        ref={inputRef}
+        type="text"
+        placeholder={placeholder}
+        value={busqueda}
+        onChange={(e) => {
+          setBusqueda(e.target.value);
+          setMostrarLista(true);
+        }}
+        onFocus={() => {
+          actualizarPosicion();
+          setMostrarLista(true);
+        }}
+        className="border-gray-200 rounded-xl bg-gray-50 w-full border p-2"
+        onBlur={() => {
+          setTimeout(() => setMostrarLista(false), 200);
+        }}
+      />
 
       {mostrarLista &&
-        !disabled &&
         createPortal(
           <ul
-            ref={portalRef}
             style={{
               position: "absolute",
               top: `${posicion.top + 4}px`,
@@ -184,25 +132,21 @@ const InputFiltro = ({
               width: `${posicion.width}px`,
               zIndex: 99999,
             }}
-            className="bg-white border border-gray-200 rounded-xl shadow-2xl max-h-56 overflow-y-auto animate-in fade-in-50 duration-150"
+            className="bg-white border border-gray-300 rounded-md shadow-xl max-h-47 overflow-y-auto"
+            onMouseDown={(e) => e.preventDefault()}
           >
             {resultados.length > 0 ? (
               resultados.map((item, index) => (
                 <li
-                  key={`${item.id || item.id_paciente || item.id_practica || index}-${index}`}
-                  onPointerDown={(e) => {
-                    e.preventDefault();
-                    manejarClickOpcion(item);
-                  }}
-                  className="p-2.5 hover:bg-emerald-50/70 hover:text-emerald-950 cursor-pointer text-xs font-medium border-b border-gray-100 last:border-b-0 transition-colors"
+                  key={`${item.id}-${index}`}
+                  onClick={() => manejarClickOpcion(item)}
+                  className="p-2 hover:bg-gray-100 cursor-pointer text-sm border-b border-gray-100 last:border-b-0"
                 >
                   {formatoVisual ? formatoVisual(item) : item[camposFiltrado[0]]}
                 </li>
               ))
             ) : (
-              <li className="p-3 text-gray-400 italic text-xs text-center">
-                No se encontraron coincidencias
-              </li>
+              <li className="p-2 text-gray-500 italic text-sm">No se encontraron coincidencias</li>
             )}
           </ul>,
           document.body,

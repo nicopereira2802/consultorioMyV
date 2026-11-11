@@ -28,7 +28,13 @@ export const PacienteObraSocial = sequelize.define(
     },
     nro_afiliado: {
       type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: null,
+    },
+    activo: {
+      type: DataTypes.BOOLEAN,
       allowNull: false,
+      defaultValue: true,
     },
   },
   {

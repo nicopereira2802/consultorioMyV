@@ -1,6 +1,6 @@
 /** @format */
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 
 //* ICONOS Y TOAST
 import { Calendar } from "lucide-react";
@@ -8,19 +8,26 @@ import toast from "react-hot-toast";
 
 // * COMPONENTES COMUNES
 import Header from "../../components/common/Header";
-import AgendaCalendario from "./components/calendario/AgendaCalendario";
+import AgendaCalendario from "./components/AgendaCalendario";
 
 //* COMPONENTES ESPECIFICOS DE TURNO
-import { VistaTurno } from "./components/modales/VistaTurno";
+import { VistaTurno } from "./components/VistaTurno";
 import { AdvertenciaPacienteIncompleto } from "./components/AdvertenciaPacienteIncompleto";
 
 //* HOOKS
 import { useTurnoSearchAgenda } from "./hooks/useTurnoSearchAgenda";
 import { useCRUDModal } from "../../hooks/useCRUDModal";
+import { useTurnoAtenderModal } from "./hooks/useTurnoAtenderModal";
+import { useTurnoCancelarModal } from "./hooks/useTurnoCancelarModal";
+import { useTurnoReprogramarModal } from "./hooks/useTurnoReprogramarModal";
 import { useTurnoActions } from "./hooks/useTurnoActions";
+import { usePacienteFaltante } from "./hooks/usePacienteFaltante";
+import { useTurnoVer } from "./hooks/useTurnoVer";
+import { useRestricciones } from "./hooks/useRestricciones";
 
 //* FUNCIONES PARA FORMATEAR FECHAS Y UTILIDADES
 import { formatFechaCortaTexto } from "../../utils/index";
+import { formatearTurnoParaReprogramar } from "./utils/formatTurnoParaReprogramar";
 
 //* CONSTANTES
 import { ESTADO_INICIAL_TURNO } from "./constants/turnosConstants";
@@ -34,14 +41,8 @@ import {
 } from "./components/FormulariosTurno";
 
 export default function AgendaDiaria() {
-  // Estado y ref para turno en modo reprogramación
-  const [turnoReprogramando, setTurnoReprogramandoState] = useState(null);
-  const turnoReprogramandoRef = useRef(null);
-
-  const setTurnoReprogramando = (t) => {
-    turnoReprogramandoRef.current = t;
-    setTurnoReprogramandoState(t);
-  };
+  // TODO: TENDRIA QUE VER COMO SACAR ESTO
+  const [turnoReprogramando, setTurnoReprogramando] = useState(null);
 
   //* HOOK DE CRUD MODAL
   const {
@@ -59,19 +60,44 @@ export default function AgendaDiaria() {
   const { turnos, pacientes, setPacientes, practicasLista, recargar } =
     useTurnoSearchAgenda("/turnos/agenda");
 
-  //* ESTADOS LOCALES DE MODALES SECUNDARIOS
-  const [turnoVer, setTurnoVer] = useState(null);
-  const [turnoAtender, setTurnoAtender] = useState(null);
-  const [cancelarConfig, setCancelarConfig] = useState(null); // { turno, inasistente: boolean }
-  const [turnoReprogramar, setTurnoReprogramar] = useState(null);
+  //* HOOK DE MODAL VER
+  const { modalVer, turnoVer, abrirParaVer, cerrarVer } = useTurnoVer();
 
-  const abrirParaVer = (t) => setTurnoVer(t);
-  const abrirParaAtender = (t) => setTurnoAtender(t);
-  const abrirParaCancelar = (t) =>
-    setCancelarConfig({ turno: t, inasistente: false });
-  const abrirParaInasistente = (t) =>
-    setCancelarConfig({ turno: t, inasistente: true });
-  const abrirParaReprogramar = (t) => setTurnoReprogramar(t);
+  //* HOOK DE MODAL ATENCION
+  const {
+    modalAtender,
+    turnoSeleccionadoAtender,
+    datosAtencion,
+    obrasSocialesPaciente,
+    abrirParaAtender,
+    cerrarModalAtender,
+    agregarPracticaAtencion,
+    actualizarPracticaAtencion,
+    actualizarDatosAtencion,
+    eliminarPracticaAtencion,
+  } = useTurnoAtenderModal();
+
+  //* HOOK DE MODAL CANCELAR E INASISTENTE
+  const {
+    modalCancelar,
+    inasistente,
+    turnoSeleccionadoCancelar,
+    datosCancelacion,
+    abrirParaCancelar,
+    abrirParaInasistente,
+    actualizarDatosCancelacion,
+    cerrarModalCancelar,
+  } = useTurnoCancelarModal();
+
+  //* HOOK DE MODAL REPROGRAMAR
+  const {
+    modalReprogramar,
+    turnoSeleccionadoReprogramar,
+    datosReprogramacion,
+    abrirParaReprogramar,
+    cerrarModalReprogramar,
+    actualizarDatosReprogramacion,
+  } = useTurnoReprogramarModal();
 
   //* HOOK DE PETICIONES API
   const {
@@ -81,65 +107,73 @@ export default function AgendaDiaria() {
     procesarReprogramacionTurno,
     manejarSeleccionFechaCalendario,
     procesarClickEnTurno,
-  } = useTurnoActions(recargar, cerrarModal);
+  } = useTurnoActions(recargar, cerrarModal, turnos);
+
+  //* HOOK DE PACIENTE INCOMPLETO
+  const { advertenciaVisible, pacientesIncompletos, obtenerCamposFaltantes, cerrarAdvertencia } =
+    usePacienteFaltante(pacientes);
+
+  //* HOOK DE RESTRICCIONES DE AGENDA
+  const { obtenerRestriccionesDeFecha } = useRestricciones();
+  const restriccionesHoy = obtenerRestriccionesDeFecha(new Date());
 
   /* ─── RETORNO DE LA PAGINA ─────────────────────────────────── */
   return (
     <div className="w-full h-screen flex flex-col pb-20 md:pb-0">
-      {/* //* HEADER PRINCIPAL CON ALERTA DE PACIENTES INTEGRADA */}
+      {/* //* HEADER PRINCIPAL */}
       <Header
         icono={Calendar}
         titulo="Agenda de Turnos"
         subtitulo="Gestión horaria y turnos del consultorio odontológico"
         badge={formatFechaCortaTexto(new Date())}
-        alerta={<AdvertenciaPacienteIncompleto pacientes={pacientes} />}
+        botonAccion={
+          advertenciaVisible && pacientesIncompletos.length > 0 ? (
+            <AdvertenciaPacienteIncompleto
+              advertenciaVisible={advertenciaVisible}
+              pacientesIncompletos={pacientesIncompletos}
+              obtenerCamposFaltantes={obtenerCamposFaltantes}
+              cerrarAdvertencia={cerrarAdvertencia}
+            />
+          ) : null
+        }
       />
 
-      <div className="flex-1 w-full min-h-0 p-2 sm:p-3 md:p-3.5 text-black flex flex-col">
-        {turnoReprogramando && (
-          <div className="bg-[#3B7A94] text-white px-4 py-2.5 rounded-xl mb-3 flex items-center justify-between text-xs sm:text-sm shadow-md animate-pulse">
-            <span className="flex items-center gap-2">
-              <Calendar size={18} className="shrink-0" />
-              <span>
-                <strong>Modo Reprogramación:</strong> Seleccione o arrastre en
-                la agenda para definir el horario y duración de{" "}
-                <strong>
-                  {turnoReprogramando.Paciente
-                    ? `${turnoReprogramando.Paciente.nombre} ${turnoReprogramando.Paciente.apellido}`
-                    : `#${turnoReprogramando.id_turno}`}
-                </strong>
-              </span>
-            </span>
-            <button
-              type="button"
-              onClick={() => {
-                setTurnoReprogramando(null);
-                toast.dismiss();
-              }}
-              className="ml-2 px-2.5 py-1 bg-white/20 hover:bg-white/30 rounded-lg text-xs font-bold transition-colors cursor-pointer shrink-0"
-            >
-              Cancelar
-            </button>
-          </div>
-        )}
-
+      <div className="flex-1 w-full min-h-0 p-2 md:p-4 text-black flex flex-col">
         <div className="w-full h-full bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden p-2 md:p-4 flex flex-col">
+          {/* Banner de Restricciones Activas para Hoy */}
+          {restriccionesHoy.length > 0 && (
+            <div className="mb-3 flex flex-col gap-2">
+              {restriccionesHoy.map((r) => (
+                <div
+                  key={r.id}
+                  className="px-3.5 py-2.5 bg-gray-100 border border-gray-300 rounded-xl text-gray-700 text-xs sm:text-sm font-semibold flex items-center gap-2 shadow-sm"
+                >
+                  <span className="text-base flex-shrink-0">🔒</span>
+                  <span>
+                    {r.todoElDia
+                      ? `Día bloqueado hoy: ${r.motivo} (No se admiten turnos en esta jornada)`
+                      : `Franja bloqueada hoy: ${r.horaInicio} a ${r.horaFin} hs · ${r.motivo}`}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* //* BODY: AGENDA */}
           <AgendaCalendario
             turnos={turnos}
+            recargarTurnos={recargar}
             onDateSelect={(selectInfo) =>
               manejarSeleccionFechaCalendario(
                 selectInfo,
                 abrirParaCrear,
                 abrirParaReprogramar,
                 actualizarDatos,
-                turnoReprogramandoRef.current ?? turnoReprogramando,
+                turnoReprogramando,
                 setTurnoReprogramando,
               )
             }
-            onEventClick={(clickInfo) =>
-              procesarClickEnTurno(clickInfo, abrirParaEditar, abrirParaVer)
-            }
+            onEventClick={(clickInfo) => procesarClickEnTurno(clickInfo, abrirParaEditar, abrirParaVer)}
           />
         </div>
       </div>
@@ -150,6 +184,7 @@ export default function AgendaDiaria() {
           modalAbierto={modalAbierto}
           cerrarModal={cerrarModal}
           editando={editando}
+          turnos={turnos}
           pacientes={pacientes}
           setPacientes={setPacientes}
           datosFormulario={datosFormulario}
@@ -172,92 +207,104 @@ export default function AgendaDiaria() {
           }}
           abrirParaReprogramar={() => {
             cerrarModal();
-            abrirParaReprogramar(turnoSeleccionado);
+            abrirParaReprogramar(turnoSeleccionado, formatearTurnoParaReprogramar);
           }}
         />
       )}
 
       {/* //* MODALES: VER */}
-      {turnoVer && (
+      {/* //? SE PUEDE MEJORAR??? */}
+      {modalVer && (
         <VistaTurno
-          isOpen={Boolean(turnoVer)}
-          onClose={() => setTurnoVer(null)}
+          isOpen={modalVer}
+          onClose={() => cerrarVer()}
           turno={turnoVer}
           abrirParaReprogramar={(turnoTarget) => {
-            setTurnoVer(null);
+            cerrarVer();
             setTurnoReprogramando(turnoTarget);
-            toast(
-              "Seleccione o arrastre en la agenda para definir el nuevo horario y duración...",
-              {
-                icon: "📅",
-                duration: 5000,
-                style: {
-                  background: "#3B7A94",
-                  color: "#fff",
-                  fontWeight: "bold",
-                },
+            toast("Seleccione el nuevo horario haciendo clic en la agenda...", {
+              icon: "📅",
+              duration: 5000,
+              style: {
+                background: "#3B7A94",
+                color: "#fff",
+                fontWeight: "bold",
               },
-            );
+            });
           }}
           abrirParaAtender={(turnoTarget) => {
-            setTurnoVer(null);
+            cerrarVer();
             if (turnoTarget) abrirParaAtender(turnoTarget);
           }}
           abrirParaCancelar={(turnoTarget) => {
-            setTurnoVer(null);
+            cerrarVer();
             if (turnoTarget) abrirParaCancelar(turnoTarget);
           }}
           abrirParaInasistente={(turnoTarget) => {
-            setTurnoVer(null);
+            cerrarVer();
             if (turnoTarget) abrirParaInasistente(turnoTarget);
           }}
         />
       )}
 
       {/* //* MODALES: ATENDER */}
-      {turnoAtender && (
+      {modalAtender && (
         <FormularioAtender
-          isOpen={Boolean(turnoAtender)}
-          onClose={() => setTurnoAtender(null)}
-          turno={turnoAtender}
+          modalAtenderAbierto={modalAtender}
+          cerrarModal={cerrarModalAtender}
+          turnoSeleccionado={turnoSeleccionadoAtender}
+          datosAtencion={datosAtencion}
           practicasLista={practicasLista}
-          onConfirm={(datos) =>
-            procesarAtencionTurno(datos, turnoAtender, () =>
-              setTurnoAtender(null),
-            )
-          }
+          pacientesObrasSociales={obrasSocialesPaciente}
+          agregarPracticaAtencion={agregarPracticaAtencion}
+          actualizarPracticaAtencion={actualizarPracticaAtencion}
+          actualizarDatosAtencion={actualizarDatosAtencion}
+          eliminarPracticaAtencion={eliminarPracticaAtencion}
+          procesarAtencionTurno={(e) => {
+            e.preventDefault();
+            procesarAtencionTurno(datosAtencion, turnoSeleccionadoAtender, cerrarModalAtender);
+          }}
         />
       )}
 
       {/* //* MODALES: REPROGRAMAR */}
-      {turnoReprogramar && (
+      {modalReprogramar && (
         <FormularioReprogramar
-          isOpen={Boolean(turnoReprogramar)}
-          onClose={() => setTurnoReprogramar(null)}
-          turno={turnoReprogramar}
-          onConfirm={(datos) =>
-            procesarReprogramacionTurno(datos, turnoReprogramar, () =>
-              setTurnoReprogramar(null),
-            )
-          }
+          modalReprogramarAbierto={modalReprogramar}
+          cerrarModal={cerrarModalReprogramar}
+          turnos={turnos}
+          turnoSeleccionado={turnoSeleccionadoReprogramar}
+          datosReprogramacion={datosReprogramacion}
+          actualizarDatosReprogramacion={actualizarDatosReprogramacion}
+          procesarReprogramacionTurno={(e) => {
+            e.preventDefault();
+            procesarReprogramacionTurno(
+              datosReprogramacion,
+              turnoSeleccionadoReprogramar,
+              cerrarModalReprogramar,
+            );
+          }}
         />
       )}
 
-      {/* //* MODALES: CANCELAR E INASISTENTE */}
-      {cancelarConfig && (
+      {/* //* MODALES: CANCELAR */}
+      {modalCancelar && (
         <FormularioCancelar
-          isOpen={Boolean(cancelarConfig)}
-          onClose={() => setCancelarConfig(null)}
-          turno={cancelarConfig.turno}
-          inasistente={cancelarConfig.inasistente}
-          onConfirm={({ notas_consulta, inasistente, turno }) =>
+          modalCancelarAbierto={modalCancelar}
+          cerrarModal={cerrarModalCancelar}
+          turnoSeleccionado={turnoSeleccionadoCancelar}
+          inasistente={inasistente}
+          notasCanceladoInasistente={datosCancelacion}
+          actualizarDatosCancelacion={actualizarDatosCancelacion}
+          procesarCancelacionTurno={(e) => {
+            e.preventDefault();
             procesarCancelacionTurno(
               inasistente,
-              turno,
-              { notas_consulta },
-              () => setCancelarConfig(null),
-            )
-          }
+              turnoSeleccionadoCancelar,
+              datosCancelacion,
+              cerrarModalCancelar,
+            );
+          }}
         />
       )}
     </div>

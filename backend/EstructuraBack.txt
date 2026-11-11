@@ -1,24 +1,15 @@
 /**
-* MODELO CategoriaGasto:
-TABLA categoria_gasto
-id_categoria_gasto -> INTEGER ; PK
-nombre -> STRING ; allowNull: false ; unique: true
-descripcion -> STRING ; allowNull: true,
-activo -> BOOLEAN ; allowNull: false ; default: true
-
  * MODELO Cobro:
- TABLA cobro
- id_cobro -> INTEGER ; PK
- id_turno -> INTEGER ; FK ; allowNull: false
- id_paciente -> INTEGER ; FK ; allowNull: false
- monto_a_cobrar -> DECIMAL(10, 2) ; allowNull: false  
- cant_cuotas -> INTEGER ; allowNull: false ; default: 1
- fecha_emision -> DATE ; allowNull: false ; default: DataTypes.NOW
- activo -> BOOLEAN ; allowNull: false ; default: true
+ * id_cobro -> INTEGER ; PK
+ * id_turno -> INTEGER ; FK ; allowNull: false
+ * id_paciente -> INTEGER ; FK ; allowNull: false
+ * monto_a_cobrar -> DECIMAL(10, 2) ; allowNull: false
+ * cant_cuotas -> INTEGER ; allowNull: false ; default: 1
+ * fecha_emision -> DATE ; allowNull: false ; default: DataTypes.NOW
+ * activo -> BOOLEAN ; allowNull: false ; default: true
  *
-
-router.use("/api/cobros", CobroRoutes);
-
+ * router.use("/api/cobros", CobroRoutes);
+ *
  * RUTAS:
 
 router.get("/", CobroController.getAllCobros);
@@ -58,17 +49,16 @@ router.get("/", CobroController.getAllCobros);
 
  /**
  * MODELO Cuota:
- TABLA cuota
- id_cuota -> INTEGER ; PK
- id_cobro -> INTEGER ; FK ; allowNull: false
- nro_cuota -> INTEGER ; allowNull: false
- monto_cuota -> DECIMAL(10, 2) ; allowNull: false
- monto_cobrado -> DECIMAL(10, 2) ; allowNull: true
- fecha_vencimiento -> DATEONLY ; allowNull: false
- fecha_cobro -> DATE ; allowNull: true
- metodo_pago -> ENUM("Efectivo", "Transferencia", "Tarjeta", "Otro") ; allowNull: true
- estado -> ENUM("Pendiente", "Pagada", "Parcialmente pagada") ; allowNull: false ; default: "Pendiente"
- vencida -> VIRTUAL ; get() {
+ * id_cuota -> INTEGER ; PK
+ * id_cobro -> INTEGER ; FK ; allowNull: false
+ * nro_cuota -> INTEGER ; allowNull: false
+ * monto_cuota -> DECIMAL(10, 2) ; allowNull: false
+ * monto_cobrado -> DECIMAL(10, 2) ; allowNull: true
+ * fecha_vencimiento -> DATEONLY ; allowNull: false
+ * fecha_cobro -> DATE ; allowNull: true
+ * metodo_pago -> ENUM("Efectivo", "Transferencia", "Tarjeta", "Otro") ; allowNull: true
+ * estado -> ENUM("Pendiente", "Pagada", "Parcialmente pagada") ; allowNull: false ; default: "Pendiente"
+ * vencida -> VIRTUAL ; get() {
  *         const hoy = new Date();
  *         return (
  *           this.estado !== "Pagada" && new Date(this.fecha_vencimiento) < hoy
@@ -77,7 +67,7 @@ router.get("/", CobroController.getAllCobros);
  *     },
  * activo -> BOOLEAN ; allowNull: false ; default: true
  *
- router.use("/api/cuotas", CuotaRoutes);
+ * router.use("/api/cuotas", CuotaRoutes);
  *
  * RUTAS:
  * router.get(
@@ -127,21 +117,8 @@ router.get("/", CobroController.getAllCobros);
  * NO TIENE, LAS CREO PARA TESTEAR? O NO HACE FALTA?
  *
 
-MODELO Gasto:
- TABLA gasto
-id_gasto -> INTEGER ; PK
-id_categoria_gasto -> INTEGER ; FK ; allowNull: false
-monto -> DECIMAL (10, 2) ; allowNull: false
-concepto -> STRING ;allowNull: false
-fecha_gasto -> DATE ; allowNull: false, defaultValue: NOW
-metodo_pago -> ENUM("Efectivo", "Transferencia", "Tarjeta", "Otro") ; allowNull: false ; defaultValue: "Efectivo"
-comprobante -> STRING ; allowNull: true;
-notas -> TEXT ; allowNull: true
-activo -> BOOLEAN ; allowNull: false ; default: true
-
  /**
  * MODELO HistorialEstadoTurno:
-  TABLA historial_estado_turno
  * id_historial -> INTEGER ; PK
  * id_turno -> INTEGER ; FK ; allowNull: false
  * id_estado -> INTEGER ; FK ; allowNull: false
@@ -156,8 +133,6 @@ activo -> BOOLEAN ; allowNull: false ; default: true
 
  /**
  * MODELO ObraSocial:
-   TABLA obra_social
-
  * id_obra_social -> INTEGER ; PK
  * nombre -> STRING ; allowNull: false ; activo -> BOOLEAN ; allowNull: false ; default: true
  * activo -> BOOLEAN ; allowNull: false ; default: true
@@ -195,8 +170,6 @@ activo -> BOOLEAN ; allowNull: false ; default: true
 
  /**
  * MODELO Paciente
-    TABLA paciente
-
  * id_paciente -> INTEGER -> PK
  * nombre -> STRING -> allowNull: false
  * apellido -> STRING -> allowNull: false
@@ -238,7 +211,6 @@ activo -> BOOLEAN ; allowNull: false ; default: true
 
  /**
  * MODELO PacienteObraSocial:
-   TABLA paciente_obra_social
  * id_paciente_obra_social -> INTEGER ; PK ; FK
  * id_obra_social -> INTEGER ; PK ; FK
  * id_paciente -> INTEGER ; PK ; FK
@@ -278,8 +250,6 @@ activo -> BOOLEAN ; allowNull: false ; default: true
 
  /**
  * MODELO Practica
-    TABLA practica
-
  * id_practica -> INTEGER ; PK
  * codigo_nomenclador -> STRING ; allowNull: false
  * nombre_nomenclador -> STRING ; allowNull: false
@@ -321,7 +291,7 @@ activo -> BOOLEAN ; allowNull: false ; default: true
 
  /**
  * MODELO PracticaTurno
- TABLA practica_turno
+ *
  * id_practica_turno -> INTEGER ; PK
  * id_turno -> INTEGER ; FK
  * id_practica -> INTEGER ; FK
@@ -365,8 +335,6 @@ activo -> BOOLEAN ; allowNull: false ; default: true
 
  /**
  * MODELO Turno:
-  TABLA turno
-
  * id_turno -> INTEGER ; PK
  * id_paciente -> INTEGER ; FK ; allowNull: false
  * id_estado -> INTEGER ; FK ; allowNull: false

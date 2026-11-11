@@ -21,7 +21,6 @@ export const CategoriaGasto = sequelize.define(
     },
     activo: {
       type: DataTypes.BOOLEAN,
-      allowNull: false,
       defaultValue: true,
     },
   },

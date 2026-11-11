@@ -2,24 +2,35 @@
 
 import { useState, useRef, useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { Settings, ChevronUp, LogOut, Download, KeyRound } from "lucide-react";
-import { useAuth } from "../../../context/AuthContext";
-import { NAV_ITEMS, CONFIG_ITEMS } from "../../../constants/navigation";
-import { usePWAInstall } from "../../../hooks/usePWAInstall";
+import {
+  Calendar,
+  CalendarClock,
+  FileText,
+  Users,
+  Settings,
+  Shield,
+  ChevronUp,
+  Wallet,
+  Lock,
+  KeyRound,
+  CheckCircle2,
+} from "lucide-react";
+import { usePinLock } from "../../../context/PinLockContext";
+import RecuperarPinModal from "../../../features/auth/components/RecuperarPinModal";
 
 export const Bottombar = () => {
   const location = useLocation();
-  const { logout, usuario, solicitarLogout, abrirModalPassword } = useAuth();
-  const { isInstallable, promptInstall } = usePWAInstall();
+  const { lock, bloquearTerminal } = usePinLock();
   const [dropdownAbierto, setDropdownAbierto] = useState(false);
+  const [modalPinAbierto, setModalPinAbierto] = useState(false);
+  const [toastPinExito, setToastPinExito] = useState(false);
+
+  // Referencia unificada para todo el bloque de configuración (botón + menú)
   const configContainerRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (
-        configContainerRef.current &&
-        !configContainerRef.current.contains(event.target)
-      ) {
+      if (configContainerRef.current && !configContainerRef.current.contains(event.target)) {
         setDropdownAbierto(false);
       }
     };
@@ -31,11 +42,7 @@ export const Bottombar = () => {
     const currentPath = location.pathname;
     if (!itemTo) return false;
     if (itemTo === "/") {
-      return (
-        currentPath === "/" ||
-        currentPath.startsWith("/agenda") ||
-        currentPath.startsWith("/atencion")
-      );
+      return currentPath === "/" || currentPath.startsWith("/agenda") || currentPath.startsWith("/atencion");
     }
     return currentPath.startsWith(itemTo);
   };
@@ -45,89 +52,72 @@ export const Bottombar = () => {
     location.pathname.startsWith("/obras-sociales") ||
     location.pathname.startsWith("/practicas");
 
-  // Orden para la barra inferior: Caja, Turnos, Agenda (centro destacado), Pacientes
-  const itemsOrdenados = [
-    NAV_ITEMS.find((item) => item.to === "/caja"),
-    NAV_ITEMS.find((item) => item.to === "/turnos"),
-    NAV_ITEMS.find((item) => item.to === "/"),
-    NAV_ITEMS.find((item) => item.to === "/pacientes"),
-  ].filter(Boolean);
-
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-[#3B7A94] border-t border-white/15 shadow-[0_-4px_20px_rgba(0,0,0,0.15)] min-h-16 safe-area-bottom">
+    <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-[#3B7A94] border-t border-white/15 shadow-[0_-4px_20px_rgba(0,0,0,0.15)]">
       <div ref={configContainerRef} className="relative">
-        {/* DROPDOWN CONFIGURACIÓN Y SESIÓN */}
+        {/* DROPDOWN CONFIGURACIÓN */}
         {dropdownAbierto && (
-          <div className="absolute bottom-full mb-2 right-2 z-60 w-56 bg-[#3B7A94] border border-white/20 rounded-2xl shadow-2xl p-2 flex flex-col gap-1 animate-in fade-in slide-in-from-bottom-2 duration-200">
-            {usuario && (
-              <div className="px-3 py-2 text-xs border-b border-white/10 mb-1 flex items-center justify-between">
-                <span className="font-bold text-white truncate capitalize">
-                  {usuario.nombre_usuario || "Usuario"}
-                </span>
-                <span className="text-[10px] text-emerald-300 font-medium capitalize">
-                  {usuario.rol || "Consultorio"}
-                </span>
-              </div>
-            )}
-
-            <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white/60">
+          <div className="absolute bottom-full mb-2 right-2 z-60 w-52 bg-[#3B7A94] border border-white/20 rounded-2xl shadow-2xl p-2 flex flex-col gap-1 animate-in fade-in slide-in-from-bottom-2 duration-200">
+            <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-white/60 border-b border-white/10 mb-1">
               Configuración
             </div>
 
-            {CONFIG_ITEMS.map(({ to, label, Icon }) => (
-              <NavLink
-                key={to}
-                to={to}
-                onClick={() => setDropdownAbierto(false)}
-                className={({ isActive }) =>
-                  `flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
-                    isActive
-                      ? "bg-white/20 text-white shadow-sm"
-                      : "text-white/80 hover:bg-white/10 hover:text-white"
-                  }`
-                }
-              >
-                <Icon size={16} className="shrink-0 text-white/80" />
-                <span>{label}</span>
-              </NavLink>
-            ))}
+            <NavLink
+              to="/configuracion/obras-sociales"
+              onClick={() => setDropdownAbierto(false)}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-colors ${
+                  isActive
+                    ? "bg-white/20 text-white shadow-sm"
+                    : "text-white/80 hover:bg-white/10 hover:text-white"
+                }`
+              }
+            >
+              <Shield size={18} className="shrink-0 text-white/80" />
+              <span>Obras Sociales</span>
+            </NavLink>
 
-            {isInstallable && (
-              <button
-                type="button"
-                onClick={() => {
-                  setDropdownAbierto(false);
-                  promptInstall();
-                }}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-emerald-300 hover:bg-emerald-500/20 hover:text-white transition-colors w-full text-left cursor-pointer border-t border-white/10"
-              >
-                <Download size={16} className="shrink-0 text-emerald-300" />
-                <span>Instalar aplicación</span>
-              </button>
-            )}
+            <NavLink
+              to="/configuracion/practicas"
+              onClick={() => setDropdownAbierto(false)}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-colors ${
+                  isActive
+                    ? "bg-white/20 text-white shadow-sm"
+                    : "text-white/80 hover:bg-white/10 hover:text-white"
+                }`
+              }
+            >
+              <FileText size={18} className="shrink-0 text-white/80" />
+              <span>Prácticas</span>
+            </NavLink>
 
+            {/* Botón Cambiar PIN */}
             <button
               type="button"
               onClick={() => {
                 setDropdownAbierto(false);
-                abrirModalPassword();
+                setModalPinAbierto(true);
               }}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-emerald-300 hover:bg-emerald-500/20 hover:text-white transition-colors w-full text-left cursor-pointer border-t border-white/10"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-white/80 hover:bg-white/10 hover:text-white transition-colors text-left w-full cursor-pointer"
             >
-              <KeyRound size={16} className="shrink-0 text-emerald-300" />
-              <span>Cambiar contraseña</span>
+              <KeyRound size={18} className="shrink-0 text-white/80" />
+              <span>Cambiar PIN</span>
             </button>
 
+            {/* Botón Cerrar Sesión */}
             <button
               type="button"
               onClick={() => {
                 setDropdownAbierto(false);
-                solicitarLogout();
+                if (bloquearTerminal) bloquearTerminal();
+                else lock();
               }}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-rose-300 hover:bg-rose-500/20 hover:text-rose-100 transition-colors w-full text-left cursor-pointer border-t border-white/10 mt-1 pt-2"
+              title="Cerrar Sesión"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-rose-200 hover:bg-rose-500/20 transition-colors text-left w-full border-t border-white/10 mt-1 cursor-pointer"
             >
-              <LogOut size={16} className="shrink-0" />
-              <span>Cerrar sesión</span>
+              <Lock size={16} className="shrink-0 text-rose-300" />
+              <span>Cerrar Sesión</span>
             </button>
           </div>
         )}
@@ -137,58 +127,68 @@ export const Bottombar = () => {
           className="w-full px-2 py-1.5 flex items-center justify-around"
           aria-label="Navegación inferior móvil M&V"
         >
-          {itemsOrdenados.map(({ to, labelCorto, label, IconMobile, Icon }) => {
-            const FinalIcon = IconMobile || Icon;
-            const esPrincipal = to === "/";
-            const activo = checkIsActive(to);
+          {/* 1. Caja */}
+          <NavLink
+            to="/caja"
+            aria-label="Caja"
+            className={`flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition-all duration-200 touch-manipulation select-none active:scale-95 ${
+              checkIsActive("/caja")
+                ? "bg-white/20 text-white shadow-sm font-semibold"
+                : "text-white/80 hover:bg-white/10 hover:text-white"
+            }`}
+          >
+            <Wallet size={20} />
+            <span className="text-[10px] font-medium leading-tight mt-1">Caja</span>
+          </NavLink>
 
-            if (esPrincipal) {
-              return (
-                <NavLink
-                  key={to}
-                  to={to}
-                  aria-label={label}
-                  onClick={() => setDropdownAbierto(false)}
-                  className={`flex flex-col items-center justify-center py-1.5 px-3 rounded-xl transition-all duration-200 touch-manipulation select-none active:scale-95 ${
-                    activo
-                      ? "bg-white/25 text-white shadow-md font-bold"
-                      : "text-white/90 hover:bg-white/10 hover:text-white"
-                  }`}
-                >
-                  <FinalIcon size={22} className="text-white" />
-                  <span className="text-[10px] font-bold leading-tight mt-1">
-                    {labelCorto}
-                  </span>
-                </NavLink>
-              );
-            }
+          {/* 2. Turnos */}
+          <NavLink
+            to="/turnos"
+            aria-label="Turnos"
+            className={`flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition-all duration-200 touch-manipulation select-none active:scale-95 ${
+              checkIsActive("/turnos")
+                ? "bg-white/20 text-white shadow-sm font-semibold"
+                : "text-white/80 hover:bg-white/10 hover:text-white"
+            }`}
+          >
+            <CalendarClock size={20} />
+            <span className="text-[10px] font-medium leading-tight mt-1">Turnos</span>
+          </NavLink>
 
-            return (
-              <NavLink
-                key={to}
-                to={to}
-                aria-label={label}
-                onClick={() => setDropdownAbierto(false)}
-                className={`flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition-all duration-200 touch-manipulation select-none active:scale-95 ${
-                  activo
-                    ? "bg-white/20 text-white shadow-sm font-semibold"
-                    : "text-white/80 hover:bg-white/10 hover:text-white"
-                }`}
-              >
-                <FinalIcon size={20} />
-                <span className="text-[10px] font-medium leading-tight mt-1">
-                  {labelCorto}
-                </span>
-              </NavLink>
-            );
-          })}
+          {/* 3. Agenda (Central) */}
+          <NavLink
+            to="/"
+            aria-label="Agenda"
+            className={`flex flex-col items-center justify-center py-1.5 px-3 rounded-xl transition-all duration-200 touch-manipulation select-none active:scale-95 ${
+              checkIsActive("/")
+                ? "bg-white/25 text-white shadow-md font-bold"
+                : "text-white/90 hover:bg-white/10 hover:text-white"
+            }`}
+          >
+            <Calendar size={22} className="text-white" />
+            <span className="text-[10px] font-bold leading-tight mt-1">Agenda</span>
+          </NavLink>
 
-          {/* Botón Configuración */}
+          {/* 4. Pacientes */}
+          <NavLink
+            to="/pacientes"
+            aria-label="Pacientes"
+            className={`flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition-all duration-200 touch-manipulation select-none active:scale-95 ${
+              checkIsActive("/pacientes")
+                ? "bg-white/20 text-white shadow-sm font-semibold"
+                : "text-white/80 hover:bg-white/10 hover:text-white"
+            }`}
+          >
+            <Users size={20} />
+            <span className="text-[10px] font-medium leading-tight mt-1">Pacientes</span>
+          </NavLink>
+
+          {/* 5. Configuración */}
           <button
             type="button"
             onClick={() => setDropdownAbierto((prev) => !prev)}
             aria-label="Configuración"
-            className={`flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition-all duration-200 touch-manipulation select-none active:scale-95 cursor-pointer ${
+            className={`flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition-all duration-200 touch-manipulation select-none active:scale-95 ${
               isConfigActive || dropdownAbierto
                 ? "bg-white/20 text-white shadow-sm font-semibold"
                 : "text-white/80 hover:bg-white/10 hover:text-white"
@@ -201,12 +201,44 @@ export const Bottombar = () => {
                 className={`absolute -bottom-1 -right-1 transition-transform duration-200 ${dropdownAbierto ? "rotate-180" : ""}`}
               />
             </div>
-            <span className="text-[10px] font-medium leading-tight mt-1">
-              Config
-            </span>
+            <span className="text-[10px] font-medium leading-tight mt-1">Config</span>
           </button>
         </nav>
       </div>
+
+      {/* Modal para Cambiar PIN */}
+      {modalPinAbierto && (
+        <RecuperarPinModal
+          isOpen={modalPinAbierto}
+          onClose={() => setModalPinAbierto(false)}
+          onSuccess={() => {
+            setModalPinAbierto(false);
+            setToastPinExito(true);
+            setTimeout(() => setToastPinExito(false), 3500);
+          }}
+          usuarioActual={
+            localStorage.getItem("usuario_guardado") ||
+            localStorage.getItem("usuario") ||
+            sessionStorage.getItem("usuario") ||
+            "Odontólogo"
+          }
+          usuarioPredefinido={
+            localStorage.getItem("usuario_guardado") ||
+            localStorage.getItem("usuario") ||
+            sessionStorage.getItem("usuario") ||
+            "Odontólogo"
+          }
+          modo="cambiar"
+        />
+      )}
+
+      {/* Toast Notificación: PIN Actualizado con Éxito */}
+      {toastPinExito && (
+        <div className="fixed bottom-20 left-4 right-4 z-[10002] flex items-center justify-center gap-2.5 px-4 py-3 bg-emerald-600 text-white text-xs font-semibold rounded-2xl shadow-xl border border-emerald-500/30 animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <CheckCircle2 size={18} className="shrink-0 text-emerald-200" />
+          <span>PIN actualizado correctamente.</span>
+        </div>
+      )}
     </div>
   );
 };

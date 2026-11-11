@@ -1,12 +1,7 @@
 /** @format */
-import { useState, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { calcularHoraFin } from "../features/turnos/utils/calcularHoraFin";
 
-/**
- * Hook agnóstico para gestionar el ciclo de vida de modales de formularios CRUD
- * (creación, edición, activación/toggle y eliminación).
- *
- * @param {Object} estadoInicialFormulario - Valores por defecto del formulario.
- */
 export function useCRUDModal(estadoInicialFormulario) {
   // * DEFINICION DE ESTADOS GENERALES
   const [modalAbierto, setModalAbierto] = useState(false);
@@ -16,12 +11,25 @@ export function useCRUDModal(estadoInicialFormulario) {
   const [itemSeleccionado, setItemSeleccionado] = useState(null);
   const [datosFormulario, setDatosFormulario] = useState(estadoInicialFormulario);
 
+  // Cálculos de hora fin (Creación / Edición)
+  useEffect(() => {
+    // Solo calculamos si el modal está abierto y hay una fecha de inicio
+    if (modalAbierto && datosFormulario.fecha_hora_inicio && datosFormulario.duracion_minutos) {
+      calcularHoraFin(datosFormulario, actualizarDatos);
+    }
+  }, [datosFormulario.fecha_hora_inicio, datosFormulario.duracion_minutos, modalAbierto]);
+
   // * ABRIR MODAL DE CREAR
   const abrirParaCrear = useCallback(
     (datosExtra = {}) => {
+      // Si se usa directamente como onClick, React pasa el evento: lo ignoramos
+      const esObjetoPlano =
+        datosExtra && typeof datosExtra === "object" && Object.getPrototypeOf(datosExtra) === Object.prototype;
+      const extras = esObjetoPlano ? datosExtra : {};
+
       setEditando(false);
       setItemSeleccionado(null);
-      setDatosFormulario({ ...estadoInicialFormulario, ...datosExtra });
+      setDatosFormulario({ ...estadoInicialFormulario, ...extras });
       setModalAbierto(true);
     },
     [estadoInicialFormulario],
@@ -47,7 +55,7 @@ export function useCRUDModal(estadoInicialFormulario) {
     setModalEliminar(true);
   }, []);
 
-  // * CERRAR MODALES (RESETEA A VALORES POR DEFECTO)
+  // * ABRIR MODAL DE CERRAR LOS MODALES (VALORES DEFAULT)
   const cerrarModal = useCallback(() => {
     setModalAbierto(false);
     setModalEliminar(false);
@@ -73,7 +81,6 @@ export function useCRUDModal(estadoInicialFormulario) {
     editando,
     itemSeleccionado,
     datosFormulario,
-    setDatosFormulario,
     abrirParaCrear,
     abrirParaEditar,
     abrirParaToggle,

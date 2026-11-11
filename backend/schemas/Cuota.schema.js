@@ -2,9 +2,7 @@
 
 import { z } from "zod";
 
-// Fecha de hoy
-const hoyString = new Date().toLocaleDateString("sv-SE");
-const metodosPagoValidos = ["Efectivo", "Transferencia", "Tarjeta"];
+const metodosPagoValidos = ["Efectivo", "Transferencia", "Tarjeta", "Otro"];
 const estadosValidos = ["Pendiente", "Pagada", "Parcialmente pagada"];
 
 export const createCuotaSchema = z.object({
@@ -26,7 +24,6 @@ export const createCuotaSchema = z.object({
       message: "El monto de la cuota no puede tener más de 2 decimales",
     }),
 
-  // 2. Cambiamos a .min(0) y permitimos null/optional para cuando está pendiente
   monto_cobrado: z
     .number({
       invalid_type_error: "El monto cobrado debe ser un número",
@@ -45,7 +42,9 @@ export const createCuotaSchema = z.object({
     })
     .regex(/^\d{4}-\d{2}-\d{2}$/, {
       message: "Formato de fecha inválido (debe ser YYYY-MM-DD)",
-    }),
+    })
+    .optional()
+    .nullable(),
 
   fecha_cobro: z.coerce
     .date({
@@ -88,12 +87,13 @@ export const updateCuotaSchema = z.object({
       message: "El monto de la cuota no puede tener más de 2 decimales",
     })
     .optional(),
+
   monto_cobrado: z
     .number({
       required_error: "El monto cobrado es obligatorio",
       invalid_type_error: "El monto cobrado debe ser un número",
     })
-    .positive("El monto de la cuota debe ser mayor a 0")
+    .min(0, "El monto cobrado no puede ser negativo")
     .refine((val) => Number.isInteger(val * 100), {
       message: "El monto cobrado no puede tener más de 2 decimales",
     })
@@ -104,13 +104,8 @@ export const updateCuotaSchema = z.object({
       required_error: "La fecha de vencimiento es requerida",
       invalid_type_error: "Formato de fecha inválido",
     })
-    // Valida que cumpla estrictamente el formato YYYY-MM-DD
     .regex(/^\d{4}-\d{2}-\d{2}$/, {
       message: "Formato de fecha inválido (debe ser YYYY-MM-DD)",
-    })
-    // Compara directamente strings en formato ISO (ej: "2026-11-15" >= "2026-11-01")
-    .refine((fecha) => fecha >= hoyString, {
-      message: "La fecha de vencimiento debe ser mayor o igual a hoy",
     })
     .optional(),
 
@@ -118,7 +113,15 @@ export const updateCuotaSchema = z.object({
     .date({
       invalid_type_error: "Formato de fecha inválido",
     })
-    .optional(),
+    .optional()
+    .nullable(),
+
+  metodo_pago: z
+    .enum(metodosPagoValidos, {
+      errorMap: () => ({ message: "Método de pago no válido" }),
+    })
+    .optional()
+    .nullable(),
 
   estado: z
     .enum(estadosValidos, {

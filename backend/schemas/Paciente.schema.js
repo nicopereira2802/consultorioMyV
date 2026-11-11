@@ -7,16 +7,42 @@ const regex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/;
 const dniRegex = /^[0-9\s]+$/;
 const domicilioRegex = /^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\s\.,°#\-\/]+$/;
 
-// Fecha de hoy
-const hoy = new Date();
-
-// Fecha límite máxima: Hace 1 año exacto (no permite bebés de menos de 1 año ni fechas futuras/recientes)
-const fechaMaxima = new Date();
-fechaMaxima.setFullYear(hoy.getFullYear() - 1);
-
 // Fecha límite mínima: Hace 120 años (evita fechas inconsistentes como el año 1800)
-const fechaMinima = new Date();
-fechaMinima.setFullYear(hoy.getFullYear() - 120);
+export const fechaNacimientoSchema = z
+  .union([
+    z.string().trim().length(0).transform(() => null),
+    z.null(),
+    z.undefined(),
+    z.date().transform((d) => d.toISOString().slice(0, 10)),
+    z
+      .string()
+      .trim()
+      .transform((val) => (val.includes("T") ? val.split("T")[0] : val))
+      .pipe(
+        z
+          .string()
+          .regex(/^\d{4}-\d{2}-\d{2}$/, "Formato de fecha inválido")
+          .refine((val) => {
+            const [year, month, day] = val.split("-").map(Number);
+            const d = new Date(Date.UTC(year, month - 1, day));
+            return (
+              d.getUTCFullYear() === year &&
+              d.getUTCMonth() === month - 1 &&
+              d.getUTCDate() === day
+            );
+          }, "Formato de fecha inválido")
+          .refine((val) => {
+            const hoy = new Date().toISOString().slice(0, 10);
+            return val <= hoy;
+          }, "La fecha de nacimiento no puede ser futura")
+          .refine((val) => {
+            const minYear = new Date().getFullYear() - 120;
+            return parseInt(val.slice(0, 4), 10) >= minYear;
+          }, "La fecha de nacimiento no es válida"),
+      ),
+  ])
+  .optional()
+  .nullish();
 
 export const createPacienteSchema = z.object({
   nombre: z
@@ -60,16 +86,7 @@ export const createPacienteSchema = z.object({
     .optional()
     .nullish(),
 
-  fecha_nacimiento: z.coerce
-    .date({
-      invalid_type_error: "Formato de fecha inválido",
-    })
-    .max(fechaMaxima, {
-      message: "El paciente debe tener al menos 1 año de edad",
-    })
-    .min(fechaMinima, { message: "La fecha de nacimiento no es válida" })
-    .optional()
-    .nullish(),
+  fecha_nacimiento: fechaNacimientoSchema,
 
   telefono: z
     .string()
@@ -77,7 +94,7 @@ export const createPacienteSchema = z.object({
     .min(8, "El teléfono debe tener al menos 8 dígitos"),
 
   domicilio: z
-    .string({ invalid_type_error: "El apellido debe ser un texto" })
+    .string({ invalid_type_error: "El domicilio debe ser un texto" })
     .trim()
     .min(2, "El domicilio debe tener al menos 2 caracteres")
     .regex(
@@ -119,7 +136,6 @@ export const updatePacienteSchema = z.object({
 
   dni: z
     .string({
-      required_error: "El dni es obligatorio",
       invalid_type_error: "El dni debe ser un texto",
     })
     .trim()
@@ -129,17 +145,10 @@ export const updatePacienteSchema = z.object({
       dniRegex,
       "El dni no puede contener números ni caracteres especiales como (), [], {}, comillas o comas",
     )
-    .optional(),
+    .optional()
+    .nullish(),
 
-  fecha_nacimiento: z.coerce
-    .date({
-      invalid_type_error: "Formato de fecha inválido",
-    })
-    .max(fechaMaxima, {
-      message: "El paciente debe tener al menos 1 año de edad",
-    })
-    .min(fechaMinima, { message: "La fecha de nacimiento no es válida" })
-    .optional(),
+  fecha_nacimiento: fechaNacimientoSchema,
 
   telefono: z
     .string()
@@ -148,12 +157,13 @@ export const updatePacienteSchema = z.object({
     .optional(),
 
   domicilio: z
-    .string({ invalid_type_error: "El apellido debe ser un texto" })
+    .string({ invalid_type_error: "El domicilio debe ser un texto" })
     .trim()
     .min(2, "El domicilio debe tener al menos 2 caracteres")
     .regex(
       domicilioRegex,
       "El domicilio no puede contener caracteres especiales como (), [], {}",
     )
-    .optional(),
+    .optional()
+    .nullish(),
 });

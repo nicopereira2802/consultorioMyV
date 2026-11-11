@@ -8,7 +8,7 @@ export default function Tabla({
   search = "", // Término de búsqueda opcional
   cantFilasSkeleton = 5, // Cantidad de filas fantasmas a mostrar durante la carga
   sinDatosText = "No hay registros disponibles.",
-  vistaMovil, // Si se provee: en móvil (< md) se muestran tarjetas y la tabla solo desde md
+  layoutFijo = false, // <-- nuevo
   children,
 }) {
   // Verificamos si los children contienen filas con datos
@@ -16,20 +16,18 @@ export default function Tabla({
   const estaBuscando = search.trim().length > 0;
 
   return (
-    <>
-      {vistaMovil && <div className="md:hidden">{vistaMovil}</div>}
-      <div
-        className={`bg-white border border-teal-100/90 rounded-2xl shadow-xs overflow-hidden flex-1 ${vistaMovil ? "hidden md:block" : ""}`}
-      >
+    <div className="bg-white border border-gray-100 shadow-sm overflow-hidden flex-1 rounded-2xl">
       <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
-          {/* ENCABEZADO DE LA TABLA: Fondo tintado clínico con borde y contraste */}
-          <thead className="bg-gradient-to-r from-emerald-50 via-teal-50/80 to-emerald-50/50 border-b-2 border-teal-200">
-            <tr className="text-xs font-bold text-teal-950 uppercase tracking-wider">
+        <table className={`w-full text-left border-collapse ${layoutFijo ? "table-fixed md:table-auto" : ""}`}>
+          {/* ENCABEZADO DE LA TABLA */}
+          <thead className="bg-teal-50/70 border-b-2 border-teal-300">
+            <tr className="border-b-2 border-teal-300 border-t-0 text-xs font-semibold uppercase tracking-wider text-teal-900">
               {columnas.map((col, index) => (
                 <th
                   key={index}
-                  className={`px-6 py-4 ${col.align === "center" ? "text-center" : "text-left"} ${col.className || ""}`}
+                  className={`px-3 md:px-6 py-3.5 border-t-0 border-l-0 border-r-0 text-xs font-semibold uppercase tracking-wider text-teal-900 first:rounded-tl-xl last:rounded-tr-xl ${
+                    col.align === "center" ? "text-center" : "text-left"
+                  } ${col.className || ""}`}
                 >
                   {col.label}
                 </th>
@@ -38,13 +36,13 @@ export default function Tabla({
           </thead>
 
           {/* CUERPO DE LA TABLA */}
-          <tbody className="divide-y divide-teal-50/80 text-sm">
+          <tbody className="divide-y divide-gray-100 text-sm">
             {cargando ? (
               /* ESTADO 1: SKELETON (Cargando / Buscando) */
               Array.from({ length: cantFilasSkeleton }).map((_, filaIdx) => (
                 <tr key={filaIdx} className="animate-pulse">
                   {columnas.map((col, colIdx) => (
-                    <td key={colIdx} className="px-6 py-4">
+                    <td key={colIdx} className={`px-3 md:px-6 py-4 ${col.className || ""}`}>
                       {/* Simulación de bloques de texto/elementos */}
                       <div className="flex items-center gap-3">
                         {/* Simula un avatar si es la primera columna */}
@@ -89,7 +87,6 @@ export default function Tabla({
           </tbody>
         </table>
       </div>
-      </div>
-    </>
+    </div>
   );
 }

@@ -86,24 +86,11 @@ export const createPracticaTurno = async (req, res) => {
     if (id_obra_social) {
       const obraSocial = await ObraSocial.findByPk(id_obra_social);
 
-      if (!obraSocial) {
-        return res.status(400).json({
+      if (!obraSocial)
+        res.status(400).json({
           status: "error",
           message: "La obra social seleccionada no existe.",
         });
-      }
-    }
-
-    // Validar que no se asigne la misma práctica más de una vez al mismo turno
-    const practicaExistente = await PracticaTurno.findOne({
-      where: { id_turno, id_practica },
-    });
-
-    if (practicaExistente) {
-      return res.status(409).json({
-        status: "error",
-        message: "Esta práctica ya está asignada al turno.",
-      });
     }
 
     const newPracticaTurno = await PracticaTurno.create({
@@ -130,7 +117,7 @@ export const updatePracticaTurno = async (req, res) => {
     const practicaTurno = req.practicaTurno;
 
     if (id_turno) {
-      const turno = await Turno.findByPk(id_turno);
+      const turno = Turno.findByPk(id_turno);
       if (!turno) {
         return res.status(400).json({
           status: "error",
@@ -139,7 +126,7 @@ export const updatePracticaTurno = async (req, res) => {
       }
     }
     if (id_practica) {
-      const practica = await Practica.findByPk(id_practica);
+      const practica = Practica.findByPk(id_practica);
       if (!practica) {
         return res.status(400).json({
           status: "error",
@@ -148,7 +135,7 @@ export const updatePracticaTurno = async (req, res) => {
       }
     }
     if (id_obra_social) {
-      const obraSocial = await ObraSocial.findByPk(id_obra_social);
+      const obraSocial = ObraSocial.findByPk(id_obra_social);
       if (!obraSocial) {
         return res.status(400).json({
           status: "error",

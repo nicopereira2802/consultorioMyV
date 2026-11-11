@@ -4,43 +4,21 @@ import jwt from "jsonwebtoken";
 
 const JWT_SECRET = process.env.JWT_SECRET || "clave_secreta_super_segura_myv_2026";
 
-/**
- * Middleware para validar tokens JWT en peticiones protegidas.
- * Si el token es válido, inyecta `req.user` y continúa.
- * Si no hay token o expiró, responde 401 para activar el flujo de refresco en el cliente.
- */
-export const verificarToken = (req, res, next) => {
-  if (process.env.NODE_ENV === "test") {
-    req.user = { id_usuario: 1, email: "test@consultorio.com", rol: "admin" };
-    return next();
-  }
-
-  const authHeader = req.headers["authorization"] || req.headers["Authorization"];
-  const token =
-    authHeader && authHeader.startsWith("Bearer ")
-      ? authHeader.slice(7).trim()
-      : authHeader;
+export const verifyToken = (req, res, next) => {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
 
   if (!token) {
-    return res.status(401).json({
-      status: "error",
-      mensaje: "Acceso denegado: Token no proporcionado",
-      code: "NO_TOKEN",
-    });
+    return res.status(401).json({ mensaje: "Acceso denegado: Token no proporcionado" });
   }
 
-  jwt.verify(token, JWT_SECRET, (err, decoded) => {
+  jwt.verify(token, JWT_SECRET, (err, user) => {
     if (err) {
-      return res.status(401).json({
-        status: "error",
-        mensaje: "Token inválido o expirado",
-        code: "TOKEN_EXPIRED",
-      });
+      return res.status(403).json({ mensaje: "Token inválido o expirado" });
     }
-    req.user = decoded;
+    req.user = user;
     next();
   });
 };
 
-export const verifyToken = verificarToken;
-export default verificarToken;
+export default verifyToken;

@@ -1,22 +1,22 @@
 /** @format */
 
+import { where } from "sequelize";
 import { ObraSocial } from "../models/index.model.js";
-import { Op } from "sequelize";
-import { parsePagination, buildPaginationMeta } from "../utils/pagination.js";
+import { Op, Sequelize } from "sequelize";
 
 // Obtener todas las obras sociales
 export const getAllObrasSociales = async (req, res) => {
   try {
-    const { page, limit, offset, search, sortField, sortOrder } = parsePagination(req.query, {
-      defaultLimit: 9,
-      defaultSortField: "nombre",
-      defaultSortOrder: "ASC",
-      allowedSortFields: Object.keys(ObraSocial.rawAttributes),
-    });
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 9;
+    const offset = (page - 1) * limit;
+    const search = req.query.search || "";
+    const sortField = req.query.sortField || "nombre";
+    const sortOrder = req.query.sortOrder || "ASC";
     const where = {};
 
     // Busqueda por nombre apellido dni telefono
-    if (search !== "") {
+    if (search.trim() !== "") {
       where[Op.or] = [{ nombre: { [Op.like]: `%${search}%` } }];
     }
 
@@ -27,11 +27,19 @@ export const getAllObrasSociales = async (req, res) => {
       order: [[sortField, sortOrder]],
     });
 
+    const totalPages = Math.ceil(count / limit);
 
     res.status(200).json({
       status: "success",
       data: obrasSociales,
-      meta: buildPaginationMeta(count, page, limit),
+      meta: {
+        total: count,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
     });
   } catch (error) {
     console.error("Error al obtener las obras sociales:", error);

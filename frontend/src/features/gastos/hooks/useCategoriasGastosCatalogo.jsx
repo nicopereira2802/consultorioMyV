@@ -10,7 +10,7 @@ export function useCategoriasGastosCatalogo() {
   const fetchCategorias = useCallback(async () => {
     setCargandoCategorias(true);
     try {
-      const res = await api.get("/categorias-gastos", { params: { limit: 1000 } });
+      const res = await api.get("/categorias-gastos");
       setCategorias(res.data.data || []);
     } catch (error) {
       console.error("Error al cargar categorías de gastos:", error);

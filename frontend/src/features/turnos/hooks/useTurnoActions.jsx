@@ -4,29 +4,41 @@ import toast from "react-hot-toast";
 import { manejarErrorApi } from "../../../utils/errorHandler";
 import { formatDateTimeInput } from "../../../utils";
 import { formatearTurnoParaReprogramar } from "../utils/formatTurnoParaReprogramar";
-import { useConfiguracion } from "../../../context/ConfiguracionContext";
+import { HORARIO_ATENCION_DEFAULT } from "../constants/turnosConstants";
+import { verificarSolapamientoConRestricciones } from "./useRestricciones";
+import {
+  verificarSolapamientoTurnos,
+  validarBloqueoConTurnos,
+} from "../utils/validacionesTurno";
 
-export function useTurnoActions(recargar, cerrarModal) {
+export { verificarSolapamientoTurnos, validarBloqueoConTurnos };
+
+export function useTurnoActions(recargar, cerrarModal, turnos = []) {
   const [cargandoAccion, setCargandoAccion] = useState(false);
-  const { validarTurnoHorario, esDiaLaboral } = useConfiguracion();
 
   const guardarTurno = async (datosFormulario, editando, turnoSeleccionadoCRUD) => {
-    if (!datosFormulario?.id_paciente) {
-      toast.error("Por favor, selecciona un paciente para el turno.");
-      return;
-    }
-    if (!datosFormulario?.fecha_hora_inicio) {
-      toast.error("Por favor, selecciona la fecha y hora de inicio del turno.");
+    // Validar que se haya seleccionado un paciente de la lista
+    const idPacienteNum = Number(datosFormulario.id_paciente);
+    if (!datosFormulario.id_paciente || isNaN(idPacienteNum) || idPacienteNum <= 0) {
+      toast.error("Por favor, seleccione un paciente de la lista.");
       return;
     }
 
-    // Validar jornada y día laboral al registrar nuevo turno
-    if (!editando && validarTurnoHorario) {
-      const validacion = validarTurnoHorario(datosFormulario.fecha_hora_inicio);
-      if (!validacion.valido) {
-        toast.error(validacion.mensaje, { id: "error-horario-invalido" });
-        return;
-      }
+    // Validar fecha de inicio al crear
+    const fechaInicioDate = new Date(datosFormulario.fecha_hora_inicio);
+    if (!editando && isNaN(fechaInicioDate.getTime())) {
+      toast.error("Por favor, indique una fecha y hora de inicio válida.");
+      return;
+    }
+
+    // Validar contra bloqueos de agenda (día completo o franja horaria)
+    const conflictoBloqueo = verificarSolapamientoConRestricciones(
+      datosFormulario.fecha_hora_inicio,
+      datosFormulario.duracion_minutos || 30
+    );
+    if (conflictoBloqueo) {
+      toast.error(conflictoBloqueo.mensaje, { icon: "🔒" });
+      return;
     }
 
     setCargandoAccion(true);
@@ -34,29 +46,78 @@ export function useTurnoActions(recargar, cerrarModal) {
       let payload;
 
       if (editando) {
+        if (datosFormulario.fecha_hora_inicio) {
+          const editInicio = new Date(datosFormulario.fecha_hora_inicio);
+          const editDur = Number(datosFormulario.duracion_minutos) || 30;
+          const editFin = datosFormulario.fecha_hora_fin
+            ? new Date(datosFormulario.fecha_hora_fin)
+            : new Date(editInicio.getTime() + editDur * 60000);
+          const conflictoEdit = verificarSolapamientoTurnos(
+            editInicio,
+            editFin,
+            turnoSeleccionadoCRUD?.id_turno,
+            turnos
+          );
+          if (conflictoEdit) {
+            toast.error(conflictoEdit.mensaje);
+            setCargandoAccion(false);
+            return;
+          }
+        }
+
         payload = {
-          id_paciente: Number(datosFormulario.id_paciente),
-          id_estado: Number(datosFormulario.id_estado || 1),
+          id_paciente: idPacienteNum,
+          id_estado: Number(datosFormulario.id_estado),
           precio_final: parseFloat(datosFormulario.precio_final || 0),
-          notas_consulta: datosFormulario.notas_consulta?.trim() || undefined,
+          notas_consulta: datosFormulario.notas_consulta?.trim() || "",
         };
 
         await api.put(`/turnos/${turnoSeleccionadoCRUD.id_turno}`, payload);
       } else {
-        // Al crear, sí requerimos las fechas y la duración completa
-        const duracionMin = Number(datosFormulario.duracion_minutos) || 30;
-        const fechaInicioDate = new Date(datosFormulario.fecha_hora_inicio);
-        const fechaFinDate =
-          datosFormulario.fecha_hora_fin && !isNaN(new Date(datosFormulario.fecha_hora_fin).getTime())
-            ? new Date(datosFormulario.fecha_hora_fin)
-            : new Date(fechaInicioDate.getTime() + duracionMin * 60000);
+        // Al crear: payload explícito (nunca hacer spread del formulario, puede traer objetos no serializables)
+        const durMin = Number(datosFormulario.duracion_minutos) || 30;
+        const fechaFinDate = new Date(datosFormulario.fecha_hora_fin);
+        const finDate = isNaN(fechaFinDate.getTime())
+          ? new Date(fechaInicioDate.getTime() + durMin * 60000)
+          : fechaFinDate;
+
+        // Validar horario comercial de atención según la configuración activa
+        const horaInicio = fechaInicioDate.getHours() + fechaInicioDate.getMinutes() / 60;
+        const horaFin = finDate.getHours() + finDate.getMinutes() / 60;
+        if (
+          horaInicio < HORARIO_ATENCION_DEFAULT.horaInicio ||
+          horaFin > HORARIO_ATENCION_DEFAULT.horaFin ||
+          horaInicio >= horaFin
+        ) {
+          toast.error(
+            `El horario de atención es de ${HORARIO_ATENCION_DEFAULT.inicioStr} a ${HORARIO_ATENCION_DEFAULT.finStr} hs. El turno debe comenzar a partir de las ${HORARIO_ATENCION_DEFAULT.inicioStr} y finalizar a más tardar a las ${HORARIO_ATENCION_DEFAULT.finStr} hs.`,
+          );
+          setCargandoAccion(false);
+          return;
+        }
+
+        // Validar solapamiento con otros turnos existentes
+        const conflictoTurno = verificarSolapamientoTurnos(
+          fechaInicioDate,
+          finDate,
+          null,
+          turnos
+        );
+        if (conflictoTurno) {
+          toast.error(conflictoTurno.mensaje);
+          setCargandoAccion(false);
+          return;
+        }
+
+        const fechaFinIso = finDate.toISOString();
 
         payload = {
-          id_paciente: Number(datosFormulario.id_paciente),
+          id_paciente: idPacienteNum,
+          duracion_minutos: durMin,
           precio_final: parseFloat(datosFormulario.precio_final || 0),
           fecha_hora_inicio: fechaInicioDate.toISOString(),
-          fecha_hora_fin: fechaFinDate.toISOString(),
-          notas_consulta: datosFormulario.notas_consulta?.trim() || undefined,
+          fecha_hora_fin: fechaFinIso,
+          notas_consulta: datosFormulario.notas_consulta?.trim() || "",
         };
 
         await api.post("/turnos", payload);
@@ -66,6 +127,10 @@ export function useTurnoActions(recargar, cerrarModal) {
       recargar();
       cerrarModal();
     } catch (error) {
+      if (error.response?.status === 409 && error.response?.data?.error) {
+        toast.error(error.response.data.error);
+        return;
+      }
       console.error("Error al guardar el turno:", error);
       manejarErrorApi(error, "No se pudo guardar el turno.");
     } finally {
@@ -76,13 +141,21 @@ export function useTurnoActions(recargar, cerrarModal) {
   const procesarAtencionTurno = async (datosAtencion, turnoSeleccionado, cerrarModalAtender) => {
     if (!turnoSeleccionado) return;
     try {
+      // Manejar formato string (ej: "5000", "5000.50", "5000,50") o número
+      const rawPrecio = datosAtencion?.precio_final;
+      const precioLimpio = typeof rawPrecio === "string"
+        ? parseFloat(rawPrecio.replace(",", "."))
+        : Number(rawPrecio);
+
+      const precioFinalValido = isNaN(precioLimpio) ? 0 : precioLimpio;
+
       const payloadAtencion = {
-        notas_consulta: datosAtencion.notas_consulta?.trim() || undefined,
-        precio_final: parseFloat(datosAtencion.precio_final),
-        practicas_realizadas: datosAtencion.practicas
+        notas_consulta: datosAtencion?.notas_consulta?.trim() || "",
+        precio_final: precioFinalValido,
+        practicas_realizadas: (datosAtencion?.practicas || [])
           .filter((p) => p.id_practica)
           .map((p) => Number(p.id_practica)),
-        obras_sociales: datosAtencion.practicas
+        obras_sociales: (datosAtencion?.practicas || [])
           .filter((p) => p.id_practica)
           .map((p) => (p.id_obra_social ? Number(p.id_obra_social) : null)),
       };
@@ -91,7 +164,7 @@ export function useTurnoActions(recargar, cerrarModal) {
 
       toast.success("Turno atendido correctamente");
       recargar();
-      cerrarModalAtender();
+      if (typeof cerrarModalAtender === "function") cerrarModalAtender();
     } catch (error) {
       console.error("Error al registrar la atención del turno:", error);
       manejarErrorApi(error, "No se pudo atender el turno.");
@@ -106,7 +179,7 @@ export function useTurnoActions(recargar, cerrarModal) {
   ) => {
     if (!turnoSeleccionadoCancelar) return;
     try {
-      const payloadAtencion = { notas_consulta: datosCancelacion.notas_consulta.trim() };
+      const payloadAtencion = { notas_consulta: datosCancelacion?.notas_consulta?.trim() || "" };
       if (inasistente) {
         await api.patch(`/turnos/${turnoSeleccionadoCancelar.id_turno}/inasistente`, payloadAtencion);
       } else {
@@ -114,15 +187,15 @@ export function useTurnoActions(recargar, cerrarModal) {
       }
 
       toast.success(
-        inasistente ? "Turno marcado como inasistido correctamente" : "Turno cancelado correctamente",
+        inasistente ? "Turno marcado como inasistente correctamente" : "Turno cancelado correctamente",
       );
       recargar();
-      cerrarModalCancelar();
+      if (typeof cerrarModalCancelar === "function") cerrarModalCancelar();
     } catch (error) {
       console.error("Error al registrar la cancelación:", error);
       manejarErrorApi(
         error,
-        inasistente ? "No se pudo marcar como inasistido" : "No se pudo cancelar el turno.",
+        inasistente ? "No se pudo marcar como inasistente" : "No se pudo cancelar el turno.",
       );
     }
   };
@@ -134,12 +207,47 @@ export function useTurnoActions(recargar, cerrarModal) {
   ) => {
     if (!turnoSeleccionado) return;
 
-    if (validarTurnoHorario) {
-      const validacion = validarTurnoHorario(datosReprogramacion.fecha_hora_inicio);
-      if (!validacion.valido) {
-        toast.error(validacion.mensaje, { id: "error-horario-invalido" });
-        return;
-      }
+    const fechaInicioDate = new Date(datosReprogramacion.fecha_hora_inicio);
+    const durMin = Number(datosReprogramacion.duracion_minutos) || 30;
+    const fechaFinDate = new Date(datosReprogramacion.fecha_hora_fin);
+    const finDate = isNaN(fechaFinDate.getTime())
+      ? new Date(fechaInicioDate.getTime() + durMin * 60000)
+      : fechaFinDate;
+
+    // Validar horario comercial de atención según la configuración activa
+    const horaInicio = fechaInicioDate.getHours() + fechaInicioDate.getMinutes() / 60;
+    const horaFin = finDate.getHours() + finDate.getMinutes() / 60;
+    if (
+      horaInicio < HORARIO_ATENCION_DEFAULT.horaInicio ||
+      horaFin > HORARIO_ATENCION_DEFAULT.horaFin ||
+      horaInicio >= horaFin
+    ) {
+      toast.error(
+        `El horario de atención es de ${HORARIO_ATENCION_DEFAULT.inicioStr} a ${HORARIO_ATENCION_DEFAULT.finStr} hs. El turno debe comenzar a partir de las ${HORARIO_ATENCION_DEFAULT.inicioStr} y finalizar a más tardar a las ${HORARIO_ATENCION_DEFAULT.finStr} hs.`,
+      );
+      return;
+    }
+
+    // Validar contra bloqueos de agenda (día completo o franja horaria)
+    const conflictoBloqueoReprog = verificarSolapamientoConRestricciones(
+      datosReprogramacion.fecha_hora_inicio,
+      durMin
+    );
+    if (conflictoBloqueoReprog) {
+      toast.error(conflictoBloqueoReprog.mensaje, { icon: "🔒" });
+      return;
+    }
+
+    // Validar solapamiento con otros turnos existentes (excluyendo el turno actual)
+    const conflictoTurnoReprog = verificarSolapamientoTurnos(
+      fechaInicioDate,
+      finDate,
+      turnoSeleccionado.id_turno,
+      turnos
+    );
+    if (conflictoTurnoReprog) {
+      toast.error(conflictoTurnoReprog.mensaje);
+      return;
     }
 
     try {
@@ -150,8 +258,12 @@ export function useTurnoActions(recargar, cerrarModal) {
 
       toast.success("Turno reprogramado correctamente");
       recargar();
-      cerrarModalReprogramar();
+      if (typeof cerrarModalReprogramar === "function") cerrarModalReprogramar();
     } catch (error) {
+      if (error.response?.status === 409 && error.response?.data?.error) {
+        toast.error(error.response.data.error);
+        return;
+      }
       console.error("Error al reprogramar el turno:", error);
       manejarErrorApi(error, "No se pudo reprogramar el turno.");
     }
@@ -180,38 +292,56 @@ export function useTurnoActions(recargar, cerrarModal) {
     setTurnoReprogramando,
   ) => {
     if (selectInfo && selectInfo.startStr) {
-      if (esDiaLaboral && !esDiaLaboral(selectInfo.startStr)) {
-        toast.error("No se pueden agendar turnos en días no laborales.", {
-          id: "error-dia-no-laboral",
-        });
-        return;
-      }
+      let nuevaFechaInicio = formatDateTimeInput(selectInfo.startStr);
 
-      if (validarTurnoHorario) {
-        const validacion = validarTurnoHorario(selectInfo.startStr);
-        if (!validacion.valido) {
-          toast.error(validacion.mensaje, { id: "error-horario-invalido" });
-          return;
+      // Si fue clickeado desde la vista mensual (allDay) o string de sólo fecha
+      if (selectInfo.allDay || selectInfo.startStr.length === 10) {
+        const fechaSolo = selectInfo.startStr.slice(0, 10);
+        nuevaFechaInicio = `${fechaSolo}T${HORARIO_ATENCION_DEFAULT.inicioStr}`;
+      } else {
+        const d = new Date(selectInfo.startStr);
+        if (!isNaN(d.getTime())) {
+          const h = d.getHours();
+          if (h < HORARIO_ATENCION_DEFAULT.horaInicio) {
+            d.setHours(HORARIO_ATENCION_DEFAULT.horaInicio, 0, 0, 0);
+            nuevaFechaInicio = formatDateTimeInput(d);
+          } else if (h >= HORARIO_ATENCION_DEFAULT.horaFin) {
+            d.setHours(HORARIO_ATENCION_DEFAULT.horaFin - 1, 30, 0, 0);
+            nuevaFechaInicio = formatDateTimeInput(d);
+          }
         }
       }
 
-      const nuevaFechaInicio = formatDateTimeInput(selectInfo.startStr);
+      // Validar si la nueva fecha colisiona con alguna restricción
+      const conflicto = verificarSolapamientoConRestricciones(nuevaFechaInicio, 30);
+      if (conflicto) {
+        if (conflicto.tipo === "dia_completo") {
+          toast.error(conflicto.mensaje, { icon: "🔒" });
+          return;
+        }
 
-      // Calculamos la duración y la fecha fin según los bloques/celdas seleccionadas
-      let duracionMinutos = 30;
-      let nuevaFechaFin;
-
-      if (selectInfo.endStr) {
-        const fechaInicioObj = new Date(selectInfo.startStr);
-        const fechaFinObj = new Date(selectInfo.endStr);
-        const diferenciaMs = fechaFinObj - fechaInicioObj;
-        duracionMinutos = Math.max(15, Math.round(diferenciaMs / (1000 * 60)));
-        nuevaFechaFin = formatDateTimeInput(selectInfo.endStr);
-      } else {
-        const fechaFinObj = new Date(
-          new Date(selectInfo.startStr).getTime() + duracionMinutos * 60000,
-        );
-        nuevaFechaFin = formatDateTimeInput(fechaFinObj);
+        // Si fue clickeado en allDay (fecha sin hora específica) y la hora 09:00 está en una franja, buscar el primer horario libre del día
+        if (selectInfo.allDay || selectInfo.startStr.length === 10) {
+          const fechaSolo = selectInfo.startStr.slice(0, 10);
+          let hLibre = null;
+          for (let h = HORARIO_ATENCION_DEFAULT.horaInicio; h < HORARIO_ATENCION_DEFAULT.horaFin; h++) {
+            const hStr = `${String(h).padStart(2, "0")}:00`;
+            const testIso = `${fechaSolo}T${hStr}`;
+            if (!verificarSolapamientoConRestricciones(testIso, 30)) {
+              hLibre = testIso;
+              break;
+            }
+          }
+          if (hLibre) {
+            nuevaFechaInicio = hLibre;
+          } else {
+            toast.error(conflicto.mensaje, { icon: "🔒" });
+            return;
+          }
+        } else {
+          toast.error(conflicto.mensaje, { icon: "🔒" });
+          return;
+        }
       }
 
       // Si había un turno esperando ser reprogramado:
@@ -219,11 +349,9 @@ export function useTurnoActions(recargar, cerrarModal) {
         const turnoConNuevaFecha = {
           ...turnoReprogramando,
           fecha_hora_inicio: nuevaFechaInicio,
-          duracion_minutos: duracionMinutos,
-          fecha_hora_fin: nuevaFechaFin,
         };
 
-        // Abrimos el modal de reprogramar con la nueva fecha y duración calculada
+        // Abrimos el modal de reprogramar con la nueva fecha seleccionada
         abrirParaReprogramar(turnoConNuevaFecha, formatearTurnoParaReprogramar);
 
         // Limpiamos el estado y el toast
@@ -232,12 +360,8 @@ export function useTurnoActions(recargar, cerrarModal) {
         return;
       }
 
-      // Si no había ningún turno para reprogramar, abrimos el modal de creación con los datos iniciales
-      abrirParaCrear({
-        fecha_hora_inicio: nuevaFechaInicio,
-        duracion_minutos: duracionMinutos,
-        fecha_hora_fin: nuevaFechaFin,
-      });
+      // Si no había ningún turno para reprogramar, abrir creación con la fecha seleccionada
+      abrirParaCrear({ fecha_hora_inicio: nuevaFechaInicio });
     }
   };
 

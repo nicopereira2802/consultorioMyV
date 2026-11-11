@@ -1,84 +1,102 @@
 /** @format */
 import { useMemo } from "react";
 
-export function useMovimientosCaja(
-  cobros,
-  gastos,
-  turnosPendientes = [],
-  busqueda = "",
-  cuotasPendientes = [],
-  totalesBackend = null,
-) {
-  // ─── CÁLCULOS FINANCIEROS KPI ───
+export function useMovimientosCaja(cobros = [], gastos = [], turnosPendientes = [], busqueda = "", resumenPeriodo = null) {
+  // Filtro defensivo: solo turnos efectivamente atendidos con saldo pendiente
+  const turnosFiltrados = useMemo(() => {
+    if (!turnosPendientes || !Array.isArray(turnosPendientes)) return [];
+    return turnosPendientes.filter((item) => {
+      const turno = item.Turno || item;
+
+      const estadoNombre = (
+        turno.estado ||
+        turno.EstadoTurno?.nombre ||
+        turno.EstadoTurno?.estado ||
+        turno.estado_turno ||
+        ""
+      ).toString().toLowerCase().trim();
+
+      const estaAtendido = estadoNombre === "atendido" || Number(turno.id_estado) === 2;
+
+      const saldo = Number(
+        item.saldo_pendiente ??
+        turno.saldo_pendiente ??
+        item.total_deuda ??
+        turno.total_deuda ??
+        item.precio_final ??
+        turno.precio_final ??
+        item.precio ??
+        turno.precio ??
+        0
+      );
+
+      return estaAtendido && saldo > 0;
+    });
+  }, [turnosPendientes]);
+
+  const totalPendienteCobro = useMemo(() => {
+    return turnosFiltrados.reduce((acc, item) => {
+      const turno = item.Turno || item;
+      const saldo = Number(
+        item.saldo_pendiente ??
+        turno.saldo_pendiente ??
+        item.total_deuda ??
+        turno.total_deuda ??
+        item.precio_final ??
+        turno.precio_final ??
+        item.precio ??
+        turno.precio ??
+        0
+      );
+      return acc + (saldo > 0 ? saldo : 0);
+    }, 0);
+  }, [turnosFiltrados]);
+
   const kpis = useMemo(() => {
-    if (totalesBackend) {
+    if (resumenPeriodo && (resumenPeriodo.ingresosTotales !== undefined || resumenPeriodo.egresosTotales !== undefined)) {
       return {
-        totalIngresos: Number(totalesBackend.totalIngresos) || 0,
-        totalEgresos: Number(totalesBackend.totalEgresos) || 0,
-        balanceNeto: Number(totalesBackend.balanceNeto) || 0,
-        totalPendienteCobro: Number(totalesBackend.totalPendienteCobro) || 0,
-        totalTurnosPendientes: Number(totalesBackend.totalTurnosPendientes) || 0,
-        totalCuotasPendientes: Number(totalesBackend.totalCuotasPendientes) || 0,
+        totalIngresos: Number(resumenPeriodo.ingresosTotales) || 0,
+        totalEgresos: Number(resumenPeriodo.egresosTotales) || 0,
+        balanceNeto: Number(resumenPeriodo.balancePeriodo) || 0,
+        totalPendienteCobro,
       };
     }
 
-    // Fallback de cálculo local
-    let totalIngresos = 0;
-    cobros.forEach((c) => {
-      const pagado = (c.Cuotas || c.Cuota || []).reduce(
-        (acc, q) => acc + (Number(q.monto_cobrado) || 0),
-        0,
-      );
-      totalIngresos += pagado;
-    });
+    const totalIngresos = cobros.reduce((acc, c) => {
+      const cuotas = c.Cuotas || c.Cuota || [];
+      return acc + cuotas.reduce((qAcc, q) => qAcc + (Number(q.monto_cobrado) || 0), 0);
+    }, 0);
 
-    const totalEgresos = gastos.reduce(
-      (acc, g) => acc + (Number(g.monto) || 0),
-      0,
-    );
-    const totalTurnos = turnosPendientes.reduce(
-      (acc, t) => acc + (Number(t.precio_final) || 0),
-      0,
-    );
-    const totalCuotas = cuotasPendientes.reduce(
-      (acc, q) =>
-        acc +
-        Math.max(
-          0,
-          (Number(q.monto_cuota) || 0) - (Number(q.monto_cobrado) || 0),
-        ),
-      0,
-    );
+    const totalEgresos = gastos.reduce((acc, g) => acc + (Number(g.monto) || 0), 0);
 
     return {
       totalIngresos,
       totalEgresos,
       balanceNeto: totalIngresos - totalEgresos,
-      totalPendienteCobro: totalTurnos + totalCuotas,
-      totalTurnosPendientes: totalTurnos,
-      totalCuotasPendientes: totalCuotas,
+      totalPendienteCobro,
     };
-  }, [gastos, cobros, turnosPendientes, cuotasPendientes, totalesBackend]);
+  }, [resumenPeriodo, cobros, gastos, totalPendienteCobro]);
 
-  // ─── UNIFICACIÓN Y FILTRADO DE MOVIMIENTOS ───
   const movimientosUnificados = useMemo(() => {
-    const listaIngresos = cobros.map((c) => ({
-      id: `ingreso-${c.id_cobro}`,
-      tipo: "ingreso",
-      concepto: `Cobro a ${
-        c.Paciente
-          ? `${c.Paciente.apellido}, ${c.Paciente.nombre}`
-          : "Paciente"
-      }`,
-      categoria: "Cobro de Atención",
-      monto: (c.Cuotas || c.Cuota || []).reduce(
-        (acc, q) => acc + (Number(q.monto_cobrado) || 0),
-        0,
-      ),
-      fecha: c.fecha_emision || c.createdAt,
-      metodo_pago: c.modalidad || "Efectivo",
-      comprobante: `Cobro #${c.id_cobro}`,
-    }));
+    const listaIngresos = cobros
+      .map((c) => {
+        const cuotas = c.Cuotas || c.Cuota || [];
+        const totalPagado = cuotas.reduce((acc, q) => acc + (Number(q.monto_cobrado) || 0), 0);
+        const metodos = [...new Set(cuotas.filter((q) => Number(q.monto_cobrado) > 0).map((q) => q.metodo_pago).filter(Boolean))];
+
+        return {
+          id: `ingreso-${c.id_cobro}`,
+          tipo: "ingreso",
+          concepto: `Cobro a ${c.Paciente ? `${c.Paciente.apellido}, ${c.Paciente.nombre}` : "Paciente"}`,
+          categoria: "Cobro de Atención",
+          monto: totalPagado,
+          fecha: c.fecha_emision || c.fecha_cobro || c.createdAt,
+          metodo_pago: metodos.length > 0 ? metodos.join(", ") : "Efectivo",
+          comprobante: `Cobro #${c.id_cobro}`,
+          cobroOriginal: c,
+        };
+      })
+      .filter((ingreso) => ingreso.monto > 0); // 👈 Filtra cualquier registro de $0
 
     const listaEgresos = gastos.map((g) => ({
       id: `egreso-${g.id_gasto}`,
@@ -106,5 +124,10 @@ export function useMovimientosCaja(
     );
   }, [cobros, gastos, busqueda]);
 
-  return { kpis, movimientosUnificados };
+  return {
+    kpis,
+    movimientosUnificados,
+    turnosFiltrados,
+    turnosPorCobrarValidos: turnosFiltrados,
+  };
 }

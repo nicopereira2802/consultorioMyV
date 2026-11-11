@@ -1,6 +1,7 @@
 /** @format */
-//* ICONOS
 import { useState } from "react";
+
+//* ICONOS
 import {
   Plus,
   Edit,
@@ -9,18 +10,23 @@ import {
   AlertCircle,
   CalendarClock,
   Eye,
+  CheckSquare,
+  CalendarDays,
+  X,
+  UserRoundX,
 } from "lucide-react";
 
 //* COMPONENTES COMUNES
 import Header from "../../components/common/Header";
+import BadgeInicial from "../../components/common/BadgeInicial";
+import Modal from "../../components/common/Modal";
 import Tabla from "../../components/common/Tabla/Tabla";
 import TablaHeader from "../../components/common/Tabla/TablaHeader";
 import TablaPaginacion from "../../components/common/Tabla/TablaPaginacion";
 
 //* COMPONENTES ESPECIFICOS DE TURNO
-import { VistaTurno } from "./components/modales/VistaTurno";
+import { VistaTurno } from "./components/VistaTurno";
 import { BotonAccionesTurno } from "./components/BotonAcciones";
-import { ListaTarjetasTurnos } from "./components/ListaTarjetasTurnos";
 
 //* PAGELAYOUT (PARA EL BOTON)
 import PageLayout from "../../components/layout/PageLayout";
@@ -29,14 +35,15 @@ import PageLayout from "../../components/layout/PageLayout";
 import { useCRUDModal } from "../../hooks/useCRUDModal";
 import { usePaginationSearch } from "../../hooks/usePaginationSearch";
 import { useTurnoDependencies } from "./hooks/useTurnoDependencies";
+import { useTurnoAtenderModal } from "./hooks/useTurnoAtenderModal";
+import { useTurnoCancelarModal } from "./hooks/useTurnoCancelarModal";
+import { useTurnoReprogramarModal } from "./hooks/useTurnoReprogramarModal";
 import { useTurnoActions } from "./hooks/useTurnoActions";
+import { useTurnoVer } from "./hooks/useTurnoVer";
 
 //* FUNCIONES PARA FORMATEAR FECHAS Y UTILS
-import {
-  formatFechaTabla,
-  formatDateTimeInput,
-  formatSoloHora,
-} from "../../utils/index";
+import { formatFechaTabla, formatDateTimeInput, formatSoloHora } from "../../utils/index";
+import { formatearTurnoParaReprogramar } from "./utils/formatTurnoParaReprogramar";
 import { estadosMap } from "./utils/estadosMap";
 
 //* CONSTANTES
@@ -67,8 +74,11 @@ export default function GestionTurnos() {
     recargar,
   } = usePaginationSearch("/turnos");
 
-  //* HOOK DE DEPENDENCIAS (PACIENTES Y CATÁLOGO DE PRÁCTICAS)
-  const { pacientes, setPacientes, practicasLista } = useTurnoDependencies();
+  //* HOOK DE DEPENDENCIAS
+  const { pacientes, setPacientes } = useTurnoDependencies();
+
+  //* Hook de menu de turno para vista mobile
+  const [turnoMenu, setTurnoMenu] = useState(null);
 
   //* HOOK DE CRUD MODAL
   const {
@@ -84,19 +94,44 @@ export default function GestionTurnos() {
     actualizarDatos,
   } = useCRUDModal(ESTADO_INICIAL_TURNO);
 
-  //* ESTADOS LOCALES DE MODALES SECUNDARIOS
-  const [turnoVer, setTurnoVer] = useState(null);
-  const [turnoAtender, setTurnoAtender] = useState(null);
-  const [cancelarConfig, setCancelarConfig] = useState(null); // { turno, inasistente: boolean }
-  const [turnoReprogramar, setTurnoReprogramar] = useState(null);
+  //* HOOK DE MODAL VER
+  const { modalVer, turnoVer, practicasLista, abrirParaVer, cerrarVer } = useTurnoVer();
 
-  const abrirParaVer = (t) => setTurnoVer(t);
-  const abrirParaAtender = (t) => setTurnoAtender(t);
-  const abrirParaCancelar = (t) =>
-    setCancelarConfig({ turno: t, inasistente: false });
-  const abrirParaInasistente = (t) =>
-    setCancelarConfig({ turno: t, inasistente: true });
-  const abrirParaReprogramar = (t) => setTurnoReprogramar(t);
+  //* HOOK DE MODAL ATENCION
+  const {
+    modalAtender,
+    turnoSeleccionadoAtender,
+    datosAtencion,
+    obrasSocialesPaciente,
+    abrirParaAtender,
+    cerrarModalAtender,
+    agregarPracticaAtencion,
+    actualizarPracticaAtencion,
+    actualizarDatosAtencion,
+    eliminarPracticaAtencion,
+  } = useTurnoAtenderModal();
+
+  //* HOOK DE MODAL CANCELACION E INASISTENTE
+  const {
+    modalCancelar,
+    inasistente,
+    turnoSeleccionadoCancelar,
+    datosCancelacion,
+    abrirParaCancelar,
+    abrirParaInasistente,
+    actualizarDatosCancelacion,
+    cerrarModalCancelar,
+  } = useTurnoCancelarModal();
+
+  //* HOOK DE MODAL REPROGRAMACION
+  const {
+    modalReprogramar,
+    turnoSeleccionadoReprogramar,
+    datosReprogramacion,
+    abrirParaReprogramar,
+    cerrarModalReprogramar,
+    actualizarDatosReprogramacion,
+  } = useTurnoReprogramarModal();
 
   //* HOOK DE PETICIONES API
   const {
@@ -105,11 +140,11 @@ export default function GestionTurnos() {
     procesarCancelacionTurno,
     procesarReprogramacionTurno,
     ejecutarEliminacion,
-  } = useTurnoActions(recargar, cerrarModal);
+  } = useTurnoActions(recargar, cerrarModal, turnos);
 
   return (
     <PageLayout onAdd={abrirParaCrear}>
-      <div className="w-full flex flex-col gap-4">
+      <div className="w-full flex flex-col gap-4 pb-24">
         {/* //* HEADER PRINCIPAL */}
         <Header
           icono={CalendarClock}
@@ -120,7 +155,7 @@ export default function GestionTurnos() {
             <button
               type="button"
               onClick={abrirParaCrear}
-              className="sm:flex items-center justify-center gap-2 bg-[#2eb086] hover:bg-[#259370] text-white px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 shadow-sm hover:shadow active:scale-95 shrink-0"
+              className="hidden sm:flex items-center justify-center gap-2 bg-[#2eb086] hover:bg-[#259370] text-white px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 shadow-sm hover:shadow active:scale-95 shrink-0"
             >
               <Plus size={18} />
               <span>Agendar Turno</span>
@@ -148,25 +183,7 @@ export default function GestionTurnos() {
               {/* //* TABLA: TABLA */}
               <Tabla
                 cargando={cargando}
-                search={search}
                 sinDatosText="No se encontraron turnos registrados."
-                vistaMovil={
-                  <ListaTarjetasTurnos
-                    turnos={turnos}
-                    cargando={cargando}
-                    search={search}
-                    abrirParaVer={abrirParaVer}
-                    abrirParaEditar={abrirParaEditar}
-                    abrirParaEliminar={abrirParaEliminar}
-                    abrirParaAtender={abrirParaAtender}
-                    abrirParaReprogramar={abrirParaReprogramar}
-                    abrirParaCancelar={abrirParaCancelar}
-                    abrirParaInasistente={abrirParaInasistente}
-                    page={page}
-                    setPage={setPage}
-                    totalPages={totalPages}
-                  />
-                }
                 columnas={[
                   { label: "ID", className: "hidden md:table-cell" },
                   { label: "Paciente" },
@@ -174,7 +191,7 @@ export default function GestionTurnos() {
                   { label: "Precio ($)", className: "hidden md:table-cell" },
                   { label: "Estado" },
                   { label: "Notas", className: "hidden md:table-cell" },
-                  { label: "Acciones", align: "center" },
+                  { label: "Acciones", align: "center", className: "hidden md:table-cell" },
                 ]}
               >
                 {turnos.map((turno) => {
@@ -187,120 +204,103 @@ export default function GestionTurnos() {
                   return (
                     <tr
                       key={turno.id_turno}
-                      className="hover:bg-emerald-50/40 transition-colors"
+                      onClick={() => {
+                        if (window.innerWidth < 768) setTurnoMenu(turno);
+                      }}
+                      className="hover:bg-gray-50/60 transition-colors cursor-pointer md:cursor-default"
                     >
                       {/* //* COLUMNAS: ID TURNO */}
-                      <td className="hidden md:table-cell px-5 py-4 font-mono font-medium text-teal-700/60 w-16 text-xs">
+                      <td className="hidden md:table-cell px-5 py-4 font-semibold text-gray-500 w-16 text-xs">
                         #{turno.id_turno}
                       </td>
 
-                      {/* //* COLUMNAS: PACIENTE (Foco con avatar clínico colorido) */}
+                      {/* //* COLUMNAS: PACIENTE */}
                       <td className="px-5 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="hidden md:flex w-9 h-9 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200/90 items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
-                            {turno.Paciente?.nombre?.charAt(0) || "P"}
-                          </div>
+                        <div className="flex items-center gap-2.5 sm:gap-3">
+                          <BadgeInicial
+                            inicial={(turno.Paciente?.nombre || turno.paciente?.nombre || "P").charAt(0).toUpperCase()}
+                            className="hidden md:flex"
+                          />
                           <div className="flex flex-col">
-                            <span className="font-bold text-slate-900 text-sm tracking-tight">
+                            <span className="font-semibold text-gray-800 text-sm">
                               {turno.Paciente
                                 ? `${turno.Paciente.nombre} ${turno.Paciente.apellido}`
                                 : `Paciente #${turno.id_paciente}`}
                             </span>
                             {turno.Paciente?.dni && (
-                              <span className="text-xs text-slate-500 font-medium mt-0.5">
-                                <span className="text-teal-700/70 font-semibold">
-                                  DNI:
-                                </span>{" "}
-                                {turno.Paciente.dni}
-                              </span>
+                              <span className="text-xs text-gray-400 mt-0.5">DNI: {turno.Paciente.dni}</span>
                             )}
                           </div>
                         </div>
                       </td>
 
-                      {/* //* COLUMNAS: FECHA Y HORA */}
+                      {/* //* COLUMNAS: FECHA INICIO Y FIN */}
                       <td className="px-5 py-4 whitespace-nowrap">
                         <div className="flex flex-col space-y-0.5">
-                          <span className="text-xs font-bold text-slate-800">
+                          <span className="text-sm font-semibold text-gray-900">
                             {formatFechaTabla(turno.fecha_hora_inicio)}
                           </span>
-                          <span className="text-xs font-medium text-teal-800/80 flex items-center gap-1">
-                            <Clock size={12} className="text-teal-600" />
-                            {formatSoloHora(turno.fecha_hora_inicio)} -{" "}
-                            {formatSoloHora(turno.fecha_hora_fin)} hs
+                          <span className="text-xs font-medium text-gray-500 flex items-center gap-1">
+                            <Clock size={12} className="text-gray-400" />
+                            {formatSoloHora(turno.fecha_hora_inicio)} - {formatSoloHora(turno.fecha_hora_fin)}{" "}
+                            hs
                           </span>
                         </div>
                       </td>
 
                       {/* //* COLUMNAS: PRECIO FINAL */}
-                      <td className="hidden md:table-cell px-5 py-4">
-                        <span className="font-semibold text-slate-700 text-xs sm:text-sm tabular-nums">
-                          ${Number(turno.precio_final || 0).toLocaleString("es-AR", {
-                            minimumFractionDigits: 2,
-                          })}
-                        </span>
+                      <td className="hidden md:table-cell px-5 py-4 font-semibold text-gray-800 text-sm">
+                        ${Number(turno.precio_final).toLocaleString("es-AR", { minimumFractionDigits: 2 })}
                       </td>
 
                       {/* //* COLUMNAS: ESTADO */}
                       <td className="px-5 py-4">
                         <span
-                          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border shadow-2xs ${estadoInfo.color}`}
+                          title={turno.EstadoTurno.estado}
+                          className={`inline-flex items-center gap-1.5 px-2 md:px-3 py-1 rounded-full text-xs font-medium border ${estadoInfo.color}`}
                         >
-                          <IconoEstado size={13} />
-                          <span>{estadoInfo.label || turno.EstadoTurno.estado}</span>
+                          <IconoEstado size={14} />
+                          <span className="hidden md:inline">{turno.EstadoTurno.estado}</span>
                         </span>
                       </td>
 
                       {/* //* COLUMNAS: NOTAS CONSULTA */}
-                      <td className="hidden md:table-cell px-5 py-4 text-slate-600 text-xs max-w-50 truncate">
-                        {turno.notas_consulta || (
-                          <span className="text-slate-400 italic">
-                            Sin notas
-                          </span>
-                        )}
+                      <td className="hidden md:table-cell px-5 py-4 text-gray-500 text-xs max-w-50 truncate">
+                        {turno.notas_consulta || <span className="text-gray-300 italic">Sin notas</span>}
                       </td>
 
-                      {/* //* COLUMNAS: ACCIONES CON COLOR FUNCIONAL Y HOVER SUAVE */}
-                      <td className="px-5 py-4 text-right">
-                        <div className="flex items-center justify-end gap-1">
+                      {/* //* COLUMNAS: ACCIONES */}
+                      <td className="hidden md:table-cell px-5 py-4 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
                           <button
                             type="button"
                             onClick={() => {
                               abrirParaVer(turno);
                             }}
-                            className="p-2 rounded-xl text-teal-600 hover:bg-teal-50 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                            className="p-2 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors"
                             title="Ver detalle"
                           >
                             <Eye size={18} />
                           </button>
-
-                          {/* Solo permitir editar turnos Programados */}
-                          {turno.EstadoTurno?.estado === "Programado" && (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                abrirParaEditar(turno, (item) => ({
-                                  ...item,
-                                  fecha_hora_inicio: formatDateTimeInput(
-                                    item.fecha_hora_inicio,
-                                  ),
-                                  fecha_hora_fin: formatDateTimeInput(
-                                    item.fecha_hora_fin,
-                                  ),
-                                  duracion_minutos: item.duracion_minutos || 30,
-                                }))
-                              }
-                              className="p-2 rounded-xl text-blue-600 hover:bg-blue-50 hover:scale-105 active:scale-95 transition-all cursor-pointer"
-                              title="Editar Turno"
-                            >
-                              <Edit size={18} />
-                            </button>
-                          )}
-
+                          <button
+                            type="button"
+                            onClick={() =>
+                              abrirParaEditar(turno, (item) => ({
+                                ...item,
+                                fecha_hora_inicio: formatDateTimeInput(item.fecha_hora_inicio),
+                                fecha_hora_fin: formatDateTimeInput(item.fecha_hora_fin),
+                                duracion_minutos: item.duracion_minutos || 30,
+                              }))
+                            }
+                            className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
+                            title="Editar Turno"
+                          >
+                            <Edit size={18} />
+                          </button>
                           <button
                             type="button"
                             onClick={() => abrirParaEliminar(turno)}
-                            className="p-2 rounded-xl text-rose-600 hover:bg-rose-50 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                            className="p-2 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
                             title="Eliminar Turno"
                           >
                             <Trash2 size={18} />
@@ -310,7 +310,9 @@ export default function GestionTurnos() {
                             <BotonAccionesTurno
                               turno={turno}
                               abrirParaAtender={abrirParaAtender}
-                              abrirParaReprogramar={abrirParaReprogramar}
+                              abrirParaReprogramar={(t) =>
+                                abrirParaReprogramar(t, formatearTurnoParaReprogramar)
+                              }
                               abrirParaCancelar={abrirParaCancelar}
                               abrirParaInasistente={abrirParaInasistente}
                             />
@@ -324,38 +326,108 @@ export default function GestionTurnos() {
             </div>
 
             {/* //* TABLA: PAGINACION */}
-            <TablaPaginacion
-              page={page}
-              setPage={setPage}
-              totalPages={totalPages}
-            />
+            <TablaPaginacion page={page} setPage={setPage} totalPages={totalPages} />
           </div>
         </div>
 
-        {/* //* MODALES: VISTA TURNO */}
-        {turnoVer && (
-          <VistaTurno
-            isOpen={Boolean(turnoVer)}
-            onClose={() => setTurnoVer(null)}
-            turno={turnoVer}
-            abrirParaReprogramar={(t) => {
-              setTurnoVer(null);
-              abrirParaReprogramar(t);
-            }}
-            abrirParaAtender={(t) => {
-              setTurnoVer(null);
-              abrirParaAtender(t);
-            }}
-            abrirParaCancelar={(t) => {
-              setTurnoVer(null);
-              abrirParaCancelar(t);
-            }}
-            abrirParaInasistente={(t) => {
-              setTurnoVer(null);
-              abrirParaInasistente(t);
-            }}
-          />
+        {/* //* MENÚ DE ACCIONES (MOBILE) */}
+        {turnoMenu && (
+          <Modal
+            isOpen={!!turnoMenu}
+            onClose={() => setTurnoMenu(null)}
+            title={`${turnoMenu.Paciente?.nombre || "Paciente"} ${turnoMenu.Paciente?.apellido || ""}`}
+            width="max-w-sm"
+          >
+            {(() => {
+              const ejecutar = (accion) => {
+                const t = turnoMenu;
+                setTurnoMenu(null);
+                accion(t);
+              };
+              const btn = "flex items-center gap-3 p-3 rounded-xl font-semibold text-sm cursor-pointer";
+
+              return (
+                <div className="flex flex-col gap-2">
+                  {turnoMenu.EstadoTurno?.estado === "Programado" && (
+                    <>
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Cambiar estado</p>
+                      <button
+                        type="button"
+                        onClick={() => ejecutar(abrirParaAtender)}
+                        className={`${btn} text-emerald-700 bg-emerald-50`}
+                      >
+                        <CheckSquare size={18} /> Atender turno
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          ejecutar((t) => abrirParaReprogramar(t, formatearTurnoParaReprogramar))
+                        }
+                        className={`${btn} text-[#3B7A94] bg-[#f0f6f9]`}
+                      >
+                        <CalendarDays size={18} /> Reprogramar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => ejecutar(abrirParaCancelar)}
+                        className={`${btn} text-red-600 bg-red-50`}
+                      >
+                        <X size={18} /> Cancelar turno
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => ejecutar(abrirParaInasistente)}
+                        className={`${btn} text-[#2b5d73] bg-[#f0f6f9]`}
+                      >
+                        <UserRoundX size={18} /> Inasistente
+                      </button>
+                    </>
+                  )}
+
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mt-2">Turno</p>
+                  <button
+                    type="button"
+                    onClick={() => ejecutar(abrirParaVer)}
+                    className={`${btn} text-emerald-700 bg-emerald-50`}
+                  >
+                    <Eye size={18} /> Ver detalle
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      ejecutar((t) =>
+                        abrirParaEditar(t, (item) => ({
+                          ...item,
+                          fecha_hora_inicio: formatDateTimeInput(item.fecha_hora_inicio),
+                          fecha_hora_fin: formatDateTimeInput(item.fecha_hora_fin),
+                          duracion_minutos: item.duracion_minutos || 30,
+                        }))
+                      )
+                    }
+                    className={`${btn} text-blue-700 bg-blue-50`}
+                  >
+                    <Edit size={18} /> Editar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => ejecutar(abrirParaEliminar)}
+                    className={`${btn} text-red-600 bg-red-50`}
+                  >
+                    <Trash2 size={18} /> Eliminar
+                  </button>
+                </div>
+              );
+            })()}
+          </Modal>
         )}
+
+        {/* //* MODALES: VISTA TURNO */}
+        <VistaTurno
+          isOpen={modalVer}
+          onClose={() => cerrarVer()}
+          turno={turnoVer}
+          abrirParaReprogramar={(turno) => abrirParaReprogramar(turno, formatearTurnoParaReprogramar)}
+        />
 
         {/* //* MODALES: CREAR Y EDITAR */}
         {modalAbierto && (
@@ -363,77 +435,82 @@ export default function GestionTurnos() {
             modalAbierto={modalAbierto}
             cerrarModal={cerrarModal}
             editando={editando}
+            turnos={turnos}
             pacientes={pacientes}
             setPacientes={setPacientes}
             datosFormulario={datosFormulario}
             actualizarDatos={actualizarDatos}
             guardarTurno={(e) => {
-              if (e && e.preventDefault) e.preventDefault();
+              e.preventDefault();
               guardarTurno(datosFormulario, editando, turnoSeleccionado);
             }}
-            abrirParaAtender={() => {
-              cerrarModal();
-              abrirParaAtender(turnoSeleccionado);
-            }}
-            abrirParaCancelar={() => {
-              cerrarModal();
-              abrirParaCancelar(turnoSeleccionado);
-            }}
-            abrirParaInasistente={() => {
-              cerrarModal();
-              abrirParaInasistente(turnoSeleccionado);
-            }}
-            abrirParaReprogramar={() => {
-              cerrarModal();
-              abrirParaReprogramar(turnoSeleccionado);
-            }}
+            abrirModalAtenderDesdeEdicion={() => abrirParaAtender(turnoSeleccionado)}
+            abrirModalCancelarDesdeEdicion={() => abrirParaCancelar(turnoSeleccionado)}
+            abrirModalInasistenteDesdeEdicion={() => abrirParaInasistente(turnoSeleccionado)}
+            abrirModalReprogramarDesdeEdicion={() =>
+              abrirParaReprogramar(turnoSeleccionado, formatearTurnoParaReprogramar)
+            }
           />
         )}
 
         {/* //* MODALES: ATENDER */}
-        {turnoAtender && (
+        {modalAtender && (
           <FormularioAtender
-            isOpen={Boolean(turnoAtender)}
-            onClose={() => setTurnoAtender(null)}
-            turno={turnoAtender}
+            modalAtenderAbierto={modalAtender}
+            cerrarModal={cerrarModalAtender}
+            turnoSeleccionado={turnoSeleccionadoAtender}
+            datosAtencion={datosAtencion}
             practicasLista={practicasLista}
-            onConfirm={(datos) =>
-              procesarAtencionTurno(datos, turnoAtender, () =>
-                setTurnoAtender(null),
-              )
-            }
+            pacientesObrasSociales={obrasSocialesPaciente}
+            agregarPracticaAtencion={agregarPracticaAtencion}
+            actualizarPracticaAtencion={actualizarPracticaAtencion}
+            actualizarDatosAtencion={actualizarDatosAtencion}
+            eliminarPracticaAtencion={eliminarPracticaAtencion}
+            procesarAtencionTurno={(e) => {
+              e.preventDefault();
+              procesarAtencionTurno(datosAtencion, turnoSeleccionadoAtender, cerrarModalAtender);
+            }}
           />
         )}
 
         {/* //* MODALES: CANCELAR E INASISTENTE */}
-        {cancelarConfig && (
+        {modalCancelar && (
           <FormularioCancelar
-            isOpen={Boolean(cancelarConfig)}
-            onClose={() => setCancelarConfig(null)}
-            turno={cancelarConfig.turno}
-            inasistente={cancelarConfig.inasistente}
-            onConfirm={({ notas_consulta, inasistente, turno }) =>
+            modalCancelarAbierto={modalCancelar}
+            cerrarModal={cerrarModalCancelar}
+            turnoSeleccionado={turnoSeleccionadoCancelar}
+            inasistente={inasistente}
+            notasCanceladoInasistente={datosCancelacion}
+            actualizarDatosCancelacion={actualizarDatosCancelacion}
+            procesarCancelacionTurno={(e) => {
+              e.preventDefault();
               procesarCancelacionTurno(
                 inasistente,
-                turno,
-                { notas_consulta },
-                () => setCancelarConfig(null),
-              )
-            }
+                turnoSeleccionadoCancelar,
+                datosCancelacion,
+                cerrarModalCancelar,
+              );
+            }}
           />
         )}
 
         {/* //* MODALES: REPROGRAMAR */}
-        {turnoReprogramar && (
+        {modalReprogramar && (
           <FormularioReprogramar
-            isOpen={Boolean(turnoReprogramar)}
-            onClose={() => setTurnoReprogramar(null)}
-            turno={turnoReprogramar}
-            onConfirm={(datos) =>
-              procesarReprogramacionTurno(datos, turnoReprogramar, () =>
-                setTurnoReprogramar(null),
-              )
-            }
+            modalReprogramarAbierto={modalReprogramar}
+            cerrarModal={cerrarModalReprogramar}
+            turnos={turnos}
+            turnoSeleccionado={turnoSeleccionadoReprogramar}
+            datosReprogramacion={datosReprogramacion}
+            actualizarDatosReprogramacion={actualizarDatosReprogramacion}
+            procesarReprogramacionTurno={(e) => {
+              e.preventDefault();
+              procesarReprogramacionTurno(
+                datosReprogramacion,
+                turnoSeleccionadoReprogramar,
+                cerrarModalReprogramar,
+              );
+            }}
           />
         )}
 

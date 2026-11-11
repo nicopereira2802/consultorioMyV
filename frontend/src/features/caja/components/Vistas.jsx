@@ -1,65 +1,54 @@
-import {
-  Plus,
-  Minus,
-  Tag,
-  ChevronDown,
-  ChevronUp,
-  Banknote,
-  CreditCard,
-  CalendarClock,
-} from "lucide-react";
+/** @format */
+
+import { Plus, Minus, Tag, ChevronDown, ChevronUp, Banknote, Scale, CreditCard } from "lucide-react";
 import { formatFechaHoraTabla } from "../../../utils";
 
-export function VistaCronologica({ movimientosUnificados }) {
+export function VistaCronologica({ movimientosUnificados, onVerCuotas }) {
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
-      <div className="divide-y divide-slate-100">
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-2xs overflow-hidden">
+      <div className="divide-y divide-gray-100">
         {movimientosUnificados.length === 0 ? (
-          <p className="text-xs text-slate-400 italic text-center py-8">
-            Sin movimientos registrados en este período.
-          </p>
+          <p className="text-xs text-gray-400 italic text-center py-8">Sin movimientos registrados.</p>
         ) : (
           movimientosUnificados.map((m) => {
             const esIngreso = m.tipo === "ingreso";
             return (
-              <div
-                key={m.id}
-                className="p-4 flex items-center justify-between hover:bg-slate-50/70 transition-colors"
-              >
+              <div key={m.id} className="p-4 flex items-center justify-between hover:bg-gray-50/60 transition-colors">
                 <div className="flex items-center gap-3">
                   <div
-                    className={`p-2 rounded-xl text-xs font-semibold ${
-                      esIngreso
-                        ? "bg-emerald-50 text-[#1b7f5b] border border-emerald-100"
-                        : "bg-rose-50 text-rose-600 border border-rose-100"
+                    className={`p-2.5 rounded-xl text-xs font-bold ${
+                      esIngreso ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"
                     }`}
                   >
-                    {esIngreso ? <Plus size={16} /> : <Minus size={16} />}
+                    {esIngreso ? <Plus size={18} /> : <Minus size={18} />}
                   </div>
                   <div>
-                    <span className="font-semibold text-slate-900 text-sm block tracking-tight">
-                      {m.concepto}
-                    </span>
-                    <span className="text-xs text-slate-500 font-normal">
+                    <span className="font-bold text-gray-800 text-sm block">{m.concepto}</span>
+                    <span className="text-xs text-gray-400">
                       {formatFechaHoraTabla(m.fecha)} • {m.metodo_pago}
                     </span>
                   </div>
                 </div>
 
-                <div className="text-right">
-                  <span
-                    className={`text-sm font-bold tabular-nums ${
-                      esIngreso ? "text-emerald-700" : "text-rose-600"
-                    }`}
-                  >
-                    {esIngreso ? "+" : "-"}$
-                    {m.monto.toLocaleString("es-AR", {
-                      minimumFractionDigits: 2,
-                    })}
-                  </span>
-                  <span className="block text-[11px] font-mono text-slate-400">
-                    {m.comprobante}
-                  </span>
+                <div className="flex items-center gap-3">
+                  <div className="text-right">
+                    <span className={`text-sm font-black ${esIngreso ? "text-emerald-600" : "text-rose-600"}`}>
+                      {esIngreso ? "+" : "-"}${m.monto.toLocaleString("es-AR", { minimumFractionDigits: 2 })}
+                    </span>
+                    <span className="block text-[10px] text-gray-400">{m.comprobante}</span>
+                  </div>
+
+                  {esIngreso && m.cobroOriginal && onVerCuotas && (
+                    <button
+                      type="button"
+                      onClick={() => onVerCuotas(m.cobroOriginal)}
+                      className="px-2.5 py-1.5 text-xs font-bold text-[#2eb086] hover:bg-[#e8f7f1] rounded-xl transition-colors cursor-pointer border border-[#2eb086]/30 flex items-center gap-1"
+                      title="Ver detalle de entregas y pagos"
+                    >
+                      <Banknote size={14} />
+                      <span>Pagos</span>
+                    </button>
+                  )}
                 </div>
               </div>
             );
@@ -70,16 +59,12 @@ export function VistaCronologica({ movimientosUnificados }) {
   );
 }
 
-export function VistaLibroMayor({
-  egresosPorCategoria,
-  categoriaAbierta,
-  setCategoriaAbierta,
-}) {
+export function VistaLibroMayor({ egresosPorCategoria, categoriaAbierta, setCategoriaAbierta }) {
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden divide-y divide-slate-100">
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-2xs overflow-hidden divide-y divide-gray-100">
       {egresosPorCategoria.length === 0 ? (
-        <p className="text-xs text-slate-400 italic text-center py-8">
-          Sin egresos registrados para agrupar por categoría en este período.
+        <p className="text-xs text-gray-400 italic text-center py-8">
+          Sin egresos registrados para agrupar por categoría.
         </p>
       ) : (
         egresosPorCategoria.map((cat) => {
@@ -89,61 +74,44 @@ export function VistaLibroMayor({
               {/* Cabecera de la categoría (Acordeon) */}
               <button
                 type="button"
-                onClick={() =>
-                  setCategoriaAbierta(estaAbierta ? null : cat.nombre)
-                }
-                className="p-4 flex items-center justify-between hover:bg-slate-50/70 w-full text-left transition-colors cursor-pointer"
+                onClick={() => setCategoriaAbierta(estaAbierta ? null : cat.nombre)}
+                className="p-4 flex items-center justify-between hover:bg-gray-50/60 w-full text-left transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-xl bg-rose-50 text-rose-600 border border-rose-100 font-semibold text-xs">
-                    <Tag size={16} />
+                  <div className="p-2.5 rounded-xl bg-rose-50 text-rose-600 font-bold text-xs">
+                    <Tag size={18} />
                   </div>
                   <div>
-                    <span className="font-semibold text-slate-900 text-sm block tracking-tight">
-                      {cat.nombre}
-                    </span>
-                    <span className="text-xs text-slate-500 font-normal">
-                      {cat.items.length} movimientos
-                    </span>
+                    <span className="font-bold text-gray-800 text-sm block">{cat.nombre}</span>
+                    <span className="text-xs text-gray-400">{cat.items.length} movimientos</span>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-4">
-                  <span className="text-sm font-bold tabular-nums text-rose-600">
-                    -$
-                    {cat.total.toLocaleString("es-AR", {
-                      minimumFractionDigits: 2,
-                    })}
+                  <span className="text-sm font-black text-rose-600">
+                    -${cat.total.toLocaleString("es-AR", { minimumFractionDigits: 2 })}
                   </span>
                   {estaAbierta ? (
-                    <ChevronUp size={16} className="text-slate-400" />
+                    <ChevronUp size={16} className="text-gray-400" />
                   ) : (
                     <ChevronDown size={16} className="text-gray-400" />
                   )}
                 </div>
               </button>
 
-              {/* Detalle interno de los gastos de esa categoría */}
+              {/* Detalle interno de los gastos de esa categoría (al abrir el acordeón) */}
               {estaAbierta && (
                 <div className="bg-gray-50/50 px-6 py-3 divide-y divide-gray-100">
                   {cat.items.map((g) => (
-                    <div
-                      key={g.id_gasto}
-                      className="py-2.5 flex items-center justify-between text-xs"
-                    >
+                    <div key={g.id_gasto} className="py-2.5 flex items-center justify-between text-xs">
                       <div>
-                        <span className="font-semibold text-gray-700 block">
-                          {g.concepto}
-                        </span>
+                        <span className="font-semibold text-gray-700 block">{g.concepto}</span>
                         <span className="text-gray-400">
                           {formatFechaHoraTabla(g.fecha_gasto)} • {g.metodo_pago}
                         </span>
                       </div>
                       <span className="font-bold text-rose-600">
-                        -$
-                        {Number(g.monto).toLocaleString("es-AR", {
-                          minimumFractionDigits: 2,
-                        })}
+                        -${Number(g.monto).toLocaleString("es-AR", { minimumFractionDigits: 2 })}
                       </span>
                     </div>
                   ))}
@@ -159,149 +127,141 @@ export function VistaLibroMayor({
 
 export function VistaPendientes({
   turnosPendientes = [],
-  cuotasPendientes = [],
   abrirCobroParaTurno,
-  abrirCobroParaCuota,
+  abrirGestionCuotas,
+  onVerBalance,
 }) {
-  const tienePendientes =
-    turnosPendientes.length > 0 || cuotasPendientes.length > 0;
+  const turnosFiltrados = (turnosPendientes || []).filter((item) => {
+    const turno = item.Turno || item; // Por si viene anidado en un cobro
 
-  if (!tienePendientes) {
-    return (
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-2xs p-8 text-center">
-        <p className="text-xs text-gray-400 italic">
-          ¡Genial! No hay atenciones ni cuotas pendientes de cobro al día de hoy.
-        </p>
-      </div>
+    // Extraer el nombre del estado venga donde venga
+    const estadoNombre = (
+      turno.estado || 
+      turno.EstadoTurno?.nombre || 
+      turno.EstadoTurno?.estado || 
+      turno.estado_turno || 
+      ''
+    ).toString().toLowerCase().trim();
+
+    // Condición 1: Debe estar efectivamente atendido (id_estado === 2)
+    const estaAtendido = estadoNombre === 'atendido' || Number(turno.id_estado) === 2;
+
+    // Condición 2: Debe tener saldo pendiente mayor a 0
+    const saldo = Number(
+      item.saldo_pendiente ??
+      turno.saldo_pendiente ??
+      item.total_deuda ??
+      turno.total_deuda ??
+      item.precio_final ??
+      turno.precio_final ??
+      item.precio ??
+      turno.precio ??
+      0
     );
-  }
+
+    return estaAtendido && saldo > 0;
+  });
+
+  console.log('TURNO POR COBRAR:', turnosFiltrados[0]);
 
   return (
-    <div className="flex flex-col gap-4">
-      {/* SECCIÓN 1: TURNOS ATENDIDOS SIN COBRO REGISTRADO */}
-      {turnosPendientes.length > 0 && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-2xs overflow-hidden">
-          <div className="p-3.5 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <CalendarClock size={16} className="text-amber-500" />
-              <span className="text-xs font-bold text-gray-700 uppercase tracking-wider">
-                Atenciones sin Cobrar ({turnosPendientes.length})
-              </span>
-            </div>
-            <span className="text-[10px] text-gray-400 font-medium">
-              Turnos atendidos sin cobro emitido
-            </span>
-          </div>
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-2xs overflow-hidden divide-y divide-gray-100">
+      {turnosFiltrados.length === 0 ? (
+        <p className="text-xs text-gray-400 italic text-center py-8">
+          No hay turnos atendidos con saldos pendientes de cobro.
+        </p>
+      ) : (
+        turnosFiltrados.map((t) => {
+          const totalDeuda = t.total_deuda !== undefined ? t.total_deuda : (t.precio_final || 0);
+          const saldoPendiente = t.saldo_pendiente !== undefined ? t.saldo_pendiente : totalDeuda;
+          const totalPagado = t.total_pagado !== undefined ? t.total_pagado : 0;
+          const tieneCobroOActivo = Boolean(t.Cobro) || totalPagado > 0;
 
-          <div className="divide-y divide-gray-100">
-            {turnosPendientes.map((t) => (
-              <div
-                key={t.id_turno}
-                className="p-4 flex items-center justify-between gap-3 hover:bg-gray-50/50"
-              >
-                <div>
-                  <span className="font-bold text-gray-800 text-sm block">
-                    {t.Paciente
-                      ? `${t.Paciente.apellido}, ${t.Paciente.nombre}`
-                      : `Paciente #${t.id_paciente}`}
+          return (
+            <div
+              key={t.id_turno}
+              className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-gray-50/60 transition-colors"
+            >
+              <div className="space-y-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-bold text-gray-800 text-sm">
+                    {t.Paciente ? `${t.Paciente.apellido}, ${t.Paciente.nombre}` : `Paciente #${t.id_paciente}`}
                   </span>
-                  <span className="text-xs text-gray-400">
-                    {formatFechaHoraTabla(t.fecha_hora_inicio)} •{" "}
-                    {t.notas_consulta || "Atención realizada"}
+                  {tieneCobroOActivo ? (
+                    <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                      Acuerdo Informal / Pagos Parciales
+                    </span>
+                  ) : (
+                    <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-gray-100 text-gray-600 border border-gray-200">
+                      Sin definir método
+                    </span>
+                  )}
+                </div>
+
+                <div className="text-xs text-gray-400 flex flex-wrap items-center gap-1.5">
+                  <span>{formatFechaHoraTabla(t.fecha_hora_inicio)}</span>
+                  <span>•</span>
+                  <span>{t.notas_consulta || "Consulta de atención"}</span>
+                </div>
+
+                {totalPagado > 0 && (
+                  <div className="text-[11px] text-gray-500 font-medium">
+                    Abonado hasta ahora:{" "}
+                    <strong className="text-emerald-600">
+                      ${totalPagado.toLocaleString("es-AR", { minimumFractionDigits: 2 })}
+                    </strong>{" "}
+                    de ${Number(totalDeuda).toLocaleString("es-AR", { minimumFractionDigits: 2 })}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center gap-3 self-end sm:self-center">
+                <div className="text-right">
+                  <span className="text-[10px] uppercase font-bold text-gray-400 block tracking-wider">
+                    Saldo Pendiente
+                  </span>
+                  <span className="font-black text-rose-500 text-base">
+                    ${Number(saldoPendiente).toLocaleString("es-AR", { minimumFractionDigits: 2 })}
                   </span>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <span className="font-black text-amber-600 text-sm">
-                    $
-                    {Number(t.precio_final || 0).toLocaleString("es-AR", {
-                      minimumFractionDigits: 2,
-                    })}
-                  </span>
+                {/* BOTÓN DE BALANCE DE CUENTA CORRIENTE */}
+                <button
+                  type="button"
+                  onClick={() => onVerBalance && onVerBalance(t.id_paciente || t.Paciente?.id_paciente)}
+                  className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors cursor-pointer border border-blue-100"
+                  title="Consultar Balance de Cuenta Corriente"
+                >
+                  <Scale size={16} />
+                </button>
+
+                {tieneCobroOActivo ? (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      abrirGestionCuotas && abrirGestionCuotas({ ...t.Cobro, Paciente: t.Paciente })
+                    }
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-2xs cursor-pointer"
+                    title="Gestionar pagos del acuerdo informal"
+                  >
+                    <Banknote size={14} />
+                    <span>Gestionar Pagos</span>
+                  </button>
+                ) : (
                   <button
                     type="button"
                     onClick={() => abrirCobroParaTurno(t)}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#2eb086] hover:bg-[#259370] text-white text-xs font-bold transition-all shadow-2xs cursor-pointer"
+                    title="Seleccionar método de pago y registrar cobro"
                   >
-                    <Banknote size={14} />
-                    <span>Cobrar Atención</span>
+                    <CreditCard size={14} />
+                    <span>Seleccionar Método de Pago</span>
                   </button>
-                </div>
+                )}
               </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* SECCIÓN 2: CUOTAS VENCIDAS O CON VENCIMIENTO HASTA HOY */}
-      {cuotasPendientes.length > 0 && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-2xs overflow-hidden">
-          <div className="p-3.5 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <CreditCard size={16} className="text-amber-600" />
-              <span className="text-xs font-bold text-gray-700 uppercase tracking-wider">
-                Cuotas Adeudadas Hasta Hoy ({cuotasPendientes.length})
-              </span>
             </div>
-            <span className="text-[10px] text-gray-400 font-medium">
-              Vencidas o con vencimiento en la fecha
-            </span>
-          </div>
-
-          <div className="divide-y divide-gray-100">
-            {cuotasPendientes.map((q) => {
-              const paciente = q.Cobro?.Paciente;
-              const nombrePaciente = paciente
-                ? `${paciente.apellido}, ${paciente.nombre}`
-                : "Paciente";
-              const pendienteCuota = Math.max(
-                0,
-                (Number(q.monto_cuota) || 0) - (Number(q.monto_cobrado) || 0),
-              );
-
-              return (
-                <div
-                  key={q.id_cuota}
-                  className="p-4 flex items-center justify-between gap-3 hover:bg-gray-50/50"
-                >
-                  <div>
-                    <span className="font-bold text-gray-800 text-sm block">
-                      {nombrePaciente}
-                    </span>
-                    <span className="text-xs text-gray-400">
-                      Cuota #{q.nro_cuota} • Vencimiento:{" "}
-                      {q.fecha_vencimiento || "Sin fecha"}
-                      {q.estado === "Parcialmente pagada" && (
-                        <span className="ml-1 text-amber-600 font-semibold">
-                          (Pago parcial: ${Number(q.monto_cobrado).toLocaleString("es-AR")})
-                        </span>
-                      )}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <span className="font-black text-rose-600 text-sm">
-                      $
-                      {pendienteCuota.toLocaleString("es-AR", {
-                        minimumFractionDigits: 2,
-                      })}
-                    </span>
-                    {abrirCobroParaCuota && (
-                      <button
-                        type="button"
-                        onClick={() => abrirCobroParaCuota(q)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#2eb086] hover:bg-[#259370] text-white text-xs font-bold transition-all shadow-2xs cursor-pointer"
-                      >
-                        <Banknote size={14} />
-                        <span>Cobrar Cuota</span>
-                      </button>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+          );
+        })
       )}
     </div>
   );

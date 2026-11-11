@@ -5,46 +5,42 @@ export default function Header({
   titulo,
   subtitulo,
   badge,
-  alerta,
   botonAccion,
-  children,
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 bg-[#e8f7f1] text-slate-800 border-b border-[#c2e8d9] px-4 py-2.5 sm:px-6 sm:py-3 shadow-2xs shrink-0 transition-colors">
-      <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-        {/* Ícono dinámico clínico con fondo funcional */}
+    <div className="flex flex-row items-center justify-between gap-3 bg-white px-5 py-3.5 border-b border-gray-100 shadow-sm">
+      <div className="flex items-center gap-3 min-w-0">
+        {/* Ícono de cada pantalla (se mantiene en mobile y desktop) */}
         {Icono && (
-          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#2eb086] text-white flex items-center justify-center shrink-0 shadow-xs">
-            <Icono size={18} />
+          <div className="w-10 h-10 rounded-xl bg-[#e8f7f1] text-[#2eb086] flex items-center justify-center shrink-0 shadow-sm">
+            <Icono size={20} />
           </div>
         )}
 
-        <div className="flex flex-col min-w-0">
-          <div className="flex flex-wrap items-center gap-2 min-w-0">
-            <h1 className="text-sm sm:text-base md:text-lg font-bold text-slate-900 tracking-tight leading-snug truncate">
+        <div className="flex flex-col items-start min-w-0">
+          {/* Renglón 1: título / Renglón 2: badge */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1 sm:gap-2.5">
+            <h1 className="text-lg sm:text-xl font-bold text-gray-800 tracking-tight leading-snug">
               {titulo}
             </h1>
-            {/* Badge opcional */}
             {badge && (
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold bg-[#2eb086]/15 text-[#1a6e54] border border-[#2eb086]/30 shrink-0">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#e8f7f1] text-[#2eb086] border border-[#2eb086]/20 shrink-0">
                 {badge}
               </span>
             )}
           </div>
+
+          {/* Renglón 3: descripción */}
           {subtitulo && (
-            <p className="text-[11px] sm:text-xs text-[#2b725c] font-medium leading-tight truncate">
+            <p className="text-xs text-gray-500 font-medium leading-tight mt-1 sm:mt-0.5 line-clamp-1 sm:line-clamp-none">
               {subtitulo}
             </p>
           )}
         </div>
       </div>
 
-      {/* Zona derecha: Alertas, botones de acción y elementos adicionales */}
-      <div className="flex items-center gap-2 shrink-0">
-        {alerta}
-        {botonAccion && <div className="hidden sm:flex">{botonAccion}</div>}
-        {children}
-      </div>
+      {/* Botón o elemento de acción rápida a la derecha */}
+      {botonAccion && <div className="flex items-center shrink-0">{botonAccion}</div>}
     </div>
   );
 }
